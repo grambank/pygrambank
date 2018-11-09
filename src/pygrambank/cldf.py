@@ -30,11 +30,7 @@ def itertable(lines):
         if i == 0:
             header = row
         elif i == 1:
-            try:
-                assert set(line).issubset({'|', ':', '-', ' '})
-            except AssertionError:
-                print(line)
-                raise
+            assert set(line).issubset({'|', ':', '-', ' '})
         else:
             yield OrderedDict(zip(header, row))
 
