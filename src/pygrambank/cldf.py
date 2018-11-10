@@ -1,5 +1,4 @@
 from __future__ import print_function, unicode_literals
-import re
 import time
 from itertools import groupby
 from collections import Counter, OrderedDict, defaultdict
@@ -9,13 +8,12 @@ import pyglottolog
 from clldutils.path import read_text, write_text
 from clldutils.misc import lazyproperty
 from clldutils.markup import Table
-from csvw import dsv
 from pycldf import StructureDataset
 from pycldf.sources import Source
 
 from pygrambank import bib
 from pygrambank import srctok
-from pygrambank.sheet import Sheet, normalized_feature_id
+from pygrambank.sheet import Sheet
 from pygrambank.api import Grambank
 
 
@@ -33,23 +31,6 @@ def itertable(lines):
             assert set(line).issubset({'|', ':', '-', ' '})
         else:
             yield OrderedDict(zip(header, row))
-
-
-def massage_collaborative_sheet(fn):
-    ren = {}
-    ren["\* Feature number"] = "GramBank ID"
-    ren["Feature question in English"] = "Feature"
-    ren["Value set"] = "Possible Values"
-    ren["Clarifying comments to outsiders (from the proposal by Jeremy, Hannah and Hedvig)"] = "Clarifying Comments"
-
-    xs = list(dsv.reader(fn, delimiter='\t'))
-    toprow = [ren.get(x, x) for x in xs[0]]
-    idcol = toprow.index("GramBank ID")
-    idgbstatus = toprow.index('GramBank-status')
-    rows = [row[:idcol] + (normalized_feature_id(row[idcol]),) + row[idcol + 1:] for row in xs[1:] if
-            row[idcol].isdigit() and row[idgbstatus] != "delete"]
-    with dsv.UnicodeWriter(fn, delimiter='\n') as w:
-        w.writerows([toprow] + rows)
 
 
 def bibdata(sheet, e, lgks, unresolved):
@@ -275,16 +256,6 @@ class Glottolog(object):
             if l.hid:
                 res[l.hid] = l
         return res
-
-    def macroarea(self, gc):
-        l = self.languoids_by_glottocode[gc]
-        if l.macroareas:
-            return l.macroareas[0].value
-        elif l.level.name == 'dialect':
-            for _, lid, llevel in reversed(l.lineage):
-                if llevel.name == 'language':
-                    return self.languoids_by_glottocode[lid].macroareas[0].value
-
 
 
 def create(repos, glottolog_repos, wiki):

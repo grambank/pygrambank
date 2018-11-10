@@ -134,8 +134,8 @@ class Sheet(object):
                     # an error, otherwise the first value takes precedence.
                     if len(set(r['Value'] for r in rows)) > 1:
                         print(
-                            'ERROR:{0}:{1} inconsistent multiple codings!'.format(
-                                self.path.name, gbid))
+                            'ERROR:{0}:{1} inconsistent multiple codings: {2}'.format(
+                                self.path.name, gbid, [r['Value'] for r in rows]))
                     else:
                         dedupres.append(rows[0])
                 else:
