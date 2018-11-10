@@ -152,7 +152,7 @@ class Sheet(object):
         with dsv.UnicodeWriter(fn, delimiter='\t') as w:
             for i, row in enumerate(self.rows):
                 if i == 0:
-                    w.writerow(list(GB_COLS.keys()) if restrict_cols else row.keys())
+                    w.writerow(list(GB_COLS.keys()) if restrict_cols else list(row.keys()))
                 w.writerow(
                     [row.get(col, '') for col in GB_COLS.keys()] if restrict_cols else row.values())
 
