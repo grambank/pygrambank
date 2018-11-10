@@ -154,7 +154,8 @@ class Sheet(object):
                 if i == 0:
                     w.writerow(list(GB_COLS.keys()) if restrict_cols else list(row.keys()))
                 w.writerow(
-                    [row.get(col, '') for col in GB_COLS.keys()] if restrict_cols else row.values())
+                    [row.get(col, '') for col in GB_COLS.keys()]
+                    if restrict_cols else list(row.values()))
 
     def _normalized_row(self, row):
         for k in row:
