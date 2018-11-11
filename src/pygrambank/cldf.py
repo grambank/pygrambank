@@ -101,7 +101,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     dataset.tablegroup.common_props['prov:wasGeneratedBy'] = describe_repos(
         Path(__file__).parent.parent.parent)
 
-    dataset.add_component('LanguageTable', 'contributed_datapoints', 'provenance')
+    dataset.add_component('LanguageTable', 'contributed_datapoints', 'provenance', 'macroarea')
     dataset.add_component('ParameterTable')
     dataset.add_component('CodeTable')
     dataset['ValueTable', 'Value'].null = ['?']
@@ -132,6 +132,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Glottocode=sheet.glottocode,
             contributed_datapoints=sheet.coder,
             provenance="{0} {1}".format(sheet.path.name, time.ctime(sheet.path.stat().st_mtime)),
+            macroarea=sheet.macroarea,
         ))
         dataset.add_sources(*list(bibdata(sheet, bibs, lgks, unresolved)))
         for row in sheet.rows:

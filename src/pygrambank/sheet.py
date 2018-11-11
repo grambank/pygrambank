@@ -102,8 +102,16 @@ class Sheet(object):
         self.lgname = m.group('lgname').strip()
         self.lgid = m.group('lgid').strip()
         self.lgnamecode = '{0.lgname} [{0.lgid}]'.format(self)
-        self.glottocode = LANGUAGE_TO_GLOTTOCODE.get(
-            self.lgnamecode, glottolog.languoids_by_ids[self.lgid].id)
+        languoid = glottolog.languoids_by_ids[self.lgid]
+        lgc = languoid.id
+        if languoid.level.name == 'dialect':
+            for _, lgc, level in reversed(languoid.lineage):
+                if level.name == 'language':
+                    break
+            else:
+                lgc = languoid.id
+        self.macroarea = glottolog.languoids_by_glottocode[lgc].macroareas[0].value
+        self.glottocode = LANGUAGE_TO_GLOTTOCODE.get(self.lgnamecode, languoid.id)
         self._features = features
 
     @lazyproperty
