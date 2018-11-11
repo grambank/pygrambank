@@ -40,7 +40,7 @@ def bibdata(sheet, e, lgks, unresolved):
     for row in sheet.rows:
         if row['Source']:
             refs = list(srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved))
-            row['Source'] = [clean_key(ref) for _, ref in refs]
+            row['Source'] = sorted([clean_key(ref) for _, ref in refs])
             for key, _ in refs:
                 typ, fields = e[key]
                 yield Source(typ, clean_key(key), **fields)
@@ -50,7 +50,7 @@ def iterunique(insheets):
     """
     For languages which have been coded multiple times, we pick out the best sheet.
     """
-    for gc, sheets in groupby(sorted(insheets, key=lambda s: s.glottocode), lambda s: s.glottocode):
+    for gc, sheets in groupby(sorted(insheets, key=lambda s: (s.glottocode, s.path.stem)), lambda s: s.glottocode):
         sheets = list(sheets)
         if len(sheets) == 1:
             yield sheets[0]
@@ -70,11 +70,11 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             sheet.write_tsv()
 
     print('reading sheets from TSV')
-    sheets = [Sheet(f, glottolog, api.features) for f in api.sheets_dir.glob('*.tsv')]
+    sheets = [Sheet(f, glottolog, api.features) for f in sorted(
+        api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
 
     print('loading bibs')
-    bibs = glottolog.bib('mpieva')
-    bibs.update(glottolog.bib('hh'))
+    bibs = glottolog.bib('hh')
     bibs.update(api.bib)
 
     lgks = defaultdict(set)
@@ -125,6 +125,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     for sheet in sheets:
         if not sheet.rows:
             print('ERROR: empty sheet {0}'.format(sheet.path))
+            continue
         coded_sheets[sheet.glottocode] = sheet
         data['LanguageTable'].append(dict(
             ID=sheet.glottocode,
