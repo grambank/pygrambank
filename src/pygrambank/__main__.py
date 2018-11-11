@@ -17,12 +17,13 @@ def cldf(args):
     parser.add_argument('repos', help="clone of glottobank/Grambank", type=Path)
     parser.add_argument('glottolog_repos', help="clone of clld/glottolog", type=Path)
     parser.add_argument('wiki_repos', help="clone of glottobank/Grambank.wiki", type=Path)
+    parser.add_argument('cldf_repos', help="clone of glottobank/grambank-cldf", type=Path)
     xargs = parser.parse_args(args.args)
     if not xargs.glottolog_repos.exists():
         raise ParserError('glottolog repos does not exist')
     if not xargs.wiki_repos.exists():
         raise ParserError('Grambank.wiki repos does not exist')
-    create(xargs.repos, xargs.glottolog_repos, xargs.wiki_repos)
+    create(xargs.repos, xargs.glottolog_repos, xargs.wiki_repos, xargs.cldf_repos)
 
 
 def main():  # pragma: no cover

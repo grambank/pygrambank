@@ -5,7 +5,7 @@ from collections import Counter, OrderedDict, defaultdict
 
 from tqdm import tqdm
 import pyglottolog
-from clldutils.path import read_text, write_text
+from clldutils.path import read_text, write_text, git_describe, Path
 from clldutils.misc import lazyproperty
 from clldutils.markup import Table
 from pycldf import StructureDataset
@@ -63,14 +63,9 @@ def iterunique(insheets):
                     yield sheet
 
 
-def sheets_to_gb(api, glottolog, pattern):
-    process = False if pattern else True
+def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     for suffix in Sheet.valid_suffixes:
         for f in tqdm(sorted(api.sheets_dir.glob('*' + suffix)), desc=suffix):
-            if pattern and pattern in f.stem:
-                process = True
-            if not process:
-                continue
             sheet = Sheet(f, glottolog, api.features)
             sheet.write_tsv()
 
@@ -93,7 +88,19 @@ def sheets_to_gb(api, glottolog, pattern):
     sheets = list(iterunique(sheets))
 
     # Lookup sources for each sheet:
-    dataset = StructureDataset.in_dir(api.repos / 'cldf')
+    dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
+
+    def describe_repos(r, org='glottobank'):
+        return {'dc:title': '{0}/{1}'.format(org, r.name), 'dc:description': git_describe(r)}
+
+    dataset.tablegroup.common_props['prov:wasDerivedFrom'] = [
+        describe_repos(api.repos),
+        describe_repos(glottolog.api.repos),
+        describe_repos(wiki)
+    ]
+    dataset.tablegroup.common_props['prov:wasGeneratedBy'] = describe_repos(
+        Path(__file__).parent.parent.parent)
+
     dataset.add_component('LanguageTable', 'contributed_datapoints', 'provenance')
     dataset.add_component('ParameterTable')
     dataset.add_component('CodeTable')
@@ -258,11 +265,12 @@ class Glottolog(object):
         return res
 
 
-def create(repos, glottolog_repos, wiki):
+def create(repos, glottolog_repos, wiki, cldf_repos):
     grambank = Grambank(repos, wiki)
     glottolog = Glottolog(glottolog_repos)
     coded_sheets = sheets_to_gb(
         grambank,
         glottolog,
-        None)
+        wiki,
+        cldf_repos)
     update_wiki(coded_sheets, glottolog, wiki)
