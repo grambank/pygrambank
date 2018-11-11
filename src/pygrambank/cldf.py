@@ -91,7 +91,9 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
 
     def describe_repos(r, org='glottobank'):
-        return {'dc:title': '{0}/{1}'.format(org, r.name), 'dc:description': git_describe(r)}
+        return OrderedDict([
+            ('dc:title', '{0}/{1}'.format(org, r.name)),
+            ('dc:description', git_describe(r))])
 
     dataset.tablegroup.common_props['prov:wasDerivedFrom'] = [
         describe_repos(api.repos),
