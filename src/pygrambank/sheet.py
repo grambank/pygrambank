@@ -110,7 +110,15 @@ class Sheet(object):
                     break
             else:
                 lgc = languoid.id
-        self.macroarea = glottolog.languoids_by_glottocode[lgc].macroareas[0].value
+        language = glottolog.languoids_by_glottocode[lgc]
+
+        # Macroareas are assigned to language level nodes:
+        self.macroarea = language.macroareas[0].value
+        self.latitude = languoid.latitude if languoid.latitude else language.latitude
+        self.longitude = languoid.longitude if languoid.longitude else language.longitude
+
+        self.family_name = languoid.lineage[0][0] if languoid.lineage else None
+        self.family_id = languoid.lineage[0][1] if languoid.lineage else None
         self.glottocode = LANGUAGE_TO_GLOTTOCODE.get(self.lgnamecode, languoid.id)
         self._features = features
 
