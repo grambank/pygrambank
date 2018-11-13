@@ -1,5 +1,8 @@
 from __future__ import print_function
 import re
+from itertools import groupby
+
+from clldutils.misc import nfilter
 
 from pygrambank import bib
 
@@ -48,7 +51,7 @@ def priok(ks, e):
         k: (max([bib.hhtype_to_n[z] for z in bib.hhtype(e[k][1])]),
             bib.lgcodestr(e[k][1].get('inlg', "")) == ['eng'])
         for k in ks}
-    return list(allmax(d).keys())
+    return set(allmax(d).keys())
 
 
 devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der"]
@@ -69,7 +72,7 @@ def matchauthor(a, fas, extraauthors = []):
     return True
 
 
-def src_to_k(lg, ayp, e, lgks):
+def iter_key_pages(lg, ayp, e, lgks):
     a, y, p = ayp
     if lg in lgks:
         for k in priok([
@@ -78,15 +81,12 @@ def src_to_k(lg, ayp, e, lgks):
                 and matchauthor(a, e[k][1].get("author", ""), bib.key_to_authors(k))],
             e=e
         ):
-            ref = k
-            if p:
-                ref += '[{0}]'.format(p)
-            yield k, ref
+            yield k, p
 
 
 def source_to_refs(src, lgid, e, lgks, unresolved):
     ays = list(iter_ayps(src))
-    refs = [ref for s in ays for ref in src_to_k(lgid, s, e, lgks)]
+    refs = sorted(set(ref for s in ays for ref in iter_key_pages(lgid, s, e, lgks)))
     if not refs:
         if repageonly.match(src):
             src = "[%s] default source:%s" % (lgid, src)
@@ -107,4 +107,4 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
                 unresolved.update([(ay[0], ay[1], lgid) for ay in ays])
             else:
                 unresolved.update([(src, lgid)])
-    return refs
+    return [(k, nfilter(r[1] for r in rs)) for k, rs in groupby(refs, lambda r: r[0])]

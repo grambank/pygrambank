@@ -39,11 +39,19 @@ def bibdata(sheet, e, lgks, unresolved):
 
     for row in sheet.rows:
         if row['Source']:
-            refs = list(srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved))
-            row['Source'] = sorted([clean_key(ref) for _, ref in refs])
-            for key, _ in refs:
+            refs, sources = [], []
+            for key, pages in srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved):
                 typ, fields = e[key]
-                yield Source(typ, clean_key(key), **fields)
+                ref = key = clean_key(key)
+                if pages:
+                    print(pages)
+                    ref += '[{0}]'.format(','.join(pages))
+                refs.append(ref)
+                sources.append(Source(typ, key, **fields))
+
+            row['Source'] = refs
+            for src in sources:
+                yield src
 
 
 def iterunique(insheets):
