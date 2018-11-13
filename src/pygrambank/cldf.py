@@ -44,7 +44,6 @@ def bibdata(sheet, e, lgks, unresolved):
                 typ, fields = e[key]
                 ref = key = clean_key(key)
                 if pages:
-                    print(pages)
                     ref += '[{0}]'.format(','.join(pages))
                 refs.append(ref)
                 sources.append(Source(typ, key, **fields))
@@ -112,7 +111,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
         Path(__file__).parent.parent.parent)
 
     dataset.add_component('LanguageTable', 'contributed_datapoints', 'provenance', 'Family_name', 'Family_id')
-    dataset.add_component('ParameterTable')
+    dataset.add_component('ParameterTable', 'patron', 'name_in_french', 'Grambank_ID_desc', 'bound_morphology')
     dataset.add_component('CodeTable')
     dataset['ValueTable', 'Value'].null = ['?']
     data = defaultdict(list)
@@ -122,6 +121,10 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             ID=fid,
             Name=feature.name,
             Description=feature.description,
+            patron=feature.patron,
+            name_in_french=feature.name_french,
+            Grambank_ID_desc=feature['Grambank_ID_desc'],
+            bound_morphology=feature['bound_morphology']
         ))
         for code, desc in sorted(feature.domain.items(), key=lambda i: int(i[0])):
             data['CodeTable'].append(dict(

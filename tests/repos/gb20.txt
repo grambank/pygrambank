@@ -1,0 +1,132 @@
+# -*- coding: utf-8 -*-
+Grambank ID: GB020
+Clarifying Comments: An article is a marker that accompanies the noun and expresses notions such as (non-)specificity, (in)definiteness and information status (new or given status). Sometimes these notions of specificity, definiteness and information status are summed up in the term "identifiability". Articles cannot occur independently, though they might be homophonous with pronouns or numerals that can. A language does not necessarily have both a non-specific/indefinite and a specific/definite marker. These markers often stem from very different sources (numerals and demonstratives) and need not be similar in formal expression or position.<CR><CR>Formal expression is irrelevant; articles can be free, bound, or marked by suprasegmental markers such as tone.<CR>Articles are different from demonstratives in that demonstratives occur in a paradigm where there are markers that have a clear spatial deictic function. As demonstratives can grammaticalize into definite or specific articles, they form a natural continuum making it hard to define discrete categories. Articles are more grammaticalized, i.e. are often obligatory in certain contexts that require definite or specific reference. Definite or specific articles can also grammaticalize from pronouns meaning 'a certain'. As articles necessarily accompany nouns, it is in these cases that it is necessary to investigate whether the marker can occur independently or not; if it can it is most likely a pronoun and not an article. Articles can be homophonous with pronouns and demonstratives, and also with classifiers.
+Feature: Are there definite or specific articles?
+Feature patron: Jeremy
+Feature question in French: Existe-t-il des articles définis ou spécifiques?
+Form: declension, particle, paradigm
+Formal means: phonologically independent item, affixation and cliticization, declension
+Function: definiteness, deixis
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB021
+Clarifying Comments: In this question we need explicit support that indefinite NPs do/do not commonly occur with an indefinite/non-specific article. Indefinite articles can be homophonous with demonstratives, the numeral 'one' or classifiers.
+Feature: Do indefinite nominals commonly have indefinite articles?
+Feature patron: Jeremy
+Feature question in French: Un NP indéfini est-il obligatoirement accompagné par un article indéfini (ou non spécifique)?
+Form: declension, particle, paradigm
+Formal means: phonologically independent item, affixation and cliticization, declension
+Function: definiteness, deixis
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB022
+Clarifying Comments: All questions concerning order of elements aim to capture the pragmatically unmarked order. Do not consider 'left or right-dislocation', accompanied by intonational signals or pragmatically marked constructions such as focus.
+Feature: Are there prenominal articles?
+Feature patron: Jeremy
+Feature question in French: Existe-t-il des articles prénominaux?
+Form: word order, declension, particle, paradigm, prefixation
+Formal means: phonologically independent item, affixation and cliticization, word order, declension
+Function: definiteness, deixis
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB023
+Clarifying Comments: All questions concerning order of elements aim to capture the pragmatically unmarked order. Do not consider 'left or right-dislocation', accompanied by intonational signals or pragmatically marked constructions such as focus.
+Feature: Are there postnominal articles?
+Feature patron: Jeremy
+Feature question in French: Existe-t-il des articles postnominaux?
+Form: word order, declension, particle, paradigm, suffixation
+Formal means: phonologically independent item, affixation and cliticization, word order, declension
+Function: definiteness, deixis
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB024
+Clarifying Comments: Consider cardinal numerals only (i.e., not ordinal numerals). It does not matter what kind of construction is required (e.g., attributive 'two books' or relative 'books that are two') or what word class the root or modifying form of that the cardinal numerals belong to, i.e., 'two-ing books' (verb) or 'two-some books' (noun) apply to this question. If some numerals go before the noun and some go after, code 3 (both orders). If there is a free choice where to place the numeral, code 3 (both orders) as well. If the order depends on some other grammatical category which is neutral with respect to pragmaticality (e.g. definiteness), code 3. If the order depends on the noun consider the order(s) that applies to an open class of nouns.
+Feature: What is the order of numeral and noun in the NP?
+Feature patron: Harald
+Feature question in French: Quel est l'ordre du numéral et du nom dans le NP?
+Form: word order
+Formal means: word order
+Function: quantification, attribution
+Possible Values: multistate 1: Num-N; 2: N-Num; 3: both.
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB025
+Clarifying Comments: Like all questions concerning order of elements, only the pragmatically unmarked orders are targeted.
+Feature: What is the order of adnominal demonstrative and noun?
+Feature patron: Jeremy
+Feature question in French: Quel est la position relative du démonstratif et du nom dans le NP?
+Form: word order
+Formal means: word order
+Function: deixis, attribution
+Possible Values: multistate 1: Dem-N; 2: N-Dem; 3: both.
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB026
+Clarifying Comments: This means that a restrictively interpreted adjective is separated from the noun by some element that is not part of the nominal. For example, can you say "The man is running big" and the like to mean "The big man is running". Typically a language which allows this has extensive agreement systems so that you can still work out what modifies what in the NP without them being adjacent (i.e. the "Australian type"). NPs that are made up of several coordinated NPs that can be interpreted by the verb or other elements are not relevant here. This features aims to capture NPs where the head and modifiers can be separated. Examples of the type "I painted the house red" or "I saw the boy big" are not necessarily discontinuous, but most likely resultative or contrastive ("I saw the boy big [as opposed to before when he was small]").
+Feature: Can adnominal property words occur discontinuously?
+Feature patron: Harald
+Feature question in French: Existe-t-il des syntagmes nominaux discontinus?
+Form: word order, special construction
+Formal means: word order
+Function: attribution
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB027
+Clarifying Comments: Is there a difference between the marking of NP coordination ('John and Mary went to market') and the marking of comitative phrases ('John with Mary went to market')? This is not always explicitly stated by the descriptive work, but an investigation into the examples and perhaps even appendixed text of the grammar should reveal this (to a certain extent). In some languages the only way to do nominal coordination is with a comitative phrase, i.e., the only way to say X and Y is to say X with Y. This feature aims to capture such languages (which, as they have no difference between coordination and comitatives for nouns, get a 0). To see whether an element is comitative or coordinating check for case marking, agreement etc. For example, if X is the element in question and in the dative you get 'John-DAT X Mary-DAT' then X is likely coordinating, while if you get John-DAT X Mary then X is likely comitative. Or with agreement, if you get 'John X Mary verb-PL' rather than 'John X Mary verb-SG' (just like 'John X suitcase verb-SG') then that suggests X is likely coordinating.
+Feature: Are nominal conjunction and comitative expressed by different elements?
+Feature patron: Harald
+Feature question in French: Existe-t-il une différence entre le marquage de la NP coordonnés ('Gérard et Louise sont allés au marché') et celui de syntagmes comitatifs ('Gérard est allé au marché avec Louise')?
+Form: declension, flagging
+Formal means: affixation and cliticization, phonologically independent item, declension
+Function: argument marking, oblique, conjunction, coordination, case marking, comitative
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
+
+
+
+
+Grambank ID: GB028
+Clarifying Comments: Is there a pronoun or other marker that explicitly marks the inclusion of an interlocutor? This feature is not restricted to the pronominal system but includes person indexing as well. If inclusive is marked overtly in either the pronominal system or through verbal marking this is sufficient to trigger a (1) for this feature, even if exclusive has no overt morphological marking.
+Feature: Is there a distinction between inclusive and exclusive?
+Feature patron: Hannah
+Feature question in French: Existe-t-il une distinction inclusive/exclusive?
+Form: declension, paradigm, indexing
+Formal means: paradigm, declension, bound person marking
+Function: clusivity, deixis, person, number
+Possible Values: 1: present, 0: absent
+Grambank_ID_desc: xy
+bound_morphology: 0
