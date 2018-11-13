@@ -86,7 +86,9 @@ def iter_key_pages(lg, ayp, e, lgks):
 
 def source_to_refs(src, lgid, e, lgks, unresolved):
     ays = list(iter_ayps(src))
-    refs = sorted(set(ref for s in ays for ref in iter_key_pages(lgid, s, e, lgks)))
+    refs = sorted(
+        set(ref for s in ays for ref in iter_key_pages(lgid, s, e, lgks)),
+        key=lambda r: (r[0], r[1] or ''))
     if not refs:
         if repageonly.match(src):
             src = "[%s] default source:%s" % (lgid, src)
