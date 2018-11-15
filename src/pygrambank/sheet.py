@@ -43,10 +43,12 @@ def normalized_feature_id(s):
 
 
 def normalize_comment(s):
-    if set(s) == {'#'}:
-        return ''
-    if set(s) == {'?'}:
-        return '?'
+    if s:
+        if set(s) == {'#'}:
+            return
+        if set(s) == {'?'}:
+            return '?'
+        return s
 
 
 def normalized_value(sheet, v, feature):
