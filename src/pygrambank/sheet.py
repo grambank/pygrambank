@@ -42,6 +42,13 @@ def normalized_feature_id(s):
     return s
 
 
+def normalize_comment(s):
+    if set(s) == {'#'}:
+        return ''
+    if set(s) == {'?'}:
+        return '?'
+
+
 def normalized_value(sheet, v, feature):
     if v in {
         '?',
@@ -198,6 +205,7 @@ class Sheet(object):
             return None
         row['Language_ID'] = self.glottocode
         row['Value'] = normalized_value(self, row['Value'], self._features[row['Feature_ID']])
+        row['Comment'] = normalize_comment(row['Comment'])
         return row
 
     #
