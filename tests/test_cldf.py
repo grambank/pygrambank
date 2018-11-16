@@ -10,8 +10,8 @@ def test_create(api, wiki, capsys, tmpdir):
     captured = capsys.readouterr()
     assert 'inconsistent' in captured.out
     ds = StructureDataset.from_metadata(cldf_repos / 'cldf' / 'StructureDataset-metadata.json')
-    assert len(list(api.sheets_dir.glob('*.tsv'))) == 4
-    assert len(list(ds['LanguageTable'])) == 1
+    assert len(list(api.sheets_dir.glob('*.tsv'))) == 5
+    assert len(list(ds['LanguageTable'])) == 2
     assert 'South America' in read_text(cldf_repos / 'cldf' / 'languages.csv')
 
     # Sources should be grouped by citekey:

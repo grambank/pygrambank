@@ -97,7 +97,7 @@ class Sheet(object):
         m = re.match(
             '(?P<coder>[^_]+)_(?P<lgname>[^\[]+)\[(?P<lgid>[^\]]+)\]\s*(\.xlsb)?$', path.stem)
         if not m or ((not self._from_tsv) and path.suffix not in self.valid_suffixes):
-            raise ValueError(path)
+            raise ValueError(path)  # pragma: no cover
 
         self.path = path
         if self._from_tsv:
@@ -234,7 +234,7 @@ class Sheet(object):
                     if re.match('Column[0-9]+$', '{0}'.format(c.value)):
                         skip_cols.add(j)
             row = [self._read_excel_value(c.value) for j, c in enumerate(row) if j not in skip_cols]
-            if set(row) == {''}:
+            if set(row) == {''}:  # pragma: no cover
                 empty_rows += 1
                 if empty_rows > 1000:
                     # There's a couple of sheets with > 100,000 (mostly empty) rows.
@@ -273,5 +273,5 @@ class Sheet(object):
 
         try:
             return read('utf-8-sig')
-        except UnicodeDecodeError:
+        except UnicodeDecodeError:  # pragma: no cover
             return read('cp1252')

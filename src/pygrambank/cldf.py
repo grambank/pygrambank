@@ -211,7 +211,7 @@ def update_wiki(coded_sheets, glottolog, wiki):
         if in_todo or in_done:
             if line.strip().startswith('## '):  # Next section!
                 if in_done:
-                    func, lines = done_table, done
+                    func, lines = done_table, done  # pragma: no cover
                 else:  # if in_todo
                     func, lines = todo_table, todo
 

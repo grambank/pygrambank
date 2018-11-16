@@ -1,5 +1,6 @@
-Grambank ID,Value,Source
-GB020,0,The Author (2018:20-30)
-GB021,1,The Author (2018:20-30);The Author (2018:45);The Author (2018)
-GB022,1,
-GB023,1,
+Grambank ID,Value,Source,Comment
+GB020,0,The Author (2018:20-30),##########
+GB021,1,The Author (2018:20-30);The Author (2018:45);The Author (2018),
+GB22,3,,???
+023,1?,,
+024,-,,
