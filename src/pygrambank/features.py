@@ -128,4 +128,7 @@ class GB20(object):
         for row, feature in enumerate(self.iterfeatures(None), start=2):
             for col, colname in enumerate(cols, start=1):
                 ws.cell(column=col, row=row, value=feature.get(colname, ''))
-        wb.save(filename=str(self.path.parent / 'For_coders' / 'GramBank_most_updated_sheet.xlsx'))
+        outdir = self.path.parent / 'For_coders'
+        if not outdir.exists():
+            outdir.mkdir()
+        wb.save(filename=str(outdir / 'GramBank_most_updated_sheet.xlsx'))
