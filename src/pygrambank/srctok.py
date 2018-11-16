@@ -63,7 +63,7 @@ def matchsingleauthor(ca, ba):
 
 
 resau = re.compile("\s*[\&\/]\s*| and ")
-def matchauthor(a, fas, extraauthors = []):
+def matchauthor(a, fas, extraauthors):
     a = bib.pauthor(a)[0]['lastname'] #undiacritic already done
     bas = set([x['lastname'] for x in bib.pauthor(fas)] + extraauthors)
     for ca in resau.split(a):
@@ -78,7 +78,7 @@ def iter_key_pages(lg, ayp, e, lgks):
         for k in priok([
             k for k in lgks[lg]
             if e[k][1].get("year", "").find(y) != -1
-                and matchauthor(a, e[k][1].get("author", ""), bib.key_to_authors(k))],
+                and matchauthor(a, e[k][1].get("author", ""), list(bib.iter_authors(k)))],
             e=e
         ):
             yield k, p

@@ -31,7 +31,7 @@ setup(
         'openpyxl==2.4.8',
         'pyglottolog',
         'tqdm',
-        'pycldf',
+        'pycldf>=1.5.2',
     ],
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],
