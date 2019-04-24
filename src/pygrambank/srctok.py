@@ -30,7 +30,8 @@ repageonly = re.compile("[\d+\;\s\-etseqpassim\.]+$")
 pg = "(?:\:\s*(?P<p>[\d\,\s\-]+))?"
 year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
-resrc = re.compile("(?P<a>(?<![^\s\(])[A-Zvd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" + year + ")" + pg + "\)?")
+capitals = 'A-Z\xc3\x85\xc3\x84\xc3\x96\xc3\x9c'
+resrc = re.compile("(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" + year + ")" + pg + "\)?")
 
 
 def iter_ayps(s):
