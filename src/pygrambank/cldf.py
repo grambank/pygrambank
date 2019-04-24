@@ -65,7 +65,7 @@ def iterunique(insheets):
             print('\nSelecting best sheet for {0}'.format(gc))
             for i, sheet in enumerate(sorted(sheets, key=lambda s: len(s.rows), reverse=True)):
                 print('{0} dps: {1} sheet {2}'.format(
-                    len(sheet.rows), 'chosing' if i == 0 else 'skipping', sheet.path.stem))
+                    len(sheet.rows), 'choosing' if i == 0 else 'skipping', unicode(sheet.path.stem, "windows-1252")))
                 if i == 0:
                     yield sheet
 
@@ -148,7 +148,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Name=sheet.lgname,
             Glottocode=sheet.glottocode,
             contributed_datapoints=sheet.coder,
-            provenance="{0} {1}".format(sheet.path.name, time.ctime(sheet.path.stat().st_mtime)),
+            provenance="{0} {1}".format(unicode(sheet.path.name, "windows-1252"), time.ctime(sheet.path.stat().st_mtime)),
             Family_name=sheet.family_name,
             Family_id=sheet.family_id,
             Latitude=sheet.latitude,
@@ -202,7 +202,11 @@ def update_wiki(coded_sheets, glottolog, wiki):
         print('formatting done')
         table = Table('Language', 'iso-639-3', 'Done By')
         for sheet in sorted(coded_sheets.values(), key=lambda s: s.lgname):
-            table.append([sheet.lgname, '{0} / {1}'.format(sheet.glottocode, sheet.lgid), sheet.coder])
+            try:
+            	table.append([sheet.lgname, '{0} / {1}'.format(sheet.glottocode, sheet.lgid), sheet.coder])
+            except UnicodeDecodeError:
+                print([sheet.lgname, sheet.glottocode, sheet.lgid, sheet.coder])
+                raise ValueError
         return '\n' + table.render() + '\n'
 
     doc = wiki / 'Languages-to-code.md'
