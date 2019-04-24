@@ -97,6 +97,7 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
         elif not (src.find("p.c") == -1
                   and src.find("personal communication") == -1
                   and src.find("ieldnotes") == -1
+                  and src.find("ield notes") == -1
                   and src.find("forth") == -1
                   and src.find("Forth") == -1
                   and src.find("ubmitted") == -1
