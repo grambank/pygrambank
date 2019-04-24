@@ -84,12 +84,15 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     bibs = glottolog.bib('hh')
     bibs.update(api.bib)
 
+    descendants = lambda l: [l] + [x for c in l.children() for x in descendants(x)]
     lgks = defaultdict(set)
     for key, (typ, fields) in bibs.items():
         if 'lgcode' in fields:
             for code in bib.lgcodestr(fields['lgcode']):
                 if code in glottolog.languoids_by_ids:
-                    lgks[glottolog.languoids_by_ids[code].id].add(key)
+                    languoid = glottolog.languoids_by_ids[code]
+                    for cl in descendants(languoid):
+                        lgks[cl.id].add(key)
 
     # Chose best sheet for indivdual Glottocodes:
     sheets = list(iterunique(sheets))
