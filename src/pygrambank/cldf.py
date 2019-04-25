@@ -84,7 +84,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     bibs = glottolog.bib('hh')
     bibs.update(api.bib)
 
-    descendants = lambda l: [l] + [x for c in l.children() for x in descendants(x)]
+    descendants = lambda l: [l] + [x for c in l.children for x in descendants(c)]
     lgks = defaultdict(set)
     for key, (typ, fields) in bibs.items():
         if 'lgcode' in fields:
