@@ -8,7 +8,7 @@ import xlrd
 import openpyxl
 from csvw import dsv
 from clldutils.misc import lazyproperty, nfilter
-from clldutils.path import Path
+from clldutils.path import Path, as_unicode
 
 LANGUAGE_TO_GLOTTOCODE = {
     "Guwidj [ung]": "guwi1238",
@@ -102,13 +102,13 @@ class Sheet(object):
         self.path = path
         if self._from_tsv:
             for suffix in self.valid_suffixes:
-                origin = path.parent.joinpath(unicode(path.stem, "windows-1252") + suffix)
+                origin = path.parent.joinpath(as_unicode(path.stem, "windows-1252") + suffix)
                 if origin.exists():
                     self.path = origin
                     break
 
-        self.coder = unicode(m.group('coder').strip(), "windows-1252")
-        self.lgname = unicode(m.group('lgname').strip(), "windows-1252")
+        self.coder = as_unicode(m.group('coder').strip(), "windows-1252")
+        self.lgname = as_unicode(m.group('lgname').strip(), "windows-1252")
         self.lgid = m.group('lgid').strip()
         self.lgnamecode = '{0.lgname} [{0.lgid}]'.format(self)
         languoid = glottolog.languoids_by_ids[self.lgid]
@@ -136,7 +136,7 @@ class Sheet(object):
         if self._from_tsv:
             res = []
             for row in dsv.reader(
-                self.path.parent / (unicode(self.path.stem, "windows-1252") + '.tsv'),
+                self.path.parent / (as_unicode(self.path.stem, "windows-1252") + '.tsv'),
                 delimiter='\t',
                 encoding='utf-8-sig',
                 dicts=True
@@ -175,7 +175,7 @@ class Sheet(object):
     def write_tsv(self, restrict_cols=False, fn=None):
         try:
             
-            fn = fn or self.path.parent / (unicode(self.path.stem, "windows-1252") + '.tsv')
+            fn = fn or self.path.parent / (as_unicode(self.path.stem, "windows-1252") + '.tsv')
         except UnicodeDecodeError:
             print([fn, self.path.parent, self.path.stem])
             fn = fn or self.path.parent / (self.path.stem + '.tsv')

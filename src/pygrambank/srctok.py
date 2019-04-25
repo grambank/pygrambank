@@ -46,8 +46,8 @@ def iter_ayps(s, word_from_title = None):
             a, y, p = m.groups()
             wft = a.find("_")
             if wft != - 1:
-        	word_from_title = a[wft+1:].lower()
-        	a = a[:wft]
+                word_from_title = a[wft+1:].lower()
+                a = a[:wft]
             yield (a, y, p.strip() if p else p, word_from_title)
 
 

@@ -5,7 +5,7 @@ from collections import Counter, OrderedDict, defaultdict
 
 from tqdm import tqdm
 import pyglottolog
-from clldutils.path import read_text, write_text, git_describe, Path
+from clldutils.path import read_text, write_text, git_describe, Path, as_unicode
 from clldutils.misc import lazyproperty
 from clldutils.markup import Table
 from pycldf import StructureDataset
@@ -65,7 +65,7 @@ def iterunique(insheets):
             print('\nSelecting best sheet for {0}'.format(gc))
             for i, sheet in enumerate(sorted(sheets, key=lambda s: len(s.rows), reverse=True)):
                 print('{0} dps: {1} sheet {2}'.format(
-                    len(sheet.rows), 'choosing' if i == 0 else 'skipping', unicode(sheet.path.stem, "windows-1252")))
+                    len(sheet.rows), 'choosing' if i == 0 else 'skipping', as_unicode(sheet.path.stem, "windows-1252")))
                 if i == 0:
                     yield sheet
 
@@ -148,7 +148,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Name=sheet.lgname,
             Glottocode=sheet.glottocode,
             contributed_datapoints=sheet.coder,
-            provenance="{0} {1}".format(unicode(sheet.path.name, "windows-1252"), time.ctime(sheet.path.stat().st_mtime)),
+            provenance="{0} {1}".format(as_unicode(sheet.path.name, "windows-1252"), time.ctime(sheet.path.stat().st_mtime)),
             Family_name=sheet.family_name,
             Family_id=sheet.family_id,
             Latitude=sheet.latitude,
