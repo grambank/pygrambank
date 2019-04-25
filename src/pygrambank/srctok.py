@@ -30,11 +30,11 @@ repageonly = re.compile("[\d+\;\s\-etseqpassim\.]+$")
 pg = "(?:\:\s*(?P<p>[\d\,\s\-]+))?"
 year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
-capitals = 'A-Z\xc3\x85\xc3\x84\xc3\x96\xc3\x9c'
+capitals = 'A-Z\x8e\x8f\x99\x9a'
 resrc = re.compile("(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" + year + ")" + pg + "\)?")
 
 
-def iter_ayps(s):
+def iter_ayps(s, word_from_title = None):
     for x in s.replace("), ", "); ").split(";"):
         if (x.find("p.c.") != -1) and x.strip().startswith("pc"):
             continue
@@ -44,7 +44,11 @@ def iter_ayps(s):
             m = resrc.search(x)
         if m:
             a, y, p = m.groups()
-            yield (a, y, p.strip() if p else p)
+            wft = a.find("_")
+            if wft != - 1:
+                word_from_title = a[wft+1:].lower()
+                a = a[:wft]
+            yield (a, y, p.strip() if p else p, word_from_title)
 
 
 def priok(ks, e):
@@ -72,13 +76,16 @@ def matchauthor(a, fas, extraauthors):
             return False
     return True
 
+def unifyear(y):
+    return y.replace(".", "").lower().replace("nd", "no date").strip()
 
 def iter_key_pages(lg, ayp, e, lgks):
-    a, y, p = ayp
+    a, y, p, word_from_title = ayp
     if lg in lgks:
         for k in priok([
             k for k in lgks[lg]
             if e[k][1].get("year", "").find(y) != -1
+                and (not word_from_title or e[k][1].get("title", "").lower().find(word_from_title) != -1) 
                 and matchauthor(a, e[k][1].get("author", ""), list(bib.iter_authors(k)))],
             e=e
         ):
@@ -103,7 +110,8 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
                   and src.find("ubmitted") == -1
                   and src.find("o appear") == -1
                   and src.find("in press") == -1
-                  and src.find("in prog.") == -1
+                  and src.find("in prep") == -1
+                  and src.find("in prog") == -1
                   and not src.startswith("http")):
             pass
         else:
