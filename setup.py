@@ -29,7 +29,7 @@ setup(
         'six',
         'xlrd',
         'openpyxl==2.4.8',
-        'pyglottolog>=1.5.0',
+        'pyglottolog>=1.5.1',
         'tqdm',
         'pycldf>=1.5.2',
     ],
