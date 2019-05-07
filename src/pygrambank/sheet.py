@@ -113,6 +113,8 @@ class Sheet(object):
         self.lgnamecode = '{0.lgname} [{0.lgid}]'.format(self)
         languoid = glottolog.languoids_by_ids[self.lgid]
         lgc = languoid.id
+        self.level = languoid.level.name
+        self.lineage = '/'.join(l[1] for l in languoid.lineage)
         if languoid.level.name == 'dialect':
             for _, lgc, level in reversed(languoid.lineage):
                 if level.name == 'language':
@@ -120,6 +122,7 @@ class Sheet(object):
             else:
                 lgc = languoid.id
         language = glottolog.languoids_by_glottocode[lgc]
+        self.language_id = language.id
 
         # Macroareas are assigned to language level nodes:
         self.macroarea = language.macroareas[0].value

@@ -4,6 +4,7 @@ from itertools import groupby
 from collections import Counter, OrderedDict, defaultdict
 
 from tqdm import tqdm
+import csvw
 import pyglottolog
 from clldutils.path import read_text, write_text, git_describe, Path, as_unicode
 from clldutils.misc import lazyproperty
@@ -113,11 +114,30 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     dataset.tablegroup.common_props['prov:wasGeneratedBy'] = describe_repos(
         Path(__file__).parent.parent.parent)
 
-    dataset.add_component('LanguageTable', 'contributed_datapoints', 'provenance', 'Family_name', 'Family_id')
+    table = dataset.add_component(
+        'LanguageTable',
+        'contributed_datapoints',
+        'provenance',
+        'Family_name',
+        'Family_id',
+        'Language_id',
+        'level',
+        'lineage',
+    )
+    table.tableSchema.foreignKeys.append(csvw.ForeignKey.fromdict(dict(
+        columnReference='Family_ID',
+        reference=dict(resource='families.csv', columnReference='ID'),
+    )))
+
     dataset.add_component('ParameterTable', 'patron', 'name_in_french', 'Grambank_ID_desc', 'bound_morphology')
     dataset.add_component('CodeTable')
     dataset['ValueTable', 'Value'].null = ['?']
-    data = defaultdict(list)
+
+    table = dataset.add_table('families.csv', 'ID', 'Newick')
+    table.common_props['dc:conformsTo'] = None
+    table.tableSchema.primaryKey = ['ID']
+
+    data, families = defaultdict(list), set()
 
     for fid, feature in sorted(api.features.items()):
         data['ParameterTable'].append(dict(
@@ -153,7 +173,13 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Family_id=sheet.family_id,
             Latitude=sheet.latitude,
             Longitude=sheet.longitude,
-            Macroarea=sheet.macroarea))
+            Macroarea=sheet.macroarea,
+            Language_ID=sheet.language_id,
+            level=sheet.level,
+            lineage=sheet.lineage,
+        ))
+        if sheet.family_id:
+            families.add(sheet.family_id)
         dataset.add_sources(*list(bibdata(sheet, bibs, lgks, unresolved)))
         for row in sheet.rows:
             data['ValueTable'].append(dict(
@@ -166,6 +192,13 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                 Source=row['Source']
             ))
 
+    print('computing newick trees')
+    data['families.csv'] = sorted([
+        {
+            'ID': gc,
+            'Newick': glottolog.api.newick_tree(
+                gc, template='{l.id}', nodes=glottolog.languoids_by_glottocode),
+        } for gc in families], key=lambda d: d['ID'])
     dataset.write(**data)
 
     for k, v in reversed(unresolved.most_common()):
