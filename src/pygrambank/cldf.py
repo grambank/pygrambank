@@ -1,15 +1,15 @@
 from __future__ import print_function, unicode_literals
-import time
+import datetime
 from itertools import groupby
 from collections import Counter, OrderedDict, defaultdict
 
 from tqdm import tqdm
-import csvw
 import pyglottolog
-from clldutils.path import read_text, write_text, git_describe, Path, as_unicode
+from clldutils.path import read_text, write_text, Path, as_unicode
 from clldutils.misc import lazyproperty
 from clldutils.markup import Table
 from pycldf import StructureDataset
+from pycldf.dataset import GitRepository
 from pycldf.sources import Source
 
 from pygrambank import bib
@@ -96,40 +96,52 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                         lgks[cl.id].add(key)
 
     # Chose best sheet for indivdual Glottocodes:
+    print('selecting best sheets')
     sheets = list(iterunique(sheets))
 
-    # Lookup sources for each sheet:
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
-
-    def describe_repos(r, org='glottobank'):
-        return OrderedDict([
-            ('dc:title', '{0}/{1}'.format(org, r.name)),
-            ('dc:description', git_describe(r))])
-
-    dataset.tablegroup.common_props['prov:wasDerivedFrom'] = [
-        describe_repos(api.repos),
-        describe_repos(glottolog.api.repos),
-        describe_repos(wiki)
-    ]
-    dataset.tablegroup.common_props['prov:wasGeneratedBy'] = describe_repos(
-        Path(__file__).parent.parent.parent)
+    dataset.add_provenance(
+        wasDerivedFrom=[
+            GitRepository('https://github.com/glottobank/Grambank', clone=api.repos),
+            GitRepository('https://github.com/clld/glottolog', clone=glottolog.api.repos),
+            GitRepository('https://github.com/glottobank/Grambank/wiki', clone=wiki),
+        ],
+        wasGeneratedBy=GitRepository(
+            'https://github.com/glottobank/pygrambank', clone=Path(__file__).parent.parent.parent),
+    )
 
     table = dataset.add_component(
         'LanguageTable',
-        'contributed_datapoints',
-        'provenance',
+        {
+            'name': 'contributed_datapoints',
+            'dc:description': 'the contributor of the codings for this language',
+        },
+        {
+            'name': 'provenance',
+            'dc:description': 'name and last modification of the contributed file',
+        },
         'Family_name',
         'Family_id',
         'Language_id',
         'level',
-        'lineage',
+        {
+            'name': 'lineage',
+            'separator': '/',
+            'dc:description': 'list of ancestor groups in the Glottolog classification',
+         },
     )
-    table.tableSchema.foreignKeys.append(csvw.ForeignKey.fromdict(dict(
-        columnReference='Family_ID',
-        reference=dict(resource='families.csv', columnReference='ID'),
-    )))
+    table.add_foreign_key('Family_id', 'families.csv', 'ID')
 
-    dataset.add_component('ParameterTable', 'patron', 'name_in_french', 'Grambank_ID_desc', 'bound_morphology')
+    dataset.add_component(
+        'ParameterTable',
+        {
+            'name': 'patron',
+            'dc:description': 'Grambank editor responsible for this feature',
+        },
+        'name_in_french',
+        'Grambank_ID_desc',
+        'bound_morphology',
+    )
     dataset.add_component('CodeTable')
     dataset['ValueTable', 'Value'].null = ['?']
 
@@ -168,7 +180,9 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Name=sheet.lgname,
             Glottocode=sheet.glottocode,
             contributed_datapoints=sheet.coder,
-            provenance="{0} {1}".format(as_unicode(sheet.path.name, "windows-1252"), time.ctime(sheet.path.stat().st_mtime)),
+            provenance="{0} {1}".format(
+                as_unicode(sheet.path.name, "windows-1252"),
+                datetime.datetime.utcfromtimestamp(sheet.path.stat().st_mtime).isoformat() + 'Z'),
             Family_name=sheet.family_name,
             Family_id=sheet.family_id,
             Latitude=sheet.latitude,

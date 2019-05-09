@@ -114,7 +114,7 @@ class Sheet(object):
         languoid = glottolog.languoids_by_ids[self.lgid]
         lgc = languoid.id
         self.level = languoid.level.name
-        self.lineage = '/'.join(l[1] for l in languoid.lineage)
+        self.lineage = [l[1] for l in languoid.lineage]
         if languoid.level.name == 'dialect':
             for _, lgc, level in reversed(languoid.lineage):
                 if level.name == 'language':

@@ -24,14 +24,14 @@ setup(
     platforms='any',
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
     install_requires=[
+        'pycldf>=1.6.2',
         'clldutils>=1.13.10',
-        'csvw>=1.3.0',
+        'csvw>=1.5.4',
         'six',
         'xlrd',
         'openpyxl==2.4.8',
         'pyglottolog>=1.5.1',
         'tqdm',
-        'pycldf>=1.5.2',
     ],
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],
