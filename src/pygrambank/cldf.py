@@ -57,8 +57,6 @@ def bibdata(sheet, e, lgks, unresolved):
             row['Source'] = refs
             for src in sources:
                 yield src
-        else:
-            print(lgks.get(sheet.glottocode))
 
 
 def iterunique(insheets):
