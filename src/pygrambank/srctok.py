@@ -97,6 +97,7 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
     refs = sorted(
         set(ref for s in ays for ref in iter_key_pages(lgid, s, e, lgks)),
         key=lambda r: (r[0], r[1] or ''))
+    src_comment = None
     if not refs:
         if repageonly.match(src):
             src = "[%s] default source:%s" % (lgid, src)
@@ -113,10 +114,10 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
                   and src.find("in prep") == -1
                   and src.find("in prog") == -1
                   and not src.startswith("http")):
-            pass
+            src_comment = src
         else:
             if ays:
                 unresolved.update([(ay[0], ay[1], lgid) for ay in ays])
             else:
                 unresolved.update([(src, lgid)])
-    return [(k, nfilter(r[1] for r in rs)) for k, rs in groupby(refs, lambda r: r[0])]
+    return [(k, nfilter(r[1] for r in rs)) for k, rs in groupby(refs, lambda r: r[0])], src_comment

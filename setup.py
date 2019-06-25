@@ -26,11 +26,11 @@ setup(
     install_requires=[
         'pycldf>=1.6.2',
         'clldutils>=1.13.10',
-        'csvw>=1.5.4',
+        'csvw>=1.5.5',
         'six',
         'xlrd',
         'openpyxl==2.4.8',
-        'pyglottolog>=1.5.1',
+        'pyglottolog~=2.0',
         'tqdm',
     ],
     extras_require={

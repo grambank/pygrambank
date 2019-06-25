@@ -11,10 +11,11 @@ from clldutils.markup import Table
 from pycldf import StructureDataset
 from pycldf.dataset import GitRepository
 from pycldf.sources import Source
+from csvw.dsv import UnicodeWriter
 
 from pygrambank import bib
 from pygrambank import srctok
-from pygrambank.sheet import Sheet
+from pygrambank.sheet import Sheet, unicode_from_path
 from pygrambank.api import Grambank
 
 
@@ -40,25 +41,33 @@ def bibdata(sheet, e, lgks, unresolved):
 
     for row in sheet.rows:
         if row['Source']:
+            row['Source_comment'] = row['Source']
             refs, sources = [], []
-            for key, pages in srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved):
+            res = srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved)
+            for key, pages in res[0]:
                 typ, fields = e[key]
                 ref = key = clean_key(key)
                 if pages:
                     ref += '[{0}]'.format(','.join(pages))
                 refs.append(ref)
                 sources.append(Source(typ, key, **fields))
+            #if res[1]:
+            #    row['Source_comment'] = res[1]
 
             row['Source'] = refs
             for src in sources:
                 yield src
+        else:
+            print(lgks.get(sheet.glottocode))
 
 
 def iterunique(insheets):
     """
     For languages which have been coded multiple times, we pick out the best sheet.
     """
-    for gc, sheets in groupby(sorted(insheets, key=lambda s: (s.glottocode, s.path.stem)), lambda s: s.glottocode):
+    for gc, sheets in groupby(
+            sorted(insheets, key=lambda s: (s.glottocode, s.path.stem)),
+            lambda s: s.glottocode):
         sheets = list(sheets)
         if len(sheets) == 1:
             yield sheets[0]
@@ -66,20 +75,53 @@ def iterunique(insheets):
             print('\nSelecting best sheet for {0}'.format(gc))
             for i, sheet in enumerate(sorted(sheets, key=lambda s: len(s.rows), reverse=True)):
                 print('{0} dps: {1} sheet {2}'.format(
-                    len(sheet.rows), 'choosing' if i == 0 else 'skipping', as_unicode(sheet.path.stem, "windows-1252")))
+                    len(sheet.rows),
+                    'choosing' if i == 0 else 'skipping', unicode_from_path(sheet.path.stem)))
                 if i == 0:
                     yield sheet
 
 
-def sheets_to_gb(api, glottolog, wiki, cldf_repos):
+def sheets_to_tsv(api, glottolog, agg=None):
+    all_rows, sheets = [], []
+    # Read the sheets that need to be converted from non-tsv formats:
     for suffix in Sheet.valid_suffixes:
         for f in tqdm(sorted(api.sheets_dir.glob('*' + suffix)), desc=suffix):
             sheet = Sheet(f, glottolog, api.features)
-            sheet.write_tsv()
+            for row in sheet.write_tsv():
+                if agg:
+                    row['_fname'] = unicode_from_path(sheet.path.name)
+                    all_rows.append(row)
+            sheets.append(sheet)
+    seen = set(sheet.path.stem for sheet in sheets)
+    # Now read the sheets coming in already as *.tsv:
+    for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem):
+        if f.stem in seen:
+            continue
+        sheet = Sheet(f, glottolog, api.features)
+        if agg:
+            for row in sheet.rows:
+                row['_fname'] = unicode_from_path(sheet.path.name)
+                all_rows.append(row)
+            sheets.append(sheet)
+
+    selected = set(unicode_from_path(s.path.name) for s in iterunique(sheets))
+    if all_rows:
+        cols = ['_fname'] + sorted(set().union(*[row.keys() for row in all_rows]))
+        with UnicodeWriter(agg) as writer:
+            writer.writerow(['_selected'] + cols)
+            writer.writerows([row['_fname'] in selected] + [row.get(c, '') for c in cols] for row in all_rows)
+
+
+def sheets_to_gb(api, glottolog, wiki, cldf_repos):
+    sheets_to_tsv(api, glottolog)
 
     print('reading sheets from TSV')
     sheets = [Sheet(f, glottolog, api.features) for f in sorted(
         api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
+
+    # Chose best sheet for indivdual Glottocodes:
+    print('selecting best sheets')
+    sheets = list(iterunique(sheets))
 
     print('loading bibs')
     bibs = glottolog.bib('hh')
@@ -94,10 +136,6 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                     languoid = glottolog.languoids_by_ids[code]
                     for cl in descendants(languoid):
                         lgks[cl.id].add(key)
-
-    # Chose best sheet for indivdual Glottocodes:
-    print('selecting best sheets')
-    sheets = list(iterunique(sheets))
 
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
     dataset.add_provenance(
@@ -143,6 +181,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
         'bound_morphology',
     )
     dataset.add_component('CodeTable')
+    dataset.add_columns('ValueTable', 'Source_comment')
     dataset['ValueTable', 'Value'].null = ['?']
 
     table = dataset.add_table('families.csv', 'ID', 'Newick')
@@ -181,7 +220,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             Glottocode=sheet.glottocode,
             contributed_datapoints=sheet.coder,
             provenance="{0} {1}".format(
-                as_unicode(sheet.path.name, "windows-1252"),
+                unicode_from_path(sheet.path.name),
                 datetime.datetime.utcfromtimestamp(sheet.path.stat().st_mtime).isoformat() + 'Z'),
             Family_name=sheet.family_name,
             Family_id=sheet.family_id,
@@ -203,7 +242,8 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                 Code_ID='{0}-{1}'.format(row['Feature_ID'], row['Value']) if row['Value'] != '?' else None,
                 Value=row['Value'],
                 Comment=row['Comment'],
-                Source=row['Source']
+                Source=row['Source'],
+                Source_comment=row.get('Source_comment'),
             ))
 
     print('computing newick trees')
@@ -250,7 +290,7 @@ def update_wiki(coded_sheets, glottolog, wiki):
         table = Table('Language', 'iso-639-3', 'Done By')
         for sheet in sorted(coded_sheets.values(), key=lambda s: s.lgname):
             try:
-            	table.append([sheet.lgname, '{0} / {1}'.format(sheet.glottocode, sheet.lgid), sheet.coder])
+                table.append([sheet.lgname, '{0} / {1}'.format(sheet.glottocode, sheet.lgid), sheet.coder])
             except UnicodeDecodeError:
                 print([sheet.lgname, sheet.glottocode, sheet.lgid, sheet.coder])
                 raise ValueError
@@ -335,6 +375,12 @@ class Glottolog(object):
             if l.hid:
                 res[l.hid] = l
         return res
+
+
+def preprocess(repos, glottolog_repos, wiki):
+    grambank = Grambank(repos, wiki)
+    glottolog = Glottolog(glottolog_repos)
+    sheets_to_tsv(grambank, glottolog, 'all.csv')
 
 
 def create(repos, glottolog_repos, wiki, cldf_repos):

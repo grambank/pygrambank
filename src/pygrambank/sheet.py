@@ -34,6 +34,10 @@ GB_COLS = OrderedDict([
 ])
 
 
+def unicode_from_path(p):
+    return as_unicode(p, 'windows-1252')
+
+
 def normalized_feature_id(s):
     if s.isdigit():
         s = "GB" + str(s).zfill(3)
@@ -43,6 +47,12 @@ def normalized_feature_id(s):
 
 
 def normalize_comment(s):
+    """
+    Normalize comments, turning things like "????" into "?".
+
+    :param s: The original comment
+    :return: The normalized comment as string
+    """
     if s:
         if set(s) == {'#'}:
             return
@@ -52,6 +62,8 @@ def normalize_comment(s):
 
 
 def normalized_value(sheet, v, feature):
+    if not v:
+        return
     if v in {
         '?',
         '??',
@@ -62,8 +74,6 @@ def normalized_value(sheet, v, feature):
         'N.A.',
         'N.A',
         '-',
-        '',
-        None,
         'NODATA',
         '? - Not known'
         '*',
@@ -97,18 +107,19 @@ class Sheet(object):
         m = re.match(
             '(?P<coder>[^_]+)_(?P<lgname>[^\[]+)\[(?P<lgid>[^\]]+)\]\s*(\.xlsb)?$', path.stem)
         if not m or ((not self._from_tsv) and path.suffix not in self.valid_suffixes):
+            # We can't read metadata from the filename, or the format is not supported.
             raise ValueError(path)  # pragma: no cover
 
         self.path = path
         if self._from_tsv:
             for suffix in self.valid_suffixes:
-                origin = path.parent.joinpath(as_unicode(path.stem, "windows-1252") + suffix)
+                origin = path.parent.joinpath(unicode_from_path(path.stem) + suffix)
                 if origin.exists():
                     self.path = origin
                     break
 
-        self.coder = as_unicode(m.group('coder').strip(), "windows-1252")
-        self.lgname = as_unicode(m.group('lgname').strip(), "windows-1252")
+        self.coder = unicode_from_path(m.group('coder').strip())
+        self.lgname = unicode_from_path(m.group('lgname').strip())
         self.lgid = m.group('lgid').strip()
         self.lgnamecode = '{0.lgname} [{0.lgid}]'.format(self)
         languoid = glottolog.languoids_by_ids[self.lgid]
@@ -125,7 +136,7 @@ class Sheet(object):
         self.language_id = language.id
 
         # Macroareas are assigned to language level nodes:
-        self.macroarea = language.macroareas[0].value
+        self.macroarea = language.macroareas[0].name,
         self.latitude = languoid.latitude if languoid.latitude else language.latitude
         self.longitude = languoid.longitude if languoid.longitude else language.longitude
 
@@ -139,7 +150,7 @@ class Sheet(object):
         if self._from_tsv:
             res = []
             for row in dsv.reader(
-                self.path.parent / (as_unicode(self.path.stem, "windows-1252") + '.tsv'),
+                self.path.parent / (unicode_from_path(self.path.stem) + '.tsv'),
                 delimiter='\t',
                 encoding='utf-8-sig',
                 dicts=True
@@ -177,8 +188,7 @@ class Sheet(object):
 
     def write_tsv(self, restrict_cols=False, fn=None):
         try:
-            
-            fn = fn or self.path.parent / (as_unicode(self.path.stem, "windows-1252") + '.tsv')
+            fn = fn or self.path.parent / (unicode_from_path(self.path.stem) + '.tsv')
         except UnicodeDecodeError:
             print([fn, self.path.parent, self.path.stem])
             fn = fn or self.path.parent / (self.path.stem + '.tsv')
@@ -189,11 +199,13 @@ class Sheet(object):
                 w.writerow(
                     [row.get(col, '') for col in GB_COLS.keys()]
                     if restrict_cols else list(row.values()))
+                yield row
 
     def _normalized_row(self, row):
         for k in row:
             row[k] = row[k].strip() if row[k] else row[k]
-        if 'Value' not in row:
+        if 'Value' not in row or (not row['Value']):
+            # Drop rows with no `Value` column or empty `Value` column.
             return None
 
         # Normalize column names:
@@ -209,9 +221,9 @@ class Sheet(object):
                 else:
                     row[col] = ''
 
-        # Normalize colum  values:
+        # Normalize colum values:
         row['Feature_ID'] = normalized_feature_id(row['Feature_ID'])
-        if row['Feature_ID'] not in self._features:  # obsolete feature!
+        if row['Feature_ID'] not in self._features:  # Drop rows for obsolete features.
             return None
         row['Language_ID'] = self.glottocode
         row['Value'] = normalized_value(self, row['Value'], self._features[row['Feature_ID']])
@@ -230,7 +242,10 @@ class Sheet(object):
         return '{0}'.format(x).strip()
 
     def _xlsx_to_rows(self):
-        sheet = openpyxl.load_workbook(str(self.path), data_only=True).active
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            sheet = openpyxl.load_workbook(str(self.path), data_only=True).active
         rows = []
         empty_rows = 0
         skip_cols = set()
@@ -246,7 +261,7 @@ class Sheet(object):
                 empty_rows += 1
                 if empty_rows > 1000:
                     # There's a couple of sheets with > 100,000 (mostly empty) rows.
-                    # After encountering more than 1,000, we stop readin.
+                    # After encountering more than 1,000, we stop reading.
                     break
                 else:
                     continue
