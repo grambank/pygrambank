@@ -3,7 +3,9 @@ from __future__ import unicode_literals, print_function
 import re
 from collections import defaultdict, OrderedDict
 from itertools import groupby
+import unicodedata
 
+import attr
 import xlrd
 import openpyxl
 from csvw import dsv
@@ -32,6 +34,43 @@ GB_COLS = OrderedDict([
     ("Comment", ["Freetext comment"]),
     ("Feature Domain", ["Possible Values"]),
 ])
+
+CODER_MAP = {
+    'Damian Blasi': 'Damián E. Blasi',
+    'Jemima Goodal': 'Jemima Goodall',
+    'Nancy Poo': 'Nancy Bakker',
+    'Hannah Haynie': 'Hannah J. Haynie',
+    'Hans-Philipp Go¨bel': 'Hans-Philipp Göbel',
+    'Cheryl Oluoch': 'Cheryl Akinyi Oluoch',
+    'Alena Witzlack': 'Alena Witzlack-Makarevich',
+    'Tania Martins': 'Tânia Martins',
+}
+
+@attr.s
+class NewSheet(object):
+    fname = attr.ib()
+
+    @property
+    def name(self):
+        return unicodedata.normalize('NFC', unicode_from_path(self.fname.stem))
+
+    @property
+    def suffix(self):
+        return self.fname.suffix
+
+    @property
+    def coders(self):
+        return [CODER_MAP.get(n, n) or n for n in re.split(',\s+|\s+and\s+', self.name.split('_')[0])]
+
+    @property
+    def language(self):
+        return self.name.split('_', 1)[1]
+
+    @property
+    def language_code(self):
+        if '[' in self.language:
+            return self.language.split('[')[1].split(']')[0].strip()
+        return self.language
 
 
 def unicode_from_path(p):

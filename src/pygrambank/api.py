@@ -5,6 +5,7 @@ from clldutils.misc import lazyproperty
 from pyglottolog.references.bibfiles import BibFile
 
 from pygrambank.features import GB20
+from pygrambank.contributors import Contributors
 
 
 class Grambank(API):
@@ -16,6 +17,10 @@ class Grambank(API):
     @property
     def sheets_dir(self):
         return self.repos / 'original_sheets'
+
+    @property
+    def contributors(self):
+        return Contributors.from_md(self.repos / 'CONTRIBUTORS.md')
 
     @lazyproperty
     def bib(self):
