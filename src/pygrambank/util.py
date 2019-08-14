@@ -132,7 +132,9 @@ def iter_xlsx(fname):
                     continue
             if header is None:
                 header = row
+                assert all(bool(c) for c in header), 'Empty column header'
             else:
+                assert len(header) == len(row), 'Header and row length mismatch'
                 yield _normalized_row(collections.OrderedDict(zip(header, row)))
 
 
@@ -153,6 +155,7 @@ def iter_xls(fname):
                 break
     else:
         rows = list(rows_by_sheetname.values())[0]
+    assert all(bool(c) for c in rows[0]), 'Empty column header'
     for row in rows[1:]:
         yield _normalized_row(collections.OrderedDict(zip(rows[0], row)))
 

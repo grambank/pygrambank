@@ -1,29 +1,13 @@
 from __future__ import unicode_literals
 import sys
 import argparse
+import collections
 
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
 from clldutils.path import Path
 
 from pygrambank.api import Grambank
 from pygrambank.cldf import create, preprocess
-
-
-@command()
-def check(args):
-    """
-    grambank --repos=PATH/TO/Grambank --wiki_repos=PATH/TO/Grambank.wiki check PATH/TO/glottolog
-
-    creates a CLDF dataset from raw Grambank data sheets.
-    """
-    parser = argparse.ArgumentParser(prog='check', usage=__doc__)
-    parser.add_argument('glottolog_repos', help="clone of glottolog/glottolog", type=Path)
-    xargs = parser.parse_args(args.args)
-    if not xargs.glottolog_repos.exists():
-        raise ParserError('glottolog repos does not exist')
-    if not args.wiki_repos.exists():
-        raise ParserError('Grambank.wiki repos does not exist')
-    preprocess(args.repos, xargs.glottolog_repos, args.wiki_repos)
 
 
 @command()
@@ -45,13 +29,30 @@ def cldf(args):
 
 
 @command()
-def roundtrip(args):
-    from pygrambank.sheet import Sheet
+def check(args):
+    from csvw.dsv import UnicodeWriter
+
+    report, counts = [], {}
     api = Grambank(args.repos)
-    for p in api.sheets_dir.iterdir():
-        if p.is_file() and p.name != '.gitattributes':
-            sheet = Sheet(p)
-            sheet.visit()
+    for sheet in api.iter_sheets():
+        n = sheet.check(api, report=report)
+        if (sheet.glottocode not in counts) or (n > counts[sheet.glottocode][0]):
+            counts[sheet.glottocode] = (n, sheet.path.stem)
+
+    selected = set(v[1] for v in counts.values())
+    for row in report:
+        row.insert(1, row[0] in selected)
+
+    with UnicodeWriter('check.tsv', delimiter='\t') as w:
+        w.writerow(['sheet', 'selected', 'level', 'feature', 'message'])
+        w.writerows(report)
+
+
+@command()
+def roundtrip(args):
+    api = Grambank(args.repos)
+    for sheet in api.iter_sheets():
+        sheet.visit()
 
 
 @command()

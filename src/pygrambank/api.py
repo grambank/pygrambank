@@ -6,6 +6,7 @@ from pyglottolog.references.bibfiles import BibFile
 
 from pygrambank.features import GB20
 from pygrambank.contributors import Contributors
+from pygrambank.sheet import Sheet
 
 
 class Grambank(API):
@@ -17,6 +18,11 @@ class Grambank(API):
     @property
     def sheets_dir(self):
         return self.repos / 'original_sheets'
+
+    def iter_sheets(self):
+        for p in sorted(self.sheets_dir.iterdir(), key=lambda i: i.stem):
+            if p.is_file() and p.name != '.gitattributes':
+                yield Sheet(p)
 
     @property
     def contributors(self):

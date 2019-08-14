@@ -144,15 +144,32 @@ class Sheet(object):
                 if row:
                     w.writerow(list(row.values()))
 
-    def check(self, api):
-        res = []
+    def check(self, api, report=None):
+        def log(msg, row_=None, level='ERROR'):
+            msg = [self.path.stem, level, row_['Feature_ID'] if row_ else '', msg]
+            print('\t'.join(msg))
+            if report is not None:
+                report.append(msg)
+
+        res, nvalid = [], 0
         for row in self.iterrows():
-            row = self._normalized_row(row)
-            if row is None:
+            if row['Feature_ID'] not in api.features:
                 continue
+            if row['Value'] and row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
+                log('invalid value {0}'.format(row['Value']), row_=row)
+            else:
+                nvalid += 1
+            #
+            # FIXME: check source! and if source, then value!
+            #
+            if row['Value'] and not row['Source']:
+                log('value without source', level='WARNING', row_=row)
+            if row['Source'] and not row['Value']:
+                log('source given, but no value', level='WARNING', row_=row)
+            if row['Comment'] and not row['Value']:
+                log('comment given, but no value', level='WARNING', row_=row)
             res.append(row)
 
-        dedupres = []
         for gbid, rows in groupby(
             sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID']
         ):
@@ -161,14 +178,9 @@ class Sheet(object):
                 # A feature is coded multiple times! If the codings are inconsistent, we raise
                 # an error, otherwise the first value takes precedence.
                 if len(set(r['Value'] for r in rows)) > 1:
-                    print(
-                        'ERROR:{0}:{1} inconsistent multiple codings: {2}'.format(
-                            self.path.name, gbid, [r['Value'] for r in rows]))
-                else:
-                    dedupres.append(rows[0])
-            else:
-                dedupres.append(rows[0])
-        return dedupres
+                    log('inconsistent multiple codings: {0}'.format([r['Value'] for r in rows]))
+
+        return nvalid
 
     def _normalized_row(self, row):
         for k in row:
