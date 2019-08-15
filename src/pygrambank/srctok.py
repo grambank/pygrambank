@@ -2,9 +2,13 @@ from __future__ import print_function
 import re
 from itertools import groupby
 
-from clldutils.misc import nfilter
+from clldutils.misc import nfilter, slug
 
 from pygrambank import bib
+
+
+def undiacritic(s):
+    return slug(s, lowercase=False, remove_whitespace=False)
 
 
 def amax(d, f=max):
@@ -29,21 +33,32 @@ def allmax(d, f=max):
 repageonly = re.compile("[\d+\;\s\-etseqpassim\.]+$")
 pg = "(?:\:\s*(?P<p>[\d\,\s\-]+))?"
 year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
+
 refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
-capitals = 'A-Z\x8e\x8f\x99\x9a'
+
+capitals = 'ÅA-Z\x8e\x8f\x99\x9a'
 resrc = re.compile("(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" + year + ")" + pg + "\)?")
 
+# Gwynn&Krishnamurti1985, p.144
+altrefullsrc = re.compile("^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
 def iter_ayps(s, word_from_title = None):
     for x in s.replace("), ", "); ").split(";"):
         if (x.find("p.c.") != -1) and x.strip().startswith("pc"):
             continue
 
+        condensed = False
+        x = x.strip()
         m = refullsrc.search(x)
         if not m:
             m = resrc.search(x)
+        if not m:
+            condensed = True
+            m = altrefullsrc.search(x)
         if m:
             a, y, p = m.groups()
+            if condensed:
+                a = a.replace('&', ' and ')
             wft = a.find("_")
             if wft != - 1:
                 word_from_title = a[wft+1:].lower()
@@ -69,15 +84,17 @@ def matchsingleauthor(ca, ba):
 
 resau = re.compile("\s*[\&\/]\s*| and ")
 def matchauthor(a, fas, extraauthors):
-    a = bib.pauthor(a)[0]['lastname'] #undiacritic already done
-    bas = set([x['lastname'] for x in bib.pauthor(fas)] + extraauthors)
+    a = undiacritic(bib.pauthor(a)[0]['lastname'])
+    bas = set([undiacritic(x['lastname']) for x in bib.pauthor(fas)] + extraauthors)
     for ca in resau.split(a):
         if not [ba for ba in bas if matchsingleauthor(ca, ba)]:
             return False
     return True
 
+
 def unifyear(y):
     return y.replace(".", "").lower().replace("nd", "no date").strip()
+
 
 def iter_key_pages(lg, ayp, e, lgks):
     a, y, p, word_from_title = ayp

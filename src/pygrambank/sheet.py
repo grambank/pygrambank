@@ -1,14 +1,13 @@
 # coding: utf-8
 from __future__ import unicode_literals, print_function
 import re
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from itertools import groupby
 import unicodedata
 
 import attr
 from csvw import dsv
-from clldutils.misc import lazyproperty, nfilter
-from clldutils.path import Path, as_unicode
+from clldutils.path import as_unicode
 
 
 GB_COLS = OrderedDict([
@@ -60,60 +59,6 @@ def unicode_from_path(p):
     return as_unicode(p, 'windows-1252')
 
 
-def normalized_feature_id(s):
-    if s.isdigit():
-        s = "GB" + str(s).zfill(3)
-    elif s.startswith("GB") and len(s) != 5:
-        s = "GB" + str(s[2:]).zfill(3)
-    return s
-
-
-def normalize_comment(s):
-    """
-    Normalize comments, turning things like "????" into "?".
-
-    :param s: The original comment
-    :return: The normalized comment as string
-    """
-    if s:
-        if set(s) == {'#'}:
-            return
-        if set(s) == {'?'}:
-            return '?'
-        return s
-
-
-def normalized_value(sheet, v, feature):
-    if not v:
-        return
-    if v in {
-        '?',
-        '??',
-        'n/a',
-        'N/A',
-        'n.a.',
-        'n.a',
-        'N.A.',
-        'N.A',
-        '-',
-        'NODATA',
-        '? - Not known'
-        '*',
-        "*",
-        '\\',
-        'x',
-    }:
-        return '?'
-    # Uncertain values like "1?" are normalized as "?".
-    if re.match('[0-9]\?$', v) or re.match('\?[0-9]$', v):
-        return '?'
-    if v not in feature.domain:
-        print('ERROR: {0}: invalid value "{1}" for feature {2}'.format(
-            sheet.path.name, v, feature.id))
-        return '?'
-    return v
-
-
 class Sheet(object):
     """
     Processing workflow:
@@ -128,8 +73,32 @@ class Sheet(object):
         self.coders = match.group('coders').split('-')
         self.glottocode = match.group('glottocode')
 
+    def metadata(self, glottolog):
+        languoid = glottolog.languoids_by_glottocode[self.glottocode]
+        if languoid.level.name == 'dialect':
+            for _, lgc, level in reversed(languoid.lineage):
+                if level.name == 'language':
+                    break
+        else:
+            lgc = languoid.id
+        language = glottolog.languoids_by_glottocode[lgc]
+        return dict(
+            level=languoid.level.name,
+            lineage=[l[1] for l in languoid.lineage],
+            Language_ID=language.id,
+            # Macroareas are assigned to language level nodes:
+            Macroarea=language.macroareas[0].name,
+            Latitude=languoid.latitude if languoid.latitude else language.latitude,
+            Longitude=languoid.longitude if languoid.longitude else language.longitude,
+            Family_name=languoid.lineage[0][0] if languoid.lineage else None,
+            Family_id=languoid.lineage[0][1] if languoid.lineage else None,
+        )
+
+    def _reader(self, **kw):
+        return dsv.reader(self.path, delimiter='\t', encoding='utf-8-sig', **kw)
+
     def iterrows(self):
-        for row in dsv.reader(self.path, delimiter='\t', encoding='utf-8-sig', dicts=True):
+        for row in self._reader(dicts=True):
             yield row
 
     def visit(self, row_visitor=None):
@@ -140,8 +109,8 @@ class Sheet(object):
             for i, row in enumerate(rows):
                 if i == 0:
                     w.writerow(list(row.keys()))
-                row = row_visitor(row)
-                if row:
+                res = row_visitor(row)
+                if res:
                     w.writerow(list(row.values()))
 
     def check(self, api, report=None):
@@ -151,6 +120,25 @@ class Sheet(object):
             if report is not None:
                 report.append(msg)
 
+        # Check the header:
+        empty_index = []
+        for i, row in enumerate(self._reader()):
+            if i == 0:
+                for col in ['Feature_ID', 'Language_ID', 'Value', 'Comment', 'Source']:
+                    if col not in row:
+                        log('missing column {0}'.format(col))
+                for j, c in enumerate(row):
+                    if not c:
+                        empty_index.append(j)
+                if len(set(row)) != len(row):
+                    log('duplicate header')
+            else:
+                if not empty_index:
+                    break
+                for j in empty_index:
+                    if row[j]:
+                        log('non-empty cell with empty header: {0}'.format(row[j]), level='WARNING')
+
         res, nvalid = [], 0
         for row in self.iterrows():
             if row['Feature_ID'] not in api.features:
@@ -159,9 +147,7 @@ class Sheet(object):
                 log('invalid value {0}'.format(row['Value']), row_=row)
             else:
                 nvalid += 1
-            #
-            # FIXME: check source! and if source, then value!
-            #
+
             if row['Value'] and not row['Source']:
                 log('value without source', level='WARNING', row_=row)
             if row['Source'] and not row['Value']:
@@ -182,31 +168,22 @@ class Sheet(object):
 
         return nvalid
 
-    def _normalized_row(self, row):
+    def itervalues(self, api):
+        for row in self.iterrows():
+            row = self._value_row(row, api)
+            if row:
+                yield row
+
+    def _value_row(self, row, api):
         for k in row:
             row[k] = row[k].strip() if row[k] else row[k]
-        if 'Value' not in row or (not row['Value']):
-            # Drop rows with no `Value` column or empty `Value` column.
+        if not row['Value']:  # Drop rows with empty `Value` column.
             return None
-
-        # Normalize column names:
-        if 'Grambank ID' in row and 'Feature_ID' in row:
-            row['Feature'] = row.pop('Feature_ID')
-
-        for col, aliases in GB_COLS.items():
-            if col not in row:
-                for k in list(row.keys()):
-                    if k in aliases:
-                        row[col] = row.pop(k)
-                        break
-                else:
-                    row[col] = ''
-
-        # Normalize colum values:
-        row['Feature_ID'] = normalized_feature_id(row['Feature_ID'])
-        if row['Feature_ID'] not in self._features:  # Drop rows for obsolete features.
+        if row['Feature_ID'] not in api.features:  # Drop rows for obsolete features.
             return None
         row['Language_ID'] = self.glottocode
-        row['Value'] = normalized_value(self, row['Value'], self._features[row['Feature_ID']])
-        row['Comment'] = normalize_comment(row['Comment'])
+
+        # Uncertain values like "1?" are normalized as "?".
+        if re.match('[0-9]\?$', row['Value']) or re.match('\?[0-9]$', row['Value']):
+            row['Value'] = '?'
         return row

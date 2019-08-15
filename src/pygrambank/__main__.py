@@ -1,13 +1,12 @@
 from __future__ import unicode_literals
 import sys
 import argparse
-import collections
 
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
 from clldutils.path import Path
 
 from pygrambank.api import Grambank
-from pygrambank.cldf import create, preprocess
+from pygrambank.cldf import create
 
 
 @command()
@@ -56,6 +55,15 @@ def roundtrip(args):
 
 
 @command()
+def fix(args):
+    from pygrambank.sheet import Sheet
+
+    api = Grambank(args.repos)
+    sheet = Sheet(api.sheets_dir / args.args[0])
+    sheet.visit(row_visitor=eval(args.args[1]))
+
+
+@command()
 def refactor(args):
     """
     grambank refactor PATH/TO/GLOTTOLOG [old_style_sheet]+
@@ -66,17 +74,18 @@ def refactor(args):
 
     parser = argparse.ArgumentParser(prog='refactor')
     parser.add_argument('glottolog_repos', help="clone of glottolog/glottolog", type=Path)
+    parser.add_argument('sheet', help="", type=Path)
     xargs = parser.parse_args(args.args)
     gl = Glottolog(xargs.glottolog_repos)
 
     api = Grambank(args.repos)
     contribs = {c.name: c for c in api.contributors}
 
-    for p in args.args[1:]:
-        sheet = NewSheet(Path(p))
-        gl_lang = gl.languoid(sheet.language_code)
-        n = '{0}_{1}.tsv'.format('-'.join(contribs[c].id for c in sheet.coders), gl_lang.id)
-        write_tsv(sheet.fname, api.sheets_dir / n, gl_lang.id)
+    sheet = NewSheet(xargs.sheet)
+    gl_lang = gl.languoid(sheet.language_code)
+    n = '{0}_{1}.tsv'.format('-'.join(contribs[c].id for c in sheet.coders), gl_lang.id)
+    write_tsv(sheet.fname, api.sheets_dir / n, gl_lang.id)
+    print(api.sheets_dir / n)
 
     #
     # FIXME: should we also run checks now? I guess so.

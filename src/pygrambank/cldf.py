@@ -35,11 +35,11 @@ def itertable(lines):
             yield OrderedDict(zip(header, row))
 
 
-def bibdata(sheet, e, lgks, unresolved):
+def bibdata(sheet, values, e, lgks, unresolved):
     def clean_key(key):
         return key.replace(':', '_').replace("'", "")
 
-    for row in sheet.rows:
+    for row in values:
         if row['Source']:
             row['Source_comment'] = row['Source']
             refs, sources = [], []
@@ -63,77 +63,50 @@ def iterunique(insheets):
     """
     For languages which have been coded multiple times, we pick out the best sheet.
     """
+    # Sort sheets by glottocode and number of values, then group:
     for gc, sheets in groupby(
-            sorted(insheets, key=lambda s: (s.glottocode, s.path.stem)),
-            lambda s: s.glottocode):
+            sorted(insheets, key=lambda s: (s[0].glottocode, -len(s[1]), s[0].path.stem)),
+            lambda s: s[0].glottocode):
         sheets = list(sheets)
         if len(sheets) == 1:
             yield sheets[0]
         else:
             print('\nSelecting best sheet for {0}'.format(gc))
-            for i, sheet in enumerate(sorted(sheets, key=lambda s: len(s.rows), reverse=True)):
+            for i, (sheet, values) in enumerate(sheets):
                 print('{0} dps: {1} sheet {2}'.format(
-                    len(sheet.rows),
-                    'choosing' if i == 0 else 'skipping', unicode_from_path(sheet.path.stem)))
+                    len(values), 'choosing' if i == 0 else 'skipping', sheet.path.stem))
                 if i == 0:
-                    yield sheet
-
-
-def sheets_to_tsv(api, glottolog, agg=None):
-    all_rows, sheets = [], []
-    # Read the sheets that need to be converted from non-tsv formats:
-    for suffix in Sheet.valid_suffixes:
-        for f in tqdm(sorted(api.sheets_dir.glob('*' + suffix)), desc=suffix):
-            sheet = Sheet(f, glottolog, api.features)
-            for row in sheet.write_tsv():
-                if agg:
-                    row['_fname'] = unicode_from_path(sheet.path.name)
-                    all_rows.append(row)
-            sheets.append(sheet)
-    seen = set(sheet.path.stem for sheet in sheets)
-    # Now read the sheets coming in already as *.tsv:
-    for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem):
-        if f.stem in seen:
-            continue
-        sheet = Sheet(f, glottolog, api.features)
-        if agg:
-            for row in sheet.rows:
-                row['_fname'] = unicode_from_path(sheet.path.name)
-                all_rows.append(row)
-            sheets.append(sheet)
-
-    selected = set(unicode_from_path(s.path.name) for s in iterunique(sheets))
-    if all_rows:
-        cols = ['_fname'] + sorted(set().union(*[row.keys() for row in all_rows]))
-        with UnicodeWriter(agg) as writer:
-            writer.writerow(['_selected'] + cols)
-            writer.writerows([row['_fname'] in selected] + [row.get(c, '') for c in cols] for row in all_rows)
+                    yield (sheet, values)
 
 
 def sheets_to_gb(api, glottolog, wiki, cldf_repos):
-    sheets_to_tsv(api, glottolog)
-
-    print('reading sheets from TSV')
-    sheets = [Sheet(f, glottolog, api.features) for f in sorted(
-        api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
+    sheets = [
+        Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
+    sheets = [(s, list(s.itervalues(api))) for s in sheets]
 
     # Chose best sheet for indivdual Glottocodes:
     print('selecting best sheets')
     sheets = list(iterunique(sheets))
 
+    descendants = glottolog.descendants_map
+
     print('loading bibs')
     bibs = glottolog.bib('hh')
     bibs.update(api.bib)
 
-    descendants = lambda l: [l] + [x for c in l.children for x in descendants(c)]
+    print('computing lang-to-refs mapping ...')
     lgks = defaultdict(set)
     for key, (typ, fields) in bibs.items():
         if 'lgcode' in fields:
             for code in bib.lgcodestr(fields['lgcode']):
                 if code in glottolog.languoids_by_ids:
-                    languoid = glottolog.languoids_by_ids[code]
-                    for cl in descendants(languoid):
-                        lgks[cl.id].add(key)
+                    gc = glottolog.languoids_by_ids[code].id
+                    if gc in descendants:
+                        for cl in descendants[gc]:
+                            lgks[cl].add(key)
+                    else:
+                        print('---non-language', code)
+    print('... done')
 
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
     dataset.add_provenance(
@@ -151,6 +124,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
         {
             'name': 'contributed_datapoints',
             'dc:description': 'the contributor of the codings for this language',
+            'separator': ' and ',
         },
         {
             'name': 'provenance',
@@ -206,33 +180,27 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                 Description=desc,
             ))
 
+    coders_by_id = {c.id: c.name for c in api.contributors}
     unresolved, coded_sheets = Counter(), {}
-    for sheet in sheets:
-        if not sheet.rows:
+    for sheet, values in sorted(sheets, key=lambda i: i[0].glottocode):
+        if not values:
             print('ERROR: empty sheet {0}'.format(sheet.path))
             continue
+        lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
-        data['LanguageTable'].append(dict(
+        ld =dict(
             ID=sheet.glottocode,
-            Name=sheet.lgname,
+            Name=lang.name,
             Glottocode=sheet.glottocode,
-            contributed_datapoints=sheet.coder,
-            provenance="{0} {1}".format(
-                unicode_from_path(sheet.path.name),
-                datetime.datetime.utcfromtimestamp(sheet.path.stat().st_mtime).isoformat() + 'Z'),
-            Family_name=sheet.family_name,
-            Family_id=sheet.family_id,
-            Latitude=sheet.latitude,
-            Longitude=sheet.longitude,
-            Macroarea=sheet.macroarea,
-            Language_ID=sheet.language_id,
-            level=sheet.level,
-            lineage=sheet.lineage,
-        ))
-        if sheet.family_id:
-            families.add(sheet.family_id)
-        dataset.add_sources(*list(bibdata(sheet, bibs, lgks, unresolved)))
-        for row in sheet.rows:
+            contributed_datapoints=[coders_by_id[cid] for cid in sheet.coders],
+            provenance=sheet.path.name,
+        )
+        ld.update(sheet.metadata(glottolog))
+        data['LanguageTable'].append(ld)
+        if ld['Family_id']:
+            families.add(ld['Family_id'])
+        dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
+        for row in sorted(values, key=lambda r: r['Feature_ID']):
             data['ValueTable'].append(dict(
                 ID='{0}-{1}'.format(row['Feature_ID'], row['Language_ID']),
                 Language_ID=sheet.glottocode,
@@ -255,7 +223,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
 
     for k, v in reversed(unresolved.most_common()):
         print(k, v)
-
+    print(sum(unresolved.values()))
     return coded_sheets
 
 
@@ -359,6 +327,16 @@ class Glottolog(object):
         return {l.id: l for l in self.languoids}
 
     @lazyproperty
+    def descendants_map(self):
+        res = defaultdict(list)
+        for l in self.languoids:
+            res[l.id].append(l.id)
+            if l.lineage:
+                for _, gc, _ in l.lineage:
+                    res[gc].append(l.id)
+        return res
+
+    @lazyproperty
     def languoids_by_ids(self):
         """
         We provide a simple lookup for the three types of identifiers for a Glottolog languoid,
@@ -373,12 +351,6 @@ class Glottolog(object):
             if l.hid:
                 res[l.hid] = l
         return res
-
-
-def preprocess(repos, glottolog_repos, wiki):
-    grambank = Grambank(repos, wiki)
-    glottolog = Glottolog(glottolog_repos)
-    sheets_to_tsv(grambank, glottolog, 'all.csv')
 
 
 def create(repos, glottolog_repos, wiki, cldf_repos):

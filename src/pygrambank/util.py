@@ -58,13 +58,6 @@ def normalized_value(v):
         'x',
     }:
         return '?'
-    ## Uncertain values like "1?" are normalized as "?".
-    #if re.match('[0-9]\?$', v) or re.match('\?[0-9]$', v):
-    #    return '?'
-    #if v not in feature.domain:
-    #    print('ERROR: {0}: invalid value "{1}" for feature {2}'.format(
-    #        sheet.path.name, v, feature.id))
-    #    return '?'
     return v
 
 
@@ -132,7 +125,7 @@ def iter_xlsx(fname):
                     continue
             if header is None:
                 header = row
-                assert all(bool(c) for c in header), 'Empty column header'
+                assert all(bool(c) for c in header), 'Empty column header: {0}'.format(header)
             else:
                 assert len(header) == len(row), 'Header and row length mismatch'
                 yield _normalized_row(collections.OrderedDict(zip(header, row)))
