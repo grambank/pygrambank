@@ -28,7 +28,7 @@ def cldf(args):
 
 
 @command()
-def check(args):
+def check(args, write_report=True):
     from csvw.dsv import UnicodeWriter
 
     report, counts = [], {}
@@ -42,9 +42,12 @@ def check(args):
     for row in report:
         row.insert(1, row[0] in selected)
 
-    with UnicodeWriter('check.tsv', delimiter='\t') as w:
-        w.writerow(['sheet', 'selected', 'level', 'feature', 'message'])
-        w.writerows(report)
+    if report:
+        if write_report:
+            with UnicodeWriter('check.tsv', delimiter='\t') as w:
+                w.writerow(['sheet', 'selected', 'level', 'feature', 'message'])
+                w.writerows(report)
+        raise ValueError('Repos check found WARNINGs or ERRORs')
 
 
 @command()
