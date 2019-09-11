@@ -106,6 +106,7 @@ def iter_xlsx(fname):
 
         header = None
         empty_rows = 0
+        empty_cols, data = [], []
         skip_cols = set()
         for i, row in enumerate(sheet.rows):
             if i == 0:
@@ -125,10 +126,14 @@ def iter_xlsx(fname):
                     continue
             if header is None:
                 header = row
-                assert all(bool(c) for c in header), 'Empty column header: {0}'.format(header)
+                empty_cols = [i for i, c in enumerate(header) if not c]
             else:
                 assert len(header) == len(row), 'Header and row length mismatch'
+                data.append(row)
                 yield _normalized_row(collections.OrderedDict(zip(header, row)))
+
+        for i in empty_cols:
+            assert all(not bool(r[i]) for r in data), 'Empty header for non-empty column: {0}'.format(i)
 
 
 def iter_xls(fname):

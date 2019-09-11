@@ -77,15 +77,26 @@ def refactor(args):
     parser.add_argument('sheet', help="", type=Path)
     xargs = parser.parse_args(args.args)
     gl = Glottolog(xargs.glottolog_repos)
+    gl = gl.languoids_by_code()
 
     api = Grambank(args.repos)
     contribs = {c.name: c for c in api.contributors}
 
-    sheet = NewSheet(xargs.sheet)
-    gl_lang = gl.languoid(sheet.language_code)
-    n = '{0}_{1}.tsv'.format('-'.join(contribs[c].id for c in sheet.coders), gl_lang.id)
-    write_tsv(sheet.fname, api.sheets_dir / n, gl_lang.id)
-    print(api.sheets_dir / n)
+    if xargs.sheet.is_dir():
+        sheets = xargs.sheet.glob('*.xlsx')
+    else:
+        sheets = [xargs.sheet]
+
+    for sheet in sheets:
+        print(sheet, '...')
+        sheet = NewSheet(sheet)
+        try:
+            gl_lang = gl[sheet.language_code]
+        except KeyError:
+            raise ValueError('Unknown language code: {0}'.format(sheet.language_code))
+        n = '{0}_{1}.tsv'.format('-'.join(contribs[c].id for c in sheet.coders), gl_lang.id)
+        write_tsv(sheet.fname, api.sheets_dir / n, gl_lang.id)
+        print('...', api.sheets_dir / n)
 
     #
     # FIXME: should we also run checks now? I guess so.
