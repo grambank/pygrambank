@@ -28,6 +28,11 @@ def cldf(args):
 
 @command()
 def check(args, write_report=True):
+    """
+    grambank --repos PATH/TO/Grambank check
+    
+    Run data quality checks on a grambank repository.
+    """
     from csvw.dsv import UnicodeWriter
 
     report, counts = [], {}
