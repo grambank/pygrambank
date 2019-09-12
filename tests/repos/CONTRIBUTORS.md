@@ -5,3 +5,5 @@
 |:---|:---------------------|:--------------|:---------------|
 | HS | Skirgård             | Hedvig        |                |
 | HJH| Haynie               | Hannah J.     |                |
+| ABBR| Abc               | Ab     |                |
+| NOVALS| Nov               | Nov     |                |

@@ -141,10 +141,11 @@ class Sheet(object):
         for row in self.iterrows():
             if row['Feature_ID'] not in api.features:
                 continue
-            if row['Value'] and row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
-                log('invalid value {0}'.format(row['Value']), row_=row)
-            else:
-                nvalid += 1
+            if row['Value']:
+                if row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
+                    log('invalid value {0}'.format(row['Value']), row_=row)
+                else:
+                    nvalid += 1
 
             if row['Value'] and not row['Source']:
                 log('value without source', level='WARNING', row_=row)

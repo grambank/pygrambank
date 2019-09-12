@@ -191,9 +191,11 @@ def write_tsv(in_, out_, glottocode):
         '.tsv': iter_tsv,
     }[in_.suffix](in_))
 
+    i = 0
     with dsv.UnicodeWriter(out_, delimiter='\t') as w:
         for i, row in enumerate(rows):
             if i == 0:
                 w.writerow(list(row.keys()))
             row['Language_ID'] = glottocode
             w.writerow(list(row.values()))
+    return i
