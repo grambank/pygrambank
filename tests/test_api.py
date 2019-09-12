@@ -15,4 +15,4 @@ def test_bib(api):
 
 
 def test_sheets(api):
-    assert len(list(api.sheets_dir.glob('*.tsv'))) == 2
+    assert len(list(api.iter_sheets())) == 2

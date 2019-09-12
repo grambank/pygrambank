@@ -3,9 +3,7 @@ from collections import Counter, OrderedDict, defaultdict
 from pathlib import Path
 
 import pyglottolog
-from clldutils.path import read_text, write_text
 from clldutils.misc import lazyproperty
-from clldutils.markup import Table
 from pycldf import StructureDataset
 from pycldf.dataset import GitRepository
 from pycldf.sources import Source
@@ -14,22 +12,6 @@ from pygrambank import bib
 from pygrambank import srctok
 from pygrambank.sheet import Sheet
 from pygrambank.api import Grambank
-
-
-def itertable(lines):
-    """
-    Read a markdown table. Yields one OrderedDict per row.
-    """
-    header = None
-    for i, line in enumerate(lines):
-        assert line.strip().startswith('|') and line.strip().endswith('|')
-        row = [c.strip() for c in line.split('|')][1:-1]
-        if i == 0:
-            header = row
-        elif i == 1:
-            assert set(line).issubset({'|', ':', '-', ' '})
-        else:
-            yield OrderedDict(zip(header, row))
 
 
 def bibdata(sheet, values, e, lgks, unresolved):
@@ -48,8 +30,6 @@ def bibdata(sheet, values, e, lgks, unresolved):
                     ref += '[{0}]'.format(','.join(pages))
                 refs.append(ref)
                 sources.append(Source(typ, key, **fields))
-            #if res[1]:
-            #    row['Source_comment'] = res[1]
 
             row['Source'] = refs
             for src in sources:
@@ -180,7 +160,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     coders_by_id = {c.id: c.name for c in api.contributors}
     unresolved, coded_sheets = Counter(), {}
     for sheet, values in sorted(sheets, key=lambda i: i[0].glottocode):
-        if not values:
+        if not values:  # pragma: no cover
             print('ERROR: empty sheet {0}'.format(sheet.path))
             continue
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
