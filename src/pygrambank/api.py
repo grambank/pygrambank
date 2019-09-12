@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from clldutils.apilib import API
 from clldutils.misc import lazyproperty
 from pyglottolog.references.bibfiles import BibFile

@@ -1,21 +1,18 @@
-from __future__ import print_function, unicode_literals
-import datetime
 from itertools import groupby
 from collections import Counter, OrderedDict, defaultdict
+from pathlib import Path
 
-from tqdm import tqdm
 import pyglottolog
-from clldutils.path import read_text, write_text, Path, as_unicode
+from clldutils.path import read_text, write_text
 from clldutils.misc import lazyproperty
 from clldutils.markup import Table
 from pycldf import StructureDataset
 from pycldf.dataset import GitRepository
 from pycldf.sources import Source
-from csvw.dsv import UnicodeWriter
 
 from pygrambank import bib
 from pygrambank import srctok
-from pygrambank.sheet import Sheet, unicode_from_path
+from pygrambank.sheet import Sheet
 from pygrambank.api import Grambank
 
 
@@ -227,79 +224,6 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     return coded_sheets
 
 
-def update_wiki(coded_sheets, glottolog, wiki):
-    def todo_table(rows):
-        print('formatting todo')
-        table = Table('Language', 'iso-639-3', 'Reserved By', 'Comment')
-        for row in rows:
-            row = list(row.values())
-            for code in row[1].split('/'):
-                glang = glottolog.languoids_by_ids.get(code.strip())
-                if glang and glang.id in coded_sheets:
-                    print('NOWDONE: {0}'.format(row))
-                    break
-            else:
-                table.append(row)
-
-        def sortkey(row):
-            prio = 0
-            if 'SCCS' in row[-1]:
-                prio += 2
-            if 'One-per-family' in row[-1]:
-                prio += 1
-            return -prio, row[0]
-
-        return '\n' + table.render(sortkey=sortkey) + '\n'
-
-    def done_table(rows):
-        print('formatting done')
-        table = Table('Language', 'iso-639-3', 'Done By')
-        for sheet in sorted(coded_sheets.values(), key=lambda s: s.lgname):
-            try:
-                table.append([sheet.lgname, '{0} / {1}'.format(sheet.glottocode, sheet.lgid), sheet.coder])
-            except UnicodeDecodeError:
-                print([sheet.lgname, sheet.glottocode, sheet.lgid, sheet.coder])
-                raise ValueError
-        return '\n' + table.render() + '\n'
-
-    doc = wiki / 'Languages-to-code.md'
-    newmd, todo, done, in_todo, in_done = [], [], [], False, False
-    for line in read_text(doc, encoding='utf-8-sig').splitlines():
-        if line.strip() == '##':
-            continue
-
-        if in_todo or in_done:
-            if line.strip().startswith('## '):  # Next section!
-                if in_done:
-                    func, lines = done_table, done  # pragma: no cover
-                else:  # if in_todo
-                    func, lines = todo_table, todo
-
-                newmd.append(func(list(itertable(lines))))
-                newmd.append(line)
-                in_todo = False
-                in_done = False
-            else:
-                if line.strip():
-                    # Aggregate table lines.
-                    (done if in_done else todo).append(line)
-        else:
-            newmd.append(line)
-
-        if line.strip().startswith('## Priority'):
-            print('aggregating todo')
-            in_todo = True
-
-        if line.strip().startswith('## Finished'):
-            print('aggregating done')
-            in_done = True
-
-    if in_done and done:
-        newmd.append(done_table(done))
-
-    write_text(doc, '\n'.join(newmd))
-
-
 class Glottolog(object):
     """
     A custom facade to the Glottolog API.
@@ -361,4 +285,3 @@ def create(repos, glottolog_repos, wiki, cldf_repos):
         glottolog,
         wiki,
         cldf_repos)
-    update_wiki(coded_sheets, glottolog, wiki)

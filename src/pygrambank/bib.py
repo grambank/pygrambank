@@ -1,4 +1,3 @@
-from __future__ import print_function
 import re
 
 from clldutils.misc import nfilter
