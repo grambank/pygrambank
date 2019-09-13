@@ -137,7 +137,7 @@ class Sheet(object):
                     if row[j]:
                         log('non-empty cell with empty header: {0}'.format(row[j]), level='WARNING')
 
-        res, nvalid = [], 0
+        res, nvalid, features = [], 0, set()
         for row in self.iterrows():
             if row['Feature_ID'] not in api.features:
                 continue
@@ -153,6 +153,9 @@ class Sheet(object):
                 log('source given, but no value', level='WARNING', row_=row)
             if row['Comment'] and not row['Value']:
                 log('comment given, but no value', level='WARNING', row_=row)
+            if row['Feature_ID'] in features:
+                log('duplicate value for feature {0}'.format(row['Feature_ID']), level='ERROR', row_=row)
+            features.add(row['Feature_ID'])
             res.append(row)
 
         for gbid, rows in groupby(
