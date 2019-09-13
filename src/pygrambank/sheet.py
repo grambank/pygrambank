@@ -71,6 +71,9 @@ class Sheet(object):
         self.coders = match.group('coders').split('-')
         self.glottocode = match.group('glottocode')
 
+    def __str__(self):
+        return str(self.path)
+
     def metadata(self, glottolog):
         languoid = glottolog.languoids_by_glottocode[self.glottocode]
         if languoid.level.name == 'dialect':
