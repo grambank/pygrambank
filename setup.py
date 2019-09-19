@@ -29,7 +29,7 @@ setup(
         'csvw>=1.5.5',
         'xlrd',
         'openpyxl==2.4.8',
-        'pyglottolog~=2.0',
+        'pyglottolog>=2.0',
         'tqdm',
     ],
     extras_require={

@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import pytest
 from clldutils.clilib import ParserError
-from clldutils.path import Path
 
 from pygrambank.__main__ import cldf, propagate_gb20
 

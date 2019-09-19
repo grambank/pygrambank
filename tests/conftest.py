@@ -1,7 +1,7 @@
 import shutil
+from pathlib import Path
 
 import pytest
-from clldutils.path import Path
 
 
 @pytest.fixture

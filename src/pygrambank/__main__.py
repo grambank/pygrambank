@@ -1,8 +1,8 @@
 import sys
 import argparse
+from pathlib import Path
 
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
-from clldutils.path import Path
 
 from pygrambank.api import Grambank
 from pygrambank.cldf import create
@@ -51,6 +51,7 @@ def check(args, write_report=True):
             with UnicodeWriter('check.tsv', delimiter='\t') as w:
                 w.writerow(['sheet', 'selected', 'level', 'feature', 'message'])
                 w.writerows(report)
+            print('Report written to check.tsv')
         raise ValueError('Repos check found WARNINGs or ERRORs')
 
 

@@ -1,5 +1,5 @@
 from itertools import groupby
-from collections import Counter, OrderedDict, defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import pyglottolog

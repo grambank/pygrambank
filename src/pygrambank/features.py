@@ -4,7 +4,6 @@ from collections import OrderedDict
 from openpyxl import Workbook
 
 from clldutils.misc import lazyproperty
-from clldutils.path import read_text
 from csvw.dsv import UnicodeWriter
 
 
@@ -36,7 +35,7 @@ class Feature(OrderedDict):
     @lazyproperty
     def description(self):
         if self._wiki.joinpath('{0}.md'.format(self.id)).exists():
-            return read_text(self._wiki.joinpath('{0}.md'.format(self.id)), encoding='utf-8-sig')
+            return self._wiki.joinpath('{0}.md'.format(self.id)).read_text(encoding='utf-8-sig')
         return self['Clarifying Comments']
 
     @lazyproperty
@@ -63,7 +62,7 @@ class GB20(object):
         self.path = path
 
     def iterfeatures(self, wiki):
-        for chunk in read_text(self.path).split(self.CHUNK_SEP):
+        for chunk in self.path.read_text(encoding='utf-8').split(self.CHUNK_SEP):
             if chunk.strip():
                 yield Feature.from_chunk(chunk, wiki)
 
@@ -77,7 +76,7 @@ class GB20(object):
         currentlist = []
         for m in re.finditer(
             "\*\s*(?P<gbid>(GB)?\d\d\d)\s+\[(?P<feature>[^\]]+)\]\((?P<link>[^)]+)\)",
-            read_text(fn)
+            fn.read_text(encoding='utf-8')
         ):
             res = m.groupdict()
             if not res['gbid'].startswith('GB'):
