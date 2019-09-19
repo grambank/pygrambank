@@ -115,7 +115,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             'name': 'lineage',
             'separator': '/',
             'dc:description': 'list of ancestor groups in the Glottolog classification',
-         },
+        },
     )
     table.add_foreign_key('Family_id', 'families.csv', 'ID')
 
@@ -165,7 +165,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
             continue
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
-        ld =dict(
+        ld = dict(
             ID=sheet.glottocode,
             Name=lang.name,
             Glottocode=sheet.glottocode,
@@ -182,7 +182,8 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
                 ID='{0}-{1}'.format(row['Feature_ID'], row['Language_ID']),
                 Language_ID=sheet.glottocode,
                 Parameter_ID=row['Feature_ID'],
-                Code_ID='{0}-{1}'.format(row['Feature_ID'], row['Value']) if row['Value'] != '?' else None,
+                Code_ID='{0}-{1}'.format(row['Feature_ID'], row['Value'])
+                if row['Value'] != '?' else None,
                 Value=row['Value'],
                 Comment=row['Comment'],
                 Source=row['Source'],
@@ -260,7 +261,7 @@ class Glottolog(object):
 def create(repos, glottolog_repos, wiki, cldf_repos):
     grambank = Grambank(repos, wiki)
     glottolog = Glottolog(glottolog_repos)
-    coded_sheets = sheets_to_gb(
+    sheets_to_gb(
         grambank,
         glottolog,
         wiki,

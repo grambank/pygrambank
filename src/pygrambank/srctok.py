@@ -11,12 +11,12 @@ def undiacritic(s):
 
 
 def amax(d, f=max):
-    return f((v, k) for (k, v) in d.items())
+    return f((v, k) for k, v in d.items())
 
 
 def filterd(f, d):
     r = {}
-    for (k,v) in d.items():
+    for k, v in d.items():
         if f(k):
             r[k] = v
     return r
@@ -36,12 +36,16 @@ year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
 
 capitals = 'ÅA-Z\x8e\x8f\x99\x9a'
-resrc = re.compile("(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" + year + ")" + pg + "\)?")
+resrc = re.compile(
+    "(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" +
+    year + ")" + pg + "\)?")
 
 # Gwynn&Krishnamurti1985, p.144
-altrefullsrc = re.compile("^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
+altrefullsrc = re.compile(
+    "^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
-def iter_ayps(s, word_from_title = None):
+
+def iter_ayps(s, word_from_title=None):
     for x in s.replace("), ", "); ").split(";"):
         if (x.find("p.c.") != -1) and x.strip().startswith("pc"):
             continue
@@ -60,7 +64,7 @@ def iter_ayps(s, word_from_title = None):
                 a = a.replace('&', ' and ')
             wft = a.find("_")
             if wft != - 1:
-                word_from_title = a[wft+1:].lower()
+                word_from_title = a[wft + 1:].lower()
                 a = a[:wft]
             yield (a, y, p.strip() if p else p, word_from_title)
 
@@ -75,13 +79,19 @@ def priok(ks, e):
 
 devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der"]
 respa = re.compile("[\s\,\,\.\-]+")
+
+
 def matchsingleauthor(ca, ba):
-    firsttoken = ([x for x in respa.split(ca) if x.strip() and x[0].isupper() and x not in devon] + [""])[0]
+    firsttoken = (
+        [x for x in respa.split(ca)
+         if x.strip() and x[0].isupper() and x not in devon] + [""])[0]
     batokens = respa.split(ba)
     return firsttoken in batokens
 
 
 resau = re.compile("\s*[\&\/]\s*| and ")
+
+
 def matchauthor(a, fas, extraauthors):
     a = undiacritic(bib.pauthor(a)[0]['lastname'])
     bas = set([undiacritic(x['lastname']) for x in bib.pauthor(fas)] + extraauthors)
@@ -96,12 +106,12 @@ def unifyear(y):
 
 
 def iter_key_pages(lg, ayp, e, lgks):
-    a, y, p, word_from_title = ayp
+    a, y, p, wft = ayp
     if lg in lgks:
         for k in priok([
             k for k in lgks[lg]
             if e[k][1].get("year", "").find(y) != -1
-                and (not word_from_title or e[k][1].get("title", "").lower().find(word_from_title) != -1) 
+                and (not wft or e[k][1].get("title", "").lower().find(wft) != -1)
                 and matchauthor(a, e[k][1].get("author", ""), list(bib.iter_authors(k)))],
             e=e
         ):

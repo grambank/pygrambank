@@ -54,7 +54,8 @@ class NewSheet(object):
 
     @property
     def coders(self):
-        return [CODER_MAP.get(n, n) or n for n in re.split(',\s+|\s+and\s+', self.name.split('_')[0])]
+        return [
+            CODER_MAP.get(n, n) or n for n in re.split(',\s+|\s+and\s+', self.name.split('_')[0])]
 
     @property
     def language(self):
@@ -116,7 +117,7 @@ class Sheet(object):
 
     def visit(self, row_visitor=None):
         if row_visitor is None:
-            row_visitor = lambda r: r
+            row_visitor = lambda r: r  # noqa: E731
         rows = list(self.iterrows())
         with dsv.UnicodeWriter(self.path, delimiter='\t', encoding='utf8') as w:
             for i, row in enumerate(rows):
@@ -157,7 +158,8 @@ class Sheet(object):
             if row['Feature_ID'] not in api.features:
                 continue
             if row['Value']:
-                if row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
+                if row['Value'] != '?' \
+                        and row['Value'] not in api.features[row['Feature_ID']].domain:
                     log('invalid value {0}'.format(row['Value']), row_=row)
                 else:
                     nvalid += 1
@@ -169,7 +171,8 @@ class Sheet(object):
             if row['Comment'] and not row['Value']:
                 log('comment given, but no value', level='WARNING', row_=row)
             if row['Feature_ID'] in features:
-                log('duplicate value for feature {0}'.format(row['Feature_ID']), level='ERROR', row_=row)
+                log('duplicate value for feature {0}'.format(
+                    row['Feature_ID']), level='ERROR', row_=row)
             features.add(row['Feature_ID'])
             res.append(row)
 

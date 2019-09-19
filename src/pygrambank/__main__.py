@@ -14,7 +14,8 @@ from pygrambank.sheet import Sheet, Row
 @command()
 def cldf(args):
     """
-    grambank --repos=PATH/TO/Grambank --wiki_repos=PATH/TO/Grambank.wiki cldf PATH/TO/glottolog PATH/TO/grambank-cldf
+    grambank --repos=PATH/TO/Grambank --wiki_repos=PATH/TO/Grambank.wiki cldf PATH/TO/glottolog \
+    PATH/TO/grambank-cldf
 
     creates a CLDF dataset from raw Grambank data sheets.
     """
@@ -33,7 +34,7 @@ def cldf(args):
 def check(args, write_report=True):
     """
     grambank --repos PATH/TO/Grambank check
-    
+
     Run data quality checks on a grambank repository.
     """
     from csvw.dsv import UnicodeWriter
@@ -74,6 +75,10 @@ def fix(args):
 
 @command()
 def new(args):
+    """Create a new empty Grambank sheet.
+
+    grambank new [PATH/TO/NEW/SHEET]
+    """
     api = Grambank(args.repos)
     name = args.args[0] if args.args else 'grambank_sheet.tsv'
 

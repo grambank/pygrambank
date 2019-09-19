@@ -5,8 +5,10 @@ from clldutils.misc import nfilter
 AUTHOR_PATTERNS = [
     re.compile(p) for p in [
         "(?P<lastname>[^,]+),\s((?P<jr>[JS]r\.|[I]+),\s)?(?P<firstname>[^,]+)$",
-        "(?P<firstname>[^{][\S]+(\s[A-Z][\S]+)*)\s(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
-        "(?P<firstname>\\{[\S]+\\}[\S]+(\s[A-Z][\S]+)*)\s(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
+        "(?P<firstname>[^{][\S]+(\s[A-Z][\S]+)*)\s"
+        "(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
+        "(?P<firstname>\\{[\S]+\\}[\S]+(\s[A-Z][\S]+)*)\s"
+        "(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
         "(?P<firstname>[\s\S]+?)\s\{(?P<lastname>[\s\S]+)\}(?P<jr>,\s[JS]r\.|[I]+)?$",
         "\{(?P<firstname>[\s\S]+)\}\s(?P<lastname>[\s\S]+?)(?P<jr>,\s[JS]r\.|[I]+)?$",
         "(?P<lastname>[A-Z][\S]+)$",
@@ -34,6 +36,8 @@ reca = re.compile("\s*[,\&]\s*")
 
 relu = re.compile("\s+|(d\')(?=[A-Z])")
 recapstart = re.compile("\[?[A-Z]")
+
+
 def lowerupper(s):
     parts = [x for x in relu.split(s) if x]
     lower, upper = [], []
@@ -70,7 +74,7 @@ def iter_authors(key):
     for i, c in enumerate(n):
         if c.isdigit():  # For citation keys of the form "Meier2018" we stop at the start of year.
             break
-        if c.isupper() and not acc in ['Mac', 'De']:
+        if c.isupper() and acc not in ['Mac', 'De']:
             if acc:
                 yield acc
             acc = c
@@ -89,7 +93,7 @@ def lgcodestr(lgcstr):
     lgs = reisobrack.findall(lgcstr)
     if lgs:
         return lgs
-    
+
     parts = [p.strip() for p in recomma.split(lgcstr)]
     codes = [p for p in parts if reiso.match(p)]
     return codes
@@ -101,7 +105,24 @@ def hhtype(f):
     return respcomsemic.split(rekillparen.sub("", f.get("hhtype", "unknown")))
 
 
-oldwcrank = ['grammar', 'grammar sketch', 'dictionary', '(typological) study of a specific feature', 'phonology', 'text', 'new testament', 'wordlist', 'comparative-historical study', 'some very small amount of data/information on a language', 'endangered language', 'sociolinguistically oriented', 'dialectologically oriented', 'handbook/overview', 'ethnographic work', 'bibliographically oriented', 'unknown']
+oldwcrank = [
+    'grammar',
+    'grammar sketch',
+    'dictionary',
+    '(typological) study of a specific feature',
+    'phonology',
+    'text',
+    'new testament',
+    'wordlist',
+    'comparative-historical study',
+    'some very small amount of data/information on a language',
+    'endangered language',
+    'sociolinguistically oriented',
+    'dialectologically oriented',
+    'handbook/overview',
+    'ethnographic work',
+    'bibliographically oriented',
+    'unknown']
 
 newwcs = {}
 newwcs['handbook/overview'] = 'overview'
@@ -123,4 +144,4 @@ newwcs['endangered language'] = 'endangered language'
 newwcs['unknown'] = 'unknown'
 
 wcrank = [newwcs[k] for k in oldwcrank]
-hhtype_to_n = dict([(x, len(wcrank)-i) for (i, x) in enumerate(wcrank)])
+hhtype_to_n = {x: len(wcrank) - i for i, x in enumerate(wcrank)}

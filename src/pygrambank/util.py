@@ -89,7 +89,7 @@ def _normalized_row(row):
 def _read_excel_value(x):
     if x is None:
         return ""
-    if type(x) == type(0.0):
+    if isinstance(x, float):
         return '{0}'.format(int(x))
     return '{0}'.format(x).strip()
 
@@ -133,7 +133,8 @@ def iter_xlsx(fname):
                 yield _normalized_row(collections.OrderedDict(zip(header, row)))
 
         for i in empty_cols:
-            assert all(not bool(r[i]) for r in data), 'Empty header for non-empty column: {0}'.format(i)
+            assert all(not bool(r[i]) for r in data), \
+                'Empty header for non-empty column: {0}'.format(i)
 
 
 def iter_xls(fname):

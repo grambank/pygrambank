@@ -36,5 +36,6 @@ class Contributors(list):
                 rows.append(Contributor(**dict(zip(header, row))))
         byid = collections.Counter([r.id for r in rows])
         if byid.most_common(1)[0][1] > 1:
-            raise ValueError('duplicate ids: {0}'.format([k for k, v in byid.most_common() if v > 1]))
+            raise ValueError(
+                'duplicate ids: {0}'.format([k for k, v in byid.most_common() if v > 1]))
         return cls(rows)

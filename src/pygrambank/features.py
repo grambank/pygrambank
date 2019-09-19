@@ -94,13 +94,16 @@ class GB20(object):
                 if spec['gbid'] in active:
                     fp.write("* %(gbid)s [%(feature)s](%(link)s)\n" % spec)
 
-            fp.write("\n\nNo longer active in the GramBank feature set (for historical interest only):\n\n")
+            fp.write(
+                "\n\nNo longer active in the GramBank feature set (for historical interest only):"
+                "\n\n")
             for spec in currentlist:
                 if spec['gbid'] not in active:
                     fp.write("* %(gbid)s [%(feature)s](%(link)s)\n" % spec)
 
     def features_sheet(self):
-        cols = ['Grambank ID', 'Feature', 'Possible Values', 'Feature patron', 'Clarifying Comments']
+        cols = [
+            'Grambank ID', 'Feature', 'Possible Values', 'Feature patron', 'Clarifying Comments']
         features = list(self.iterfeatures(None))
         for f in features:
             for col in f:
