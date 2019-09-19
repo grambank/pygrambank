@@ -28,6 +28,18 @@ CODER_MAP = {
     'Tania Martins': 'Tânia Martins',
 }
 
+
+@attr.s
+class Row(object):
+    Language_ID = attr.ib()
+    Feature_ID = attr.ib()
+    Value = attr.ib()
+    Source = attr.ib()
+    Comment = attr.ib()
+    Feature_Domain = attr.ib()
+    contributed_datapoints = attr.ib(default='')
+
+
 @attr.s
 class NewSheet(object):
     fname = attr.ib()

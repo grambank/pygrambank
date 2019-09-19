@@ -1,3 +1,5 @@
+import collections
+
 from clldutils.apilib import API
 from clldutils.misc import lazyproperty
 from pyglottolog.references.bibfiles import BibFile
@@ -36,7 +38,7 @@ class Grambank(API):
 
     @lazyproperty
     def features(self):
-        return {f['Grambank ID']: f for f in self.ordered_features}
+        return collections.OrderedDict([(f['Grambank ID'], f) for f in self.ordered_features])
 
     def visit_feature(self, visitor):
         features = []

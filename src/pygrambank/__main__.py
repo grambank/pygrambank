@@ -2,10 +2,13 @@ import sys
 import argparse
 from pathlib import Path
 
+import attr
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
+from csvw.dsv import UnicodeWriter
 
 from pygrambank.api import Grambank
 from pygrambank.cldf import create
+from pygrambank.sheet import Sheet, Row
 
 
 @command()
@@ -64,11 +67,21 @@ def roundtrip(args):
 
 @command()
 def fix(args):
-    from pygrambank.sheet import Sheet
-
     api = Grambank(args.repos)
     sheet = Sheet(api.sheets_dir / args.args[0])
     sheet.visit(row_visitor=eval(args.args[1]))
+
+
+@command()
+def new(args):
+    api = Grambank(args.repos)
+    name = args.args[0] if args.args else 'grambank_sheet.tsv'
+
+    with UnicodeWriter(name) as w:
+        w.writerow([f.name for f in attr.fields(Row)])
+        for feature in api.features.values():
+            domain = '; '.join(['{0}: {1}'.format(k, v) for k, v in feature.domain.items()])
+            w.writerow(attr.astuple(Row('', feature.id, '', '', '', domain, '')))
 
 
 @command()

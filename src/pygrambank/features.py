@@ -11,7 +11,7 @@ class Feature(OrderedDict):
     def __init__(self, spec, wiki):
         OrderedDict.__init__(self, spec)
         self._wiki = wiki
-        self.domain = {}
+        self.domain = OrderedDict()
         spec = self['Possible Values'].replace('multistate', '').strip()
         delimiter = ',' if ',' in spec else ';'
         for val in spec.split(delimiter):
