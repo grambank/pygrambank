@@ -33,6 +33,23 @@ class Feature(OrderedDict):
         return ''.join('{0}: {1}\n'.format(k, v) for k, v in self.items())
 
     @lazyproperty
+    def wiki(self):
+        res = OrderedDict()
+        header, lines = None, []
+        for line in self._wiki.joinpath(
+                '{0}.md'.format(self.id)).read_text(encoding='utf-8-sig').split('\n'):
+            line = line.strip()
+            if line.startswith('## '):
+                if lines:
+                    res[header] = '\n'.join(lines).strip()
+                header = line.replace('## ', '').strip()
+            else:
+                lines.append(line)
+        if lines:
+            res[header] = '\n'.join(lines).strip()
+        return res
+
+    @lazyproperty
     def description(self):
         if self._wiki.joinpath('{0}.md'.format(self.id)).exists():
             return self._wiki.joinpath('{0}.md'.format(self.id)).read_text(encoding='utf-8-sig')

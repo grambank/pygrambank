@@ -1,6 +1,7 @@
 import sys
 import argparse
 from pathlib import Path
+import collections
 
 import attr
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
@@ -79,14 +80,27 @@ def new(args):
 
     grambank new [PATH/TO/NEW/SHEET]
     """
-    api = Grambank(args.repos)
+    api = Grambank(args.repos, wiki=args.wiki_repos)
     name = args.args[0] if args.args else 'grambank_sheet.tsv'
 
-    with UnicodeWriter(name) as w:
-        w.writerow([f.name for f in attr.fields(Row)])
+    rows = collections.OrderedDict([
+        ('Language_ID', lambda f: ''),
+        ('Grambank_ID', lambda f: f.id),
+        ('Possible Values', lambda f: f['Possible Values']),
+        ('Value', lambda f: ''),
+        ('Source', lambda f: ''),
+        ('Comment', lambda f: ''),
+        ('Contributed_datapoints', lambda f: ''),
+        ('Clarifying comments', lambda f: f.wiki['Summary']),
+        ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
+        ('Function', lambda f: f['Function']),
+        ('Form', lambda f: f['Form']),
+    ])
+
+    with UnicodeWriter(name, delimiter='\t') as w:
+        w.writerow(rows.keys())
         for feature in api.features.values():
-            domain = '; '.join(['{0}: {1}'.format(k, v) for k, v in feature.domain.items()])
-            w.writerow(attr.astuple(Row('', feature.id, '', '', '', domain, '')))
+            w.writerow([v(feature) for v in rows.values()])
 
 
 @command()

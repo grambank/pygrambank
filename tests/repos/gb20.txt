@@ -8,6 +8,7 @@ Form: declension, particle, paradigm
 Formal means: phonologically independent item, affixation and cliticization, declension
 Function: definiteness, deixis
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -23,6 +24,7 @@ Form: declension, particle, paradigm
 Formal means: phonologically independent item, affixation and cliticization, declension
 Function: definiteness, deixis
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -38,6 +40,7 @@ Form: word order, declension, particle, paradigm, prefixation
 Formal means: phonologically independent item, affixation and cliticization, word order, declension
 Function: definiteness, deixis
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -53,6 +56,7 @@ Form: word order, declension, particle, paradigm, suffixation
 Formal means: phonologically independent item, affixation and cliticization, word order, declension
 Function: definiteness, deixis
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -68,6 +72,7 @@ Form: word order
 Formal means: word order
 Function: quantification, attribution
 Possible Values: multistate 1: Num-N; 2: N-Num; 3: both.
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -83,6 +88,7 @@ Form: word order
 Formal means: word order
 Function: deixis, attribution
 Possible Values: multistate 1: Dem-N; 2: N-Dem; 3: both.
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -98,6 +104,7 @@ Form: word order, special construction
 Formal means: word order
 Function: attribution
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -113,6 +120,7 @@ Form: declension, flagging
 Formal means: affixation and cliticization, phonologically independent item, declension
 Function: argument marking, oblique, conjunction, coordination, case marking, comitative
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
 
@@ -128,5 +136,6 @@ Form: declension, paradigm, indexing
 Formal means: paradigm, declension, bound person marking
 Function: clusivity, deixis, person, number
 Possible Values: 1: present, 0: absent
+Relevant unit(s): none
 Grambank_ID_desc: xy
 bound_morphology: 0
