@@ -5,6 +5,16 @@ from clldutils.misc import nfilter, slug
 
 from pygrambank import bib
 
+REFS = {
+    ('Strauß', 'n.d.', 'melp1238'): 's:Strauss:Melpa',
+    ('Thurston', '1987', 'kuan1248'): 'hvw:Thurston:NBritain',
+    ("Z'Graggen", '1969', 'geda1237'): 'hvld:Zgraggen:Madang',
+    ('LeCoeur and LeCoeur', '1956', 'daza1242'): 's:LeCoeurLeCoeur:Teda-Daza',
+    ('Lindsey', '2018', 'agob1244'): 'Lindsey2018',
+    ('Lee', '2005a', 'mada1285'): 'Lee2005a',
+    ('Lee', '2005b', 'mada1285'): 'Lee2005b',
+}
+
 
 def undiacritic(s):
     return slug(s, lowercase=False, remove_whitespace=False)
@@ -77,7 +87,7 @@ def priok(ks, e):
     return set(allmax(d).keys())
 
 
-devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der"]
+devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der", "El", "De la", "De"]
 respa = re.compile("[\s\,\,\.\-]+")
 
 
@@ -130,6 +140,8 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
             print("PAGEONLY:", src, lgid)
         elif not (src.find("p.c") == -1
                   and src.find("personal communication") == -1
+                  and src.find("pers comm") == -1
+                  and src.find("pers. comm") == -1
                   and src.find("ieldnotes") == -1
                   and src.find("ield notes") == -1
                   and src.find("forth") == -1
@@ -143,7 +155,11 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
             src_comment = src
         else:
             if ays:
-                unresolved.update([(ay[0], ay[1], lgid) for ay in ays])
+                for author, year, pages, word_from_title in ays:
+                    if (author, year, lgid) in REFS:
+                        refs.append((REFS[(author,year, lgid)], pages))
+                    else:
+                        unresolved.update([(author, year, lgid)])
             else:
                 unresolved.update([(src, lgid)])
     return [(k, nfilter(r[1] for r in rs)) for k, rs in groupby(refs, lambda r: r[0])], src_comment

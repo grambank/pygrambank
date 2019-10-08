@@ -2,6 +2,7 @@ import sys
 import argparse
 from pathlib import Path
 import collections
+import re
 
 import attr
 from clldutils.clilib import ArgumentParserWithLogging, command, ParserError
@@ -69,9 +70,64 @@ def roundtrip(args):
 
 @command()
 def fix(args):
+    """
+    grambank --repos . fix SHEET_NAME "lambda r: r.update(Source=r['Source'].replace('), ', '); ')) or r"
+    """
     api = Grambank(args.repos)
     sheet = Sheet(api.sheets_dir / args.args[0])
     sheet.visit(row_visitor=eval(args.args[1]))
+
+
+@command()
+def sourcecheck(args):
+    pages = '(:\s*(?P<pages>([§IVXfpcilvx.0-9–,\-\s]*|(in\s+)?passim)))?'
+    lower = "[A-ZÑa-zñçćäáàãåæéíïóöšßúü']"
+    year = '([12][0-9]{3}([a-z])?((\-|/|,\s+)[0-9]{4})?|no date|forthcoming)'
+    name = '((el|von|da|dos|van der|(V|v)an den|van de|van|de la|de)\s+)?[A-ZÑÅ]%(lower)s+(\-%(lower)s+)*' % locals()
+    patterns = [
+        re.compile('(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)\s+(?P<year>%(year)s)\s*%(pages)s$' % locals()),
+        re.compile('(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)\s*\((?P<year>%(year)s)\s*%(pages)s\)$' % locals()),
+    ]
+    pc = re.compile('(p\.c\.?|personal communication|pers\.? comm\.)')
+
+    #(2015): 117, 139
+    early_parens = re.compile('\((?P<year>[0-9]{4})\):\s*(?P<pages>[0-9\s,\-]+)$')
+
+    def replace_early_parens(m):
+        return '({year}: {pages})'.format(**m.groupdict())
+
+    missed = collections.Counter()
+    api = Grambank(args.repos)
+
+    def iter_refs(source):
+        if source.startswith('(') and source.endswith(')') and '(' not in source[1:-1]:
+            source = source[1:-1].strip()
+        for ref in source.split(';'):
+            ref = ref.strip()
+            if re.search('[0-9]{4}((:[0-9\-]+)?\))?,\s+%s' % name, ref):
+                # Something like Meier 2008, Mueller 2019
+                for r in ref.split(','):
+                    if r.strip() and not pc.search(r):
+                        yield r.strip()
+            else:
+                if not pc.search(ref):
+                    yield ref
+
+    for sheet in api.iter_sheets():
+        for row in sheet.iterrows():
+            for ref in iter_refs(row['Source']):
+                ref = early_parens.sub(replace_early_parens, ref)
+                if ref.endswith(':'):
+                    ref = ref[:-1].strip()
+                for pattern in patterns:
+                    if pattern.match(ref):
+                        break
+                else:
+                    missed.update([ref])
+                    #print(ref)
+    for k, v in sorted(missed.items())[1500:2500]:
+        print(k, v)
+    print(sum(missed.values()))
 
 
 @command()
@@ -85,7 +141,8 @@ def new(args):
 
     rows = collections.OrderedDict([
         ('Language_ID', lambda f: ''),
-        ('Grambank_ID', lambda f: f.id),
+        ('Feature_ID', lambda f: f.id),
+        ('Feature', lambda f: f.wiki['title']),
         ('Possible Values', lambda f: f['Possible Values']),
         ('Value', lambda f: ''),
         ('Source', lambda f: ''),

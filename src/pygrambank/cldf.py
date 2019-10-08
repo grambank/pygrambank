@@ -199,9 +199,14 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
         } for gc in families], key=lambda d: d['ID'])
     dataset.write(**data)
 
+    per_sheet = defaultdict(list)
     for k, v in reversed(unresolved.most_common()):
         print(k, v)
+        per_sheet[k[-1]].append(k[:-1])
     print(sum(unresolved.values()))
+
+    for k, v in sorted(per_sheet.items(), key=lambda i: (len(i[1]), i[0])):
+        print(k, v)
     return coded_sheets
 
 

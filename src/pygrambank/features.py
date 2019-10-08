@@ -35,11 +35,13 @@ class Feature(OrderedDict):
     @lazyproperty
     def wiki(self):
         res = OrderedDict()
-        header, lines = None, []
+        title, header, lines = None, None, []
         for line in self._wiki.joinpath(
                 '{0}.md'.format(self.id)).read_text(encoding='utf-8-sig').split('\n'):
             line = line.strip()
-            if line.startswith('## '):
+            if (not title) and line.startswith('#'):
+                res['title'] = title = line.replace('#', '').strip()
+            elif line.startswith('## '):
                 if lines:
                     res[header] = '\n'.join(lines).strip()
                 header = line.replace('## ', '').strip()
