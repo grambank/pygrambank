@@ -8,7 +8,7 @@ from clldutils.clilib import ParserError, register_subcommands, get_parser_and_s
 from clldutils.loglib import Logging
 
 from pygrambank.api import Grambank
-from pygrambank.sheet import Sheet, Row
+from pygrambank.sheet import Sheet
 
 
 def roundtrip(args):
@@ -19,7 +19,8 @@ def roundtrip(args):
 
 def fix(args):
     """
-    grambank --repos . fix SHEET_NAME "lambda r: r.update(Source=r['Source'].replace('), ', '); ')) or r"
+    grambank --repos . fix SHEET_NAME
+    "lambda r: r.update(Source=r['Source'].replace('), ', '); ')) or r"
     """
     api = Grambank(args.repos)
     sheet = Sheet(api.sheets_dir / args.args[0])
@@ -30,14 +31,19 @@ def sourcecheck(args):
     pages = '(:\s*(?P<pages>([§IVXfpcilvx.0-9–,\-\s]*|(in\s+)?passim)))?'
     lower = "[A-ZÑa-zñçćäáàãåæéíïóöšßúü']"
     year = '([12][0-9]{3}([a-z])?((\-|/|,\s+)[0-9]{4})?|no date|forthcoming)'
-    name = '((el|von|da|dos|van der|(V|v)an den|van de|van|de la|de)\s+)?[A-ZÑÅ]%(lower)s+(\-%(lower)s+)*' % locals()
+    name = '((el|von|da|dos|van der|(V|v)an den|van de|van|de la|de)\s+)?' \
+           '[A-ZÑÅ]%(lower)s+(\-%(lower)s+)*' % locals()
     patterns = [
-        re.compile('(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)\s+(?P<year>%(year)s)\s*%(pages)s$' % locals()),
-        re.compile('(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)\s*\((?P<year>%(year)s)\s*%(pages)s\)$' % locals()),
+        re.compile(
+            '(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)'
+            '\s+(?P<year>%(year)s)\s*%(pages)s$' % locals()),
+        re.compile(
+            '(?P<author>%(name)s(\s+(%(name)s|and|&))*(\s+et\s+al\.?)?)'
+            '\s*\((?P<year>%(year)s)\s*%(pages)s\)$' % locals()),
     ]
     pc = re.compile('(p\.c\.?|personal communication|pers\.? comm\.)')
 
-    #(2015): 117, 139
+    # (2015): 117, 139
     early_parens = re.compile('\((?P<year>[0-9]{4})\):\s*(?P<pages>[0-9\s,\-]+)$')
 
     def replace_early_parens(m):
@@ -71,7 +77,6 @@ def sourcecheck(args):
                         break
                 else:
                     missed.update([ref])
-                    #print(ref)
     for k, v in sorted(missed.items())[1500:2500]:
         print(k, v)
     print(sum(missed.values()))

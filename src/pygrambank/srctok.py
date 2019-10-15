@@ -157,7 +157,7 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
             if ays:
                 for author, year, pages, word_from_title in ays:
                     if (author, year, lgid) in REFS:
-                        refs.append((REFS[(author,year, lgid)], pages))
+                        refs.append((REFS[(author, year, lgid)], pages))
                     else:
                         unresolved.update([(author, year, lgid)])
             else:

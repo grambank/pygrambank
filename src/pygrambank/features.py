@@ -1,10 +1,7 @@
 import re
 from collections import OrderedDict
 
-from openpyxl import Workbook
-
 from clldutils.misc import lazyproperty
-from csvw.dsv import UnicodeWriter
 
 
 class Feature(OrderedDict):
