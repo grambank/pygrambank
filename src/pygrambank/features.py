@@ -119,36 +119,3 @@ class GB20(object):
             for spec in currentlist:
                 if spec['gbid'] not in active:
                     fp.write("* %(gbid)s [%(feature)s](%(link)s)\n" % spec)
-
-    def features_sheet(self):
-        cols = [
-            'Grambank ID', 'Feature', 'Possible Values', 'Feature patron', 'Clarifying Comments']
-        features = list(self.iterfeatures(None))
-        for f in features:
-            for col in f:
-                if col not in cols:
-                    cols.append(col)
-
-        with UnicodeWriter(self.path.parent / 'gb20features.tsv', delimiter='\t') as writer:
-            writer.writerow(cols)
-            for f in features:
-                writer.writerow([f.get(col, '') for col in cols])
-
-    def grambank_sheet(self):
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "..."
-        cols = [
-            'Grambank ID', 'Feature', 'Relevant unit(s)', 'Function', 'Form', 'Feature patron',
-            'Clarifying Comments', 'Possible Values',
-            'Value', 'Source', 'Comment']
-        for i, col in enumerate(cols, start=1):
-            ws.cell(column=i, row=1, value=col)
-
-        for row, feature in enumerate(self.iterfeatures(None), start=2):
-            for col, colname in enumerate(cols, start=1):
-                ws.cell(column=col, row=row, value=feature.get(colname, ''))
-        outdir = self.path.parent / 'For_coders'
-        if not outdir.exists():
-            outdir.mkdir()
-        wb.save(filename=str(outdir / 'GramBank_most_updated_sheet.xlsx'))

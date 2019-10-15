@@ -11,7 +11,6 @@ from pycldf.sources import Source
 from pygrambank import bib
 from pygrambank import srctok
 from pygrambank.sheet import Sheet
-from pygrambank.api import Grambank
 
 
 def bibdata(sheet, values, e, lgks, unresolved):
@@ -56,7 +55,8 @@ def iterunique(insheets):
                     yield (sheet, values)
 
 
-def sheets_to_gb(api, glottolog, wiki, cldf_repos):
+def create(api, glottolog, wiki, cldf_repos):
+    glottolog = Glottolog(glottolog)
     sheets = [
         Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
     sheets = [(s, list(s.itervalues(api))) for s in sheets]
@@ -89,7 +89,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
     dataset.add_provenance(
         wasDerivedFrom=[
             GitRepository('https://github.com/glottobank/Grambank', clone=api.repos),
-            GitRepository('https://github.com/clld/glottolog', clone=glottolog.api.repos),
+            GitRepository('https://github.com/glottolog/glottolog', clone=glottolog.api.repos),
             GitRepository('https://github.com/glottobank/Grambank/wiki', clone=wiki),
         ],
         wasGeneratedBy=GitRepository(
@@ -179,7 +179,7 @@ def sheets_to_gb(api, glottolog, wiki, cldf_repos):
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
         for row in sorted(values, key=lambda r: r['Feature_ID']):
             data['ValueTable'].append(dict(
-                ID='{0}-{1}'.format(row['Feature_ID'], row['Language_ID']),
+                ID='{0}-{1}'.format(row['Feature_ID'], sheet.glottocode),
                 Language_ID=sheet.glottocode,
                 Parameter_ID=row['Feature_ID'],
                 Code_ID='{0}-{1}'.format(row['Feature_ID'], row['Value'])
@@ -261,13 +261,3 @@ class Glottolog(object):
             if l.hid:
                 res[l.hid] = l
         return res
-
-
-def create(repos, glottolog_repos, wiki, cldf_repos):
-    grambank = Grambank(repos, wiki)
-    glottolog = Glottolog(glottolog_repos)
-    sheets_to_gb(
-        grambank,
-        glottolog,
-        wiki,
-        cldf_repos)

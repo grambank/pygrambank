@@ -138,7 +138,7 @@ class Sheet(object):
         empty_index = []
         for i, row in enumerate(self._reader()):
             if i == 0:
-                for col in ['Feature_ID', 'Language_ID', 'Value', 'Comment', 'Source']:
+                for col in ['Feature_ID', 'Value', 'Comment', 'Source']:
                     if col not in row:
                         log('missing column {0}'.format(col))
                 for j, c in enumerate(row):
@@ -201,7 +201,6 @@ class Sheet(object):
             return None
         if row['Feature_ID'] not in api.features:  # Drop rows for obsolete features.
             return None
-        row['Language_ID'] = self.glottocode
 
         # Uncertain values like "1?" are normalized as "?".
         if re.match('[0-9]\?$', row['Value']) or re.match('\?[0-9]$', row['Value']):
