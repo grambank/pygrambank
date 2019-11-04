@@ -116,9 +116,16 @@ class Sheet(object):
             yield row
 
     def visit(self, row_visitor=None):
+        """
+        Apply `row_visitor` to all rows in a sheet.
+
+        :param row_visitor:
+        :return: Pair of `int`s specifying the number of rows read and written.
+        """
         if row_visitor is None:
             row_visitor = lambda r: r  # noqa: E731
         rows = list(self.iterrows())
+        count = 0
         with dsv.UnicodeWriter(self.path, delimiter='\t', encoding='utf8') as w:
             for i, row in enumerate(rows):
                 if i == 0:
@@ -126,6 +133,8 @@ class Sheet(object):
                 res = row_visitor(row)
                 if res:
                     w.writerow(list(row.values()))
+                    count += 1
+        return (len(rows), count)
 
     def check(self, api, report=None):
         def log(msg, row_=None, level='ERROR'):

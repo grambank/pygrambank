@@ -8,23 +8,12 @@ from clldutils.clilib import ParserError, register_subcommands, get_parser_and_s
 from clldutils.loglib import Logging
 
 from pygrambank.api import Grambank
-from pygrambank.sheet import Sheet
 
 
 def roundtrip(args):
     api = Grambank(args.repos)
     for sheet in api.iter_sheets():
         sheet.visit()
-
-
-def fix(args):
-    """
-    grambank --repos . fix SHEET_NAME
-    "lambda r: r.update(Source=r['Source'].replace('), ', '); ')) or r"
-    """
-    api = Grambank(args.repos)
-    sheet = Sheet(api.sheets_dir / args.args[0])
-    sheet.visit(row_visitor=eval(args.args[1]))
 
 
 def sourcecheck(args):
