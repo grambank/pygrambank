@@ -4,6 +4,7 @@ Create a CLDF StructureDataset from the Grambank data.
 import pathlib
 
 from cldfcatalog import Catalog
+from pycldf import Dataset
 
 from pygrambank.cli_util import add_wiki_repos
 from pygrambank.cldf import create
@@ -32,3 +33,5 @@ def register(parser):
 def run(args):
     with Catalog(args.glottolog, args.glottolog_version) as glottolog:
         create(args.repos, glottolog.dir, args.wiki_repos, args.cldf_repos)
+    ds = Dataset.from_metadata(args.cldf_repos / 'cldf' / 'StructureDataset-metadata.json')
+    ds.validate(log=args.log)

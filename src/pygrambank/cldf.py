@@ -12,6 +12,9 @@ from pygrambank import bib
 from pygrambank import srctok
 from pygrambank.sheet import Sheet
 
+# FIXME: These should be fixed in the data!
+INVALID = ['9', '.?']
+
 
 def bibdata(sheet, values, e, lgks, unresolved):
     def clean_key(key):
@@ -96,12 +99,14 @@ def create(api, glottolog, wiki, cldf_repos):
             'https://github.com/glottobank/pygrambank', clone=Path(__file__).parent.parent.parent),
     )
 
+    dataset.add_table('contributors.csv', 'ID', 'Name')
+
     table = dataset.add_component(
         'LanguageTable',
         {
-            'name': 'contributed_datapoints',
+            'name': 'Coders',
             'dc:description': 'the contributor of the codings for this language',
-            'separator': ' and ',
+            'separator': ';',
         },
         {
             'name': 'provenance',
@@ -118,6 +123,7 @@ def create(api, glottolog, wiki, cldf_repos):
         },
     )
     table.add_foreign_key('Family_id', 'families.csv', 'ID')
+    table.add_foreign_key('Coders', 'contributors.csv', 'ID')
 
     dataset.add_component(
         'ParameterTable',
@@ -130,8 +136,9 @@ def create(api, glottolog, wiki, cldf_repos):
         'bound_morphology',
     )
     dataset.add_component('CodeTable')
-    dataset.add_columns('ValueTable', 'Source_comment')
+    dataset.add_columns('ValueTable', 'Source_comment', {"name": "Coders", "separator": ";"})
     dataset['ValueTable', 'Value'].null = ['?']
+    dataset['ValueTable'].add_foreign_key('Coders', 'contributors.csv', 'ID')
 
     table = dataset.add_table('families.csv', 'ID', 'Newick')
     table.common_props['dc:conformsTo'] = None
@@ -157,7 +164,16 @@ def create(api, glottolog, wiki, cldf_repos):
                 Description=desc,
             ))
 
-    coders_by_id = {c.id: c.name for c in api.contributors}
+    data['contributors.csv'] = [dict(ID=c.id, Name=c.name) for c in api.contributors]
+    cids = set(d['ID'] for d in data['contributors.csv'])
+
+    def coders(sheet, row):
+        if 'contributed_datapoints' in row:
+            return [row['contributed_datapoints']]
+        if 'Contributed_datapoints' in row:
+            return [row['Contributed_datapoints']]
+        return sheet.coders
+
     unresolved, coded_sheets = Counter(), {}
     for sheet, values in sorted(sheets, key=lambda i: i[0].glottocode):
         if not values:  # pragma: no cover
@@ -165,11 +181,12 @@ def create(api, glottolog, wiki, cldf_repos):
             continue
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
+        assert all(c in cids for c in sheet.coders)
         ld = dict(
             ID=sheet.glottocode,
             Name=lang.name,
             Glottocode=sheet.glottocode,
-            contributed_datapoints=[coders_by_id[cid] for cid in sheet.coders],
+            Coders=sheet.coders,
             provenance=sheet.path.name,
         )
         ld.update(sheet.metadata(glottolog))
@@ -178,6 +195,8 @@ def create(api, glottolog, wiki, cldf_repos):
             families.add(ld['Family_id'])
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
         for row in sorted(values, key=lambda r: r['Feature_ID']):
+            if row['Value'] in INVALID:
+                continue
             data['ValueTable'].append(dict(
                 ID='{0}-{1}'.format(row['Feature_ID'], sheet.glottocode),
                 Language_ID=sheet.glottocode,
@@ -188,6 +207,7 @@ def create(api, glottolog, wiki, cldf_repos):
                 Comment=row['Comment'],
                 Source=row['Source'],
                 Source_comment=row.get('Source_comment'),
+                Coders=coders(sheet, row),
             ))
 
     print('computing newick trees')
