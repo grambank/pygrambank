@@ -1,10 +1,18 @@
 """
 Check original_sheets/ for correctness.
 """
+import pathlib
 from csvw.dsv import UnicodeWriter
+from pygrambank.sheet import Sheet
 
 
 def register(parser):
+    parser.add_argument(
+        '--filename',
+        help="Path of a specific TSV file to check",
+        default=None,
+        type=pathlib.Path
+    )
     parser.add_argument(
         '--report',
         help="Path of TSV file, to which results will be written.",
@@ -15,7 +23,15 @@ def register(parser):
 def run(args):
     report, counts = [], {}
     api = args.repos
-    for sheet in api.iter_sheets():
+    
+    if args.filename:
+        if not args.filename.is_file():
+            raise IOError("%s does not exist" % args.filename)
+        sheets = [Sheet(args.filename)]
+    else:
+        sheets = api.iter_sheets()
+
+    for sheet in sheets:
         n = sheet.check(api, report=report)
         if (sheet.glottocode not in counts) or (n > counts[sheet.glottocode][0]):
             counts[sheet.glottocode] = (n, sheet.path.stem)
