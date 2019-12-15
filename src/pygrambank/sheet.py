@@ -1,5 +1,5 @@
 import re
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from itertools import groupby
 import unicodedata
 
@@ -154,7 +154,8 @@ class Sheet(object):
                     if not c:
                         empty_index.append(j)
                 if len(set(row)) != len(row):
-                    log('duplicate header')
+                    dupes = Counter([h for h in row if row.count(h) > 1])
+                    log('duplicate header column(s) %r' % dupes)
             else:
                 if not empty_index:
                     break
@@ -164,9 +165,9 @@ class Sheet(object):
 
         res, nvalid, features = [], 0, set()
         for row in self.iterrows():
-            if row['Feature_ID'] not in api.features:
+            if row.get('Feature_ID') not in api.features:
                 continue
-            if row['Value']:
+            if row.get('Value'):
                 if row['Value'] != '?' \
                         and row['Value'] not in api.features[row['Feature_ID']].domain:
                     log('invalid value {0}'.format(row['Value']), row_=row)
