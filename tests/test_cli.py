@@ -35,3 +35,11 @@ def test_new(args, tmpdir):
     sheet = pathlib.Path(args.out)
     assert sheet.exists()
     assert 'GB021' in sheet.read_text(encoding='utf-8')
+
+
+def test_remove_empty(tmpdir):
+    content = """a\tb\tc\t\t\t\n1\t2\t3\t\t\t\n"""
+    tsv = tmpdir.join('XX_aaaa1234.tsv')
+    tsv.write_text(content, encoding="utf8")
+    main(['remove_empty', str(tsv)])
+    assert tsv.read_text(encoding='utf8') == "a\tb\tc\n1\t2\t3\n"
