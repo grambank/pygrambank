@@ -84,7 +84,7 @@ def iter_authors(key):
         yield acc
 
 
-reisobrack = re.compile("\[([a-z][a-z][a-z]|NOCODE_[A-Z][^\s\]]+)\]")
+reisobrack = re.compile("\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
 recomma = re.compile("[,/]\s?")
 reiso = re.compile("[a-z][a-z][a-z]$|NOCODE_[A-Z][^\s\]]+$")
 

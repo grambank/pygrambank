@@ -165,7 +165,13 @@ class Sheet(object):
 
         res, nvalid, features = [], 0, set()
         for row in self.iterrows():
-            if row.get('Feature_ID') not in api.features:
+            fid = row.get('Feature_ID')
+            if not fid:
+                continue
+            if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
+                if row.get('Value'):
+                    log('invalid Feature_ID: {0}'.format(fid), level='ERROR', row_=row)
+            if fid not in api.features:
                 continue
             if row.get('Value'):
                 if row['Value'] != '?' \
