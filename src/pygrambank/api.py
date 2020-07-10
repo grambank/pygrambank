@@ -21,7 +21,7 @@ class Grambank(API):
 
     def iter_sheets(self):
         for p in sorted(self.sheets_dir.iterdir(), key=lambda i: i.stem):
-            if p.is_file() and len(p.name) >= 4 and p.name[-4:] == '.tsv':
+            if p.is_file() and p.name not in ['.gitattributes', '.DS_Store']:
                 yield Sheet(p)
 
     @property
