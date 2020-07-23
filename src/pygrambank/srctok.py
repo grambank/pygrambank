@@ -57,7 +57,7 @@ altrefullsrc = re.compile(
 
 def iter_ayps(s, word_from_title=None):
     for x in s.replace("), ", "); ").split(";"):
-        if (x.find("p.c.") != -1) and x.strip().startswith("pc"):
+        if (x.find("p.c.") != -1) and x.strip().startswith("p.c"):
             continue
 
         condensed = False
@@ -109,10 +109,6 @@ def matchauthor(a, fas, extraauthors):
         if not [ba for ba in bas if matchsingleauthor(ca, ba)]:
             return False
     return True
-
-
-def unifyear(y):
-    return y.replace(".", "").lower().replace("nd", "no date").strip()
 
 
 def iter_key_pages(lg, ayp, e, lgks):
