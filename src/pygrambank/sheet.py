@@ -96,12 +96,14 @@ class Sheet(object):
         else:
             lgc = languoid.id
         language = glottolog.languoids_by_glottocode[lgc]
+        if not language.macroareas:
+            print('--- no macroareas: {}'.format(self.glottocode))
         return dict(
             level=languoid.level.name,
             lineage=[l[1] for l in languoid.lineage],
             Language_ID=language.id,
             # Macroareas are assigned to language level nodes:
-            Macroarea=language.macroareas[0].name,
+            Macroarea=language.macroareas[0].name if language.macroareas else '',
             Latitude=languoid.latitude if languoid.latitude else language.latitude,
             Longitude=languoid.longitude if languoid.longitude else language.longitude,
             Family_name=languoid.lineage[0][0] if languoid.lineage else None,

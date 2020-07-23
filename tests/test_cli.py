@@ -43,3 +43,37 @@ def test_remove_empty(tmpdir):
     tsv.write_text(content, encoding="utf8")
     main(['remove_empty', str(tsv)])
     assert tsv.read_text(encoding='utf8') == "a\tb\tc\n1\t2\t3\n"
+
+
+def test_check(repos, capsys, tmpdir):
+    main(['--repos', str(repos), 'check', '--report', str(tmpdir.join('report.tsv'))])
+    out, err = capsys.readouterr()
+    assert all(word in out for word in ['WARNING', 'ERROR'])
+    main([
+        '--repos', str(repos),
+        'check',
+        '--filename', str(repos / 'original_sheets' / 'ABBR_abcd1234.tsv')])
+
+
+def test_fix(repos):
+    fname = repos / 'original_sheets' / 'ABBR_abcd1234.tsv'
+    assert 'book2018' in fname.read_text(encoding='utf8')
+    main([
+        '--repos', str(repos),
+        'fix',
+        "lambda r: r.update(Source=(r.get('Source') or '').replace('2018', 'xyz')) or r",
+        str(fname),
+    ])
+    text = fname.read_text(encoding='utf8')
+    assert ('book2018' not in text) and ('bookxyz' in text)
+
+
+def test_cldf2(repos, tmpdir):
+    d = pathlib.Path(__file__).parent
+    main([
+        '--repos', str(repos),
+        'cldf',
+        '--wiki_repos', str(d / 'Grambank.wiki'),
+        '--cldf_repos', str(tmpdir),
+        str(d / 'glottolog'),
+    ])

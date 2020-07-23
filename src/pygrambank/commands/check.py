@@ -1,8 +1,8 @@
 """
 Check original_sheets/ for correctness.
 """
-import pathlib
 from csvw.dsv import UnicodeWriter
+from clldutils.clilib import PathType
 from pygrambank.sheet import Sheet
 
 
@@ -11,7 +11,7 @@ def register(parser):
         '--filename',
         help="Path of a specific TSV file to check",
         default=None,
-        type=pathlib.Path
+        type=PathType(type='file'),
     )
     parser.add_argument(
         '--report',
@@ -25,8 +25,6 @@ def run(args):
     api = args.repos
     
     if args.filename:
-        if not args.filename.is_file():
-            raise IOError("%s does not exist" % args.filename)
         sheets = [Sheet(args.filename)]
     else:
         sheets = api.iter_sheets()

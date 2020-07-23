@@ -43,11 +43,11 @@ def lowerupper(s):
     lower, upper = [], []
     for i, x in enumerate(parts):
         if not recapstart.match(x):
-            lower.append(x)
+            lower.append(x)  # pragma: no cover
         else:
             upper = parts[i:]
             break
-    return (lower, upper)
+    return lower, upper
 
 
 def lastvon(author):

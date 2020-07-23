@@ -5,6 +5,7 @@ from csvw import dsv
 from clldutils.clilib import PathType
 from pygrambank.sheet import Sheet
 
+
 def register(parser):
     parser.add_argument('path', nargs='+', type=PathType(type='file'))
 
@@ -22,10 +23,9 @@ def run(args):
                 
                 # check other cells are empty
                 for i, e in enumerate(row):
-                    if i not in not_empty and e:
+                    if i not in not_empty and e:  # pragma: no cover
                         raise ValueError(
                             "Unlabelled column has value on line %d. Fix manually!" % i
                         )
                 w.writerow([row[i] for i in not_empty])
     return
-        

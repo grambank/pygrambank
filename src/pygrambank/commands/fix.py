@@ -1,6 +1,8 @@
 """
 Fix sheet(s) by applying a lambda function to all its rows.
 """
+import pathlib
+
 from pygrambank.sheet import Sheet
 
 
@@ -19,6 +21,9 @@ def register(parser):
 
 def run(args):
     for sheet in args.sheets:
+        p = pathlib.Path(sheet)
+        if p.exists() and p.is_file():
+            sheet = p.name
         sheet = Sheet(args.repos.sheets_dir / sheet)
         args.log.info('fixing {0}'.format(sheet.path))
         read, written = sheet.visit(row_visitor=eval(args.lambda_))
