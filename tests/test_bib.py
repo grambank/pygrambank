@@ -13,6 +13,9 @@ def test_iter_authors(string, expected):
 
 @pytest.mark.parametrize('string, expected', [
     (
+        'Mueller, Jr., Hans d\'er von',
+        [{'jr': 'Jr.', 'firstname': 'Hans d\'er von', 'lastname': 'Mueller'}]),
+    (
         'Thomas von Mueller',
         [{'firstname': 'Thomas', 'lastname': 'von Mueller'}]),
     (

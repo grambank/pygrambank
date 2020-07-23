@@ -5,11 +5,16 @@ import pytest
 
 
 @pytest.fixture
-def api(tmpdir):
+def repos(tmpdir):
+    shutil.copytree(str(Path(__file__).parent / 'repos'), str(tmpdir.join('repos')))
+    return Path(str(tmpdir.join('repos')))
+
+
+@pytest.fixture
+def api(repos):
     from pygrambank.api import Grambank
 
-    shutil.copytree(str(Path(__file__).parent / 'repos'), str(tmpdir.join('repos')))
-    return Grambank(str(tmpdir.join('repos')))
+    return Grambank(repos)
 
 
 @pytest.fixture

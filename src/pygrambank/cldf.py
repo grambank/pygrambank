@@ -181,7 +181,9 @@ def create(api, glottolog, wiki, cldf_repos):
             continue
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
-        assert all(c in cids for c in sheet.coders)
+        for c in sheet.coders:
+            if c not in cids:
+                raise ValueError('unknown coder ID: {0} in {1}'.format(c, sheet.path))
         ld = dict(
             ID=sheet.glottocode,
             Name=lang.name,
@@ -225,8 +227,8 @@ def create(api, glottolog, wiki, cldf_repos):
         per_sheet[k[-1]].append(k[:-1])
     print(sum(unresolved.values()))
 
-    for k, v in sorted(per_sheet.items(), key=lambda i: (len(i[1]), i[0])):
-        print(k, v)
+    #for k, v in sorted(per_sheet.items(), key=lambda i: (len(i[1]), i[0])):
+    #    print(k, v)
     return coded_sheets
 
 

@@ -20,7 +20,7 @@ def register(parser):
 
 
 def run(args):
-    if args.out == FNAME:
+    if args.out == FNAME:  # pragma: no cover
         name = args.repos.path(args.out)
     else:
         name = pathlib.Path(args.out)
