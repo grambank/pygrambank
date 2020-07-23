@@ -1,6 +1,6 @@
-from itertools import groupby
-from collections import Counter, defaultdict
-from pathlib import Path
+import pathlib
+import itertools
+import collections
 
 import pyglottolog
 from clldutils.misc import lazyproperty
@@ -43,7 +43,7 @@ def iterunique(insheets):
     For languages which have been coded multiple times, we pick out the best sheet.
     """
     # Sort sheets by glottocode and number of values, then group:
-    for gc, sheets in groupby(
+    for gc, sheets in itertools.groupby(
             sorted(insheets, key=lambda s: (s[0].glottocode, -len(s[1]), s[0].path.stem)),
             lambda s: s[0].glottocode):
         sheets = list(sheets)
@@ -75,7 +75,7 @@ def create(api, glottolog, wiki, cldf_repos):
     bibs.update(api.bib)
 
     print('computing lang-to-refs mapping ...')
-    lgks = defaultdict(set)
+    lgks = collections.defaultdict(set)
     for key, (typ, fields) in bibs.items():
         if 'lgcode' in fields:
             for code in bib.lgcodestr(fields['lgcode']):
@@ -96,7 +96,8 @@ def create(api, glottolog, wiki, cldf_repos):
             GitRepository('https://github.com/glottobank/Grambank/wiki', clone=wiki),
         ],
         wasGeneratedBy=GitRepository(
-            'https://github.com/glottobank/pygrambank', clone=Path(__file__).parent.parent.parent),
+            'https://github.com/glottobank/pygrambank',
+            clone=pathlib.Path(__file__).parent.parent.parent),
     )
 
     dataset.add_table('contributors.csv', 'ID', 'Name')
@@ -144,7 +145,7 @@ def create(api, glottolog, wiki, cldf_repos):
     table.common_props['dc:conformsTo'] = None
     table.tableSchema.primaryKey = ['ID']
 
-    data, families = defaultdict(list), set()
+    data, families = collections.defaultdict(list), set()
 
     for fid, feature in sorted(api.features.items()):
         data['ParameterTable'].append(dict(
@@ -174,7 +175,7 @@ def create(api, glottolog, wiki, cldf_repos):
             return [row['Contributed_datapoints']]
         return sheet.coders
 
-    unresolved, coded_sheets = Counter(), {}
+    unresolved, coded_sheets = collections.Counter(), {}
     for sheet, values in sorted(sheets, key=lambda i: i[0].glottocode):
         if not values:  # pragma: no cover
             print('ERROR: empty sheet {0}'.format(sheet.path))
@@ -221,14 +222,12 @@ def create(api, glottolog, wiki, cldf_repos):
         } for gc in families], key=lambda d: d['ID'])
     dataset.write(**data)
 
-    per_sheet = defaultdict(list)
+    per_sheet = collections.defaultdict(list)
     for k, v in reversed(unresolved.most_common()):
         print(k, v)
         per_sheet[k[-1]].append(k[:-1])
     print(sum(unresolved.values()))
 
-    #for k, v in sorted(per_sheet.items(), key=lambda i: (len(i[1]), i[0])):
-    #    print(k, v)
     return coded_sheets
 
 
@@ -260,7 +259,7 @@ class Glottolog(object):
 
     @lazyproperty
     def descendants_map(self):
-        res = defaultdict(list)
+        res = collections.defaultdict(list)
         for l in self.languoids:
             res[l.id].append(l.id)
             if l.lineage:

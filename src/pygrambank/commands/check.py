@@ -23,7 +23,7 @@ def register(parser):
 def run(args):
     report, counts = [], {}
     api = args.repos
-    
+
     if args.filename:
         sheets = [Sheet(args.filename)]
     else:

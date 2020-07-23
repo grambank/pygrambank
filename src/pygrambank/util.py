@@ -57,7 +57,7 @@ def normalized_value(v):
         '\\',
         'x',
     }:
-        return '?'
+        return '?'  # pragma: no cover
     return v
 
 
@@ -66,8 +66,8 @@ def _normalized_row(row):
         row[k] = row[k].strip() if row[k] else row[k]
 
     # Normalize column names:
-    if 'Grambank ID' in row and 'Feature_ID' in row:
-        row['Feature'] = row.pop('Feature_ID')
+    if ('Grambank ID' in row) and ('Feature_ID' in row):
+        row['Feature'] = row.pop('Feature_ID')  # pragma: no cover
 
     for col, aliases in GB_COLS.items():
         if col not in row:
@@ -113,7 +113,7 @@ def iter_xlsx(fname):
                 for j, c in enumerate(row):
                     # There's a couple of sheets with > 10,000 columns, labeled with "Column<no>".
                     # We cut these out to reduce TSV bloat.
-                    if re.match('Column[0-9]+$', '{0}'.format(c.value)):
+                    if re.match('Column[0-9]+$', '{0}'.format(c.value)):  # pragma: no cover
                         skip_cols.add(j)
             row = [_read_excel_value(c.value) for j, c in enumerate(row) if j not in skip_cols]
             if set(row) == {''}:  # pragma: no cover
@@ -132,7 +132,7 @@ def iter_xlsx(fname):
                 data.append(row)
                 yield _normalized_row(collections.OrderedDict(zip(header, row)))
 
-        for i in empty_cols:
+        for i in empty_cols:  # pragma: no cover
             assert all(not bool(r[i]) for r in data), \
                 'Empty header for non-empty column: {0}'.format(i)
 
@@ -152,7 +152,7 @@ def iter_xls(fname):
             if sheetname in rows_by_sheetname:
                 rows = rows_by_sheetname[sheetname]
                 break
-    else:
+    else:  # pragma: no cover
         rows = list(rows_by_sheetname.values())[0]
     assert all(bool(c) for c in rows[0]), 'Empty column header'
     for row in rows[1:]:
