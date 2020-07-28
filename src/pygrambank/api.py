@@ -12,7 +12,7 @@ from pygrambank.sheet import Sheet
 class Grambank(API):
     def __init__(self, repos, wiki=None):
         API.__init__(self, repos)
-        self.wiki = wiki or self.repos.parent / 'Grambank.wiki'
+        self.wiki = wiki or self.repos.resolve().parent / 'Grambank.wiki'
         self.gb20 = GB20(self.path('gb20.txt'))
 
     @property

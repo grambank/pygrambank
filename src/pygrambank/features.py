@@ -24,7 +24,13 @@ class Feature(OrderedDict):
                 items.append(re.split('\s*:\s*', line.strip(), 1))
         # Make sure there are no duplicate keys:
         assert len(set(i[0] for i in items)) == len(items)
-        return cls(items, wiki)
+        res = cls(items, wiki)
+        for k, v in res.wiki.items():
+            #print(k)
+            if k in res:
+                if res[k] != v:
+                    print('++++', k, res[k], v)
+        return res
 
     def as_chunk(self):
         return ''.join('{0}: {1}\n'.format(k, v) for k, v in self.items())
@@ -32,15 +38,18 @@ class Feature(OrderedDict):
     @lazyproperty
     def wiki(self):
         res = OrderedDict()
+        p = self._wiki / '{}.md'.format(self.id)
+        if not p.exists():
+            return res
         title, header, lines = None, None, []
-        for line in self._wiki.joinpath(
-                '{0}.md'.format(self.id)).read_text(encoding='utf-8-sig').split('\n'):
+        for line in p.read_text(encoding='utf-8-sig').split('\n'):
             line = line.strip()
             if (not title) and line.startswith('#'):
                 res['title'] = title = line.replace('#', '').strip()
             elif line.startswith('## '):
                 if lines:
                     res[header] = '\n'.join(lines).strip()
+                    lines = []
                 header = line.replace('## ', '').strip()
             else:
                 lines.append(line)

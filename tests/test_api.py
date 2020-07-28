@@ -11,7 +11,7 @@ def test_features(api, wiki):
 
 
 def test_bib(api):
-    assert len(api.bib) == 3
+    assert len(api.bib) == 4
 
 
 def test_sheets(api):

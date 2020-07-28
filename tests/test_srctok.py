@@ -18,10 +18,10 @@ def bibs_and_lgks(api):
 
 
 def test_source_to_refs(capsys):
-    source_to_refs('1234', 'x', {}, {}, {})
+    source_to_refs('1234', 'x', {}, {}, Counter())
     out, _ = capsys.readouterr()
     assert 'PAGEONLY' in out
-    assert source_to_refs('p.c.', 'x', {}, {}, {})[0] == []
+    assert source_to_refs('p.c.', 'x', {}, {}, Counter())[0] == []
     unresolved = Counter()
     source_to_refs('Meier 2018', 'x', {}, {}, unresolved)
     assert unresolved
@@ -33,3 +33,5 @@ def test_source_to_refs_disambiguation_by_title(bibs_and_lgks):
     bibs, lgks = bibs_and_lgks
     assert source_to_refs('Author_beta 2020', 'abc', bibs, lgks, {})[0] == [('book2020b', [])]
     assert source_to_refs('Author_alpha 2020', 'abc', bibs, lgks, {})[0] == [('book2020a', [])]
+    unresolved = Counter()
+    assert source_to_refs('Author nd', 'abc', bibs, lgks, unresolved)[0] == [('bookc', [])]
