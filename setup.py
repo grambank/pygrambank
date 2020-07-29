@@ -11,7 +11,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords='',
     license='Apache 2.0',
-    url='https://github.com/glottobank/pygrambank',
+    url='https://github.com/grambank/pygrambank',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     include_package_data=True,
