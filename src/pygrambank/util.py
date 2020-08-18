@@ -1,6 +1,7 @@
-import collections
-import warnings
 import re
+import warnings
+import itertools
+import collections
 
 from csvw import dsv
 import openpyxl
@@ -200,3 +201,25 @@ def write_tsv(in_, out_, glottocode):
             row['Language_ID'] = glottocode
             w.writerow(list(row.values()))
     return i
+
+
+def iterunique(insheets, verbose=False):
+    """
+    For languages which have been coded multiple times, we pick out the best sheet.
+    """
+    # Sort sheets by glottocode and number of values, then group:
+    for gc, sheets in itertools.groupby(
+            sorted(insheets, key=lambda s: (s[0].glottocode, -len(s[1]), s[0].path.stem)),
+            lambda s: s[0].glottocode):
+        sheets = list(sheets)
+        if len(sheets) == 1:
+            yield sheets[0]
+        else:
+            if verbose:
+                print('\nSelecting best sheet for {0}'.format(gc))
+            for i, (sheet, values) in enumerate(sheets):
+                if verbose:
+                    print('{0} dps: {1} sheet {2}'.format(
+                        len(values), 'choosing' if i == 0 else 'skipping', sheet.path.stem))
+                if i == 0:
+                    yield (sheet, values)

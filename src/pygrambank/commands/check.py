@@ -3,7 +3,9 @@ Check original_sheets/ for correctness.
 """
 from csvw.dsv import UnicodeWriter
 from clldutils.clilib import PathType
+
 from pygrambank.sheet import Sheet
+from pygrambank.util import iterunique
 
 
 def register(parser):
@@ -27,7 +29,8 @@ def run(args):
     if args.filename:
         sheets = [Sheet(args.filename)]
     else:
-        sheets = api.iter_sheets()
+        sheets = [(s, list(s.itervalues(api))) for s in api.iter_sheets()]
+        sheets = (s[0] for s in iterunique(sheets))
 
     for sheet in sheets:
         n = sheet.check(api, report=report)

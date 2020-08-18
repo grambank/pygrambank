@@ -29,6 +29,12 @@ def test_source_to_refs(capsys):
     assert source_to_refs('Gwynn&Krishnamurti1985, p.144', 'x', {}, {}, unresolved)[0] == []
 
 
+def test_source_to_refs_multi_word_name(bibs_and_lgks):
+    bibs, lgks = bibs_and_lgks
+    assert source_to_refs('Last Name 2000', 'abc', bibs, lgks, Counter())[0] == [('multi_word_name_1', [])]
+    assert source_to_refs('Last Name 1900', 'abc', bibs, lgks, Counter())[0] == [('multi_word_name_2', [])]
+
+
 def test_source_to_refs_disambiguation_by_title(bibs_and_lgks):
     bibs, lgks = bibs_and_lgks
     assert source_to_refs('Author_beta 2020', 'abc', bibs, lgks, {})[0] == [('book2020b', [])]

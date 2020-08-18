@@ -1,5 +1,4 @@
 import pathlib
-import itertools
 import collections
 
 import pyglottolog
@@ -11,6 +10,7 @@ from pycldf.sources import Source
 from pygrambank import bib
 from pygrambank import srctok
 from pygrambank.sheet import Sheet
+from pygrambank.util import iterunique
 
 # FIXME: These should be fixed in the data!
 INVALID = ['9', '.?']
@@ -38,26 +38,6 @@ def bibdata(sheet, values, e, lgks, unresolved):
                 yield src
 
 
-def iterunique(insheets):
-    """
-    For languages which have been coded multiple times, we pick out the best sheet.
-    """
-    # Sort sheets by glottocode and number of values, then group:
-    for gc, sheets in itertools.groupby(
-            sorted(insheets, key=lambda s: (s[0].glottocode, -len(s[1]), s[0].path.stem)),
-            lambda s: s[0].glottocode):
-        sheets = list(sheets)
-        if len(sheets) == 1:
-            yield sheets[0]
-        else:
-            print('\nSelecting best sheet for {0}'.format(gc))
-            for i, (sheet, values) in enumerate(sheets):
-                print('{0} dps: {1} sheet {2}'.format(
-                    len(values), 'choosing' if i == 0 else 'skipping', sheet.path.stem))
-                if i == 0:
-                    yield (sheet, values)
-
-
 def create(api, glottolog, wiki, cldf_repos):
     glottolog = Glottolog(glottolog)
     sheets = [
@@ -66,7 +46,7 @@ def create(api, glottolog, wiki, cldf_repos):
 
     # Chose best sheet for indivdual Glottocodes:
     print('selecting best sheets')
-    sheets = list(iterunique(sheets))
+    sheets = list(iterunique(sheets, verbose=True))
 
     descendants = glottolog.descendants_map
 
