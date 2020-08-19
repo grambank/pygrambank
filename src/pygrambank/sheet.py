@@ -29,6 +29,7 @@ class Row:
     contributed_datapoint = attr.ib(
         default=attr.Factory(list),
         converter=lambda s: re.findall('[A-Z]+(?=[^A-Z]|$)', s) if s else [])
+    Source_comment = attr.ib(default=None)
 
     @classmethod
     def from_dict(cls, d):

@@ -21,10 +21,10 @@ def bibdata(sheet, values, e, lgks, unresolved):
         return key.replace(':', '_').replace("'", "")
 
     for row in values:
-        if row['Source']:
-            row['Source_comment'] = row['Source']
+        if row.Source:
+            row.Source_comment = row.Source
             refs, sources = [], []
-            res = srctok.source_to_refs(row["Source"], sheet.glottocode, e, lgks, unresolved)
+            res = srctok.source_to_refs(row.Source, sheet.glottocode, e, lgks, unresolved)
             for key, pages in res[0]:
                 typ, fields = e[key]
                 ref = key = clean_key(key)
@@ -33,7 +33,7 @@ def bibdata(sheet, values, e, lgks, unresolved):
                 refs.append(ref)
                 sources.append(Source(typ, key, **fields))
 
-            row['Source'] = refs
+            row.Source = refs
             for src in sources:
                 yield src
 
@@ -42,7 +42,7 @@ def create(api, glottolog, wiki, cldf_repos):
     glottolog = Glottolog(glottolog)
     sheets = [
         Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
-    sheets = [(s, list(s.itervalues(api))) for s in sheets]
+    sheets = [(s, list(s.iter_row_objects(api))) for s in sheets]
 
     # Chose best sheet for indivdual Glottocodes:
     print('selecting best sheets')
@@ -79,51 +79,7 @@ def create(api, glottolog, wiki, cldf_repos):
             'https://github.com/glottobank/pygrambank',
             clone=pathlib.Path(__file__).parent.parent.parent),
     )
-
-    dataset.add_table('contributors.csv', 'ID', 'Name')
-
-    table = dataset.add_component(
-        'LanguageTable',
-        {
-            'name': 'Coders',
-            'dc:description': 'the contributor of the codings for this language',
-            'separator': ';',
-        },
-        {
-            'name': 'provenance',
-            'dc:description': 'name and last modification of the contributed file',
-        },
-        'Family_name',
-        'Family_id',
-        'Language_id',
-        'level',
-        {
-            'name': 'lineage',
-            'separator': '/',
-            'dc:description': 'list of ancestor groups in the Glottolog classification',
-        },
-    )
-    table.add_foreign_key('Family_id', 'families.csv', 'ID')
-    table.add_foreign_key('Coders', 'contributors.csv', 'ID')
-
-    dataset.add_component(
-        'ParameterTable',
-        {
-            'name': 'patron',
-            'dc:description': 'Grambank editor responsible for this feature',
-        },
-        'name_in_french',
-        'Grambank_ID_desc',
-        'bound_morphology',
-    )
-    dataset.add_component('CodeTable')
-    dataset.add_columns('ValueTable', 'Source_comment', {"name": "Coders", "separator": ";"})
-    dataset['ValueTable', 'Value'].null = ['?']
-    dataset['ValueTable'].add_foreign_key('Coders', 'contributors.csv', 'ID')
-
-    table = dataset.add_table('families.csv', 'ID', 'Newick')
-    table.common_props['dc:conformsTo'] = None
-    table.tableSchema.primaryKey = ['ID']
+    create_schema(dataset)
 
     data, families = collections.defaultdict(list), set()
 
@@ -149,11 +105,7 @@ def create(api, glottolog, wiki, cldf_repos):
     cids = set(d['ID'] for d in data['contributors.csv'])
 
     def coders(sheet, row):
-        if 'contributed_datapoints' in row:
-            return [row['contributed_datapoints']]
-        if 'Contributed_datapoints' in row:
-            return [row['Contributed_datapoints']]
-        return sheet.coders
+        return sorted(set(sheet.coders).union(row.contributed_datapoint))
 
     unresolved, coded_sheets = collections.Counter(), {}
     for sheet, values in sorted(sheets, key=lambda i: i[0].glottocode):
@@ -177,19 +129,18 @@ def create(api, glottolog, wiki, cldf_repos):
         if ld['Family_id']:
             families.add(ld['Family_id'])
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
-        for row in sorted(values, key=lambda r: r['Feature_ID']):
-            if row['Value'] in INVALID:
+        for row in sorted(values, key=lambda r: r.Feature_ID):
+            if row.Value in INVALID:
                 continue
             data['ValueTable'].append(dict(
-                ID='{0}-{1}'.format(row['Feature_ID'], sheet.glottocode),
+                ID='{0}-{1}'.format(row.Feature_ID, sheet.glottocode),
                 Language_ID=sheet.glottocode,
-                Parameter_ID=row['Feature_ID'],
-                Code_ID='{0}-{1}'.format(row['Feature_ID'], row['Value'])
-                if row['Value'] != '?' else None,
-                Value=row['Value'],
-                Comment=row['Comment'],
-                Source=row['Source'],
-                Source_comment=row.get('Source_comment'),
+                Parameter_ID=row.Feature_ID,
+                Code_ID='{0}-{1}'.format(row.Feature_ID, row.Value) if row.Value != '?' else None,
+                Value=row.Value,
+                Comment=row.Comment,
+                Source=row.Source,
+                Source_comment=row.Source_comment,
                 Coders=coders(sheet, row),
             ))
 
@@ -262,3 +213,50 @@ class Glottolog(object):
             if l.hid:
                 res[l.hid] = l
         return res
+
+
+def create_schema(dataset):
+    dataset.add_table('contributors.csv', 'ID', 'Name')
+
+    table = dataset.add_component(
+        'LanguageTable',
+        {
+            'name': 'Coders',
+            'dc:description': 'the contributor of the codings for this language',
+            'separator': ';',
+        },
+        {
+            'name': 'provenance',
+            'dc:description': 'name and last modification of the contributed file',
+        },
+        'Family_name',
+        'Family_id',
+        'Language_id',
+        'level',
+        {
+            'name': 'lineage',
+            'separator': '/',
+            'dc:description': 'list of ancestor groups in the Glottolog classification',
+        },
+    )
+    table.add_foreign_key('Family_id', 'families.csv', 'ID')
+    table.add_foreign_key('Coders', 'contributors.csv', 'ID')
+
+    dataset.add_component(
+        'ParameterTable',
+        {
+            'name': 'patron',
+            'dc:description': 'Grambank editor responsible for this feature',
+        },
+        'name_in_french',
+        'Grambank_ID_desc',
+        'bound_morphology',
+    )
+    dataset.add_component('CodeTable')
+    dataset.add_columns('ValueTable', 'Source_comment', {"name": "Coders", "separator": ";"})
+    dataset['ValueTable', 'Value'].null = ['?']
+    dataset['ValueTable'].add_foreign_key('Coders', 'contributors.csv', 'ID')
+
+    table = dataset.add_table('families.csv', 'ID', 'Newick')
+    table.common_props['dc:conformsTo'] = None
+    table.tableSchema.primaryKey = ['ID']
