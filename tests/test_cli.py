@@ -19,6 +19,12 @@ def test_recode(tmpdir):
     assert pathlib.Path(str(tmpdir)).joinpath('test').read_text(encoding='utf8') == 'äöü'
 
 
+def test_describe(api, capsys):
+    main(['--repos', str(api.repos), 'describe', 'ABBR', '--columns'])
+    out, _ = capsys.readouterr()
+    assert 'abcd1234.tsv' in out
+
+
 def test_cldf(args, tmpdir):
     with pytest.raises(AttributeError):
         cldf.run(args)

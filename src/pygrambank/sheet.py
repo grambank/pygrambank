@@ -1,73 +1,49 @@
 import re
-from collections import OrderedDict, Counter
+from collections import Counter
 from itertools import groupby
-import unicodedata
 
 import attr
 from csvw import dsv
-from clldutils.path import as_unicode
 
-
-GB_COLS = OrderedDict([
-    ("Language_ID", ["iso-639-3", "Language", "Glottocode", "glottocode"]),
-    ("Feature_ID", ["GramBank ID", "Grambank ID", "\* Feature number", "Grambank"]),
-    ("Value", []),
-    ("Source", []),
-    ("Comment", ["Freetext comment"]),
-    ("Feature Domain", ["Possible Values"]),
-])
-
-CODER_MAP = {
-    'Damian Blasi': 'Damián E. Blasi',
-    'Jemima Goodal': 'Jemima Goodall',
-    'Nancy Poo': 'Nancy Bakker',
-    'Hannah Haynie': 'Hannah J. Haynie',
-    'Hans-Philipp Go¨bel': 'Hans-Philipp Göbel',
-    'Cheryl Oluoch': 'Cheryl Akinyi Oluoch',
-    'Alena Witzlack': 'Alena Witzlack-Makarevich',
-    'Tania Martins': 'Tânia Martins',
-}
+from pygrambank.srctok import iter_ayps
 
 
 @attr.s
-class Row(object):
-    Language_ID = attr.ib()
+class Source:
+    author = attr.ib()
+    year = attr.ib()
+    pages = attr.ib()
+    in_title = attr.ib()
+
+    @property
+    def key(self):
+        return self.author, self.year, self.in_title
+
+
+@attr.s
+class Row:
     Feature_ID = attr.ib()
     Value = attr.ib()
     Source = attr.ib()
-    Comment = attr.ib()
-    Feature_Domain = attr.ib()
-    contributed_datapoints = attr.ib(default='')
+    Comment = attr.ib(default=None)
+    contributed_datapoint = attr.ib(
+        default=attr.Factory(list),
+        converter=lambda s: re.findall('[A-Z]+(?=[^A-Z]|$)', s) if s else [])
 
-
-@attr.s
-class NewSheet(object):
-    fname = attr.ib()
-
-    @property
-    def name(self):
-        return unicodedata.normalize('NFC', unicode_from_path(self.fname.stem))
-
-    @property
-    def suffix(self):
-        return self.fname.suffix
-
-    @property
-    def coders(self):
-        return [
-            CODER_MAP.get(n, n) or n for n in re.split(',\s+|\s+and\s+', self.name.split('_')[0])]
+    @classmethod
+    def from_dict(cls, d):
+        fields = list(attr.fields_dict(cls).keys())
+        kw = {}
+        for k, v in d.items():
+            if ('ontributed' in k) and ('atapoint' in k):
+                k = 'contributed_datapoint'
+            if k in fields:
+                kw[k] = v
+        return cls(**kw)
 
     @property
-    def language(self):
-        return self.name.split('_', 1)[1]
-
-    @property
-    def language_code(self):
-        return self.language.split('[')[1].split(']')[0].strip()
-
-
-def unicode_from_path(p):
-    return as_unicode(p, 'windows-1252')
+    def sources(self):
+        return [Source(*ayp) for ayp in iter_ayps(self.Source)]
 
 
 class Sheet(object):
@@ -83,6 +59,7 @@ class Sheet(object):
         self.path = path
         self.coders = match.group('coders').split('-')
         self.glottocode = match.group('glottocode')
+        self._rows = None
 
     def __str__(self):
         return str(self.path)
@@ -114,8 +91,14 @@ class Sheet(object):
         return dsv.reader(self.path, delimiter='\t', encoding='utf-8-sig', **kw)
 
     def iterrows(self):
-        for row in self._reader(dicts=True):
-            yield row
+        if self._rows is None:
+            self._rows = []
+            for row in self._reader(dicts=True):
+                self._rows.append(row)
+                yield row
+        else:
+            for row in self._rows:
+                yield row
 
     def visit(self, row_visitor=None):
         """
@@ -136,7 +119,48 @@ class Sheet(object):
                 if res:
                     w.writerow(list(row.values()))
                     count += 1
+        # Make sure calling iterrows again will re-read from disk:
+        self._rows = None
         return (len(rows), count)
+
+    def valid_row(self, row, api, log=None, features=None):
+        fid = row.get('Feature_ID')
+        if not fid:
+            return False
+        res = True
+        if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
+            if row.get('Value'):
+                if log:
+                    log('invalid Feature_ID: {0}'.format(fid), level='ERROR', row_=row)
+            res = False
+        if fid not in api.features:
+            return False
+        if row.get('Value'):
+            if row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
+                if log:
+                    log('invalid value {0}'.format(row['Value']), row_=row)
+                res = False
+        else:
+            res = False
+
+        if row['Value'] and not row['Source']:
+            if log:
+                log('value without source', level='WARNING', row_=row)
+            res = False
+        if row['Source'] and not row['Value']:
+            if log:
+                log('source given, but no value', level='WARNING', row_=row)
+            res = False
+        if row['Comment'] and not row['Value']:
+            if log:
+                log('comment given, but no value', level='WARNING', row_=row)
+            res = False
+        if row['Feature_ID'] in (features or set()):
+            if log:
+                log('duplicate value for feature {0}'.format(
+                    row['Feature_ID']), level='ERROR', row_=row)
+            res = False
+        return res
 
     def check(self, api, report=None):
         def log(msg, row_=None, level='ERROR'):
@@ -167,30 +191,8 @@ class Sheet(object):
 
         res, nvalid, features = [], 0, set()
         for row in self.iterrows():
-            fid = row.get('Feature_ID')
-            if not fid:
-                continue
-            if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
-                if row.get('Value'):
-                    log('invalid Feature_ID: {0}'.format(fid), level='ERROR', row_=row)
-            if fid not in api.features:
-                continue
-            if row.get('Value'):
-                if row['Value'] != '?' \
-                        and row['Value'] not in api.features[row['Feature_ID']].domain:
-                    log('invalid value {0}'.format(row['Value']), row_=row)
-                else:
-                    nvalid += 1
-
-            if row['Value'] and not row['Source']:
-                log('value without source', level='WARNING', row_=row)
-            if row['Source'] and not row['Value']:
-                log('source given, but no value', level='WARNING', row_=row)
-            if row['Comment'] and not row['Value']:
-                log('comment given, but no value', level='WARNING', row_=row)
-            if row['Feature_ID'] in features:
-                log('duplicate value for feature {0}'.format(
-                    row['Feature_ID']), level='ERROR', row_=row)
+            if self.valid_row(row, api, log=log, features=features):
+                nvalid += 1
             features.add(row['Feature_ID'])
             res.append(row)
 
@@ -208,19 +210,9 @@ class Sheet(object):
 
     def itervalues(self, api):
         for row in self.iterrows():
-            row = self._value_row(row, api)
-            if row:
+            if self.valid_row(row, api):
                 yield row
 
-    def _value_row(self, row, api):
-        for k in row:
-            row[k] = row[k].strip() if row[k] else row[k]
-        if not row['Value']:  # Drop rows with empty `Value` column.
-            return None
-        if row['Feature_ID'] not in api.features:  # Drop rows for obsolete features.
-            return None
-
-        # Uncertain values like "1?" are normalized as "?".
-        if re.match('[0-9]\?$', row['Value']) or re.match('\?[0-9]$', row['Value']):
-            row['Value'] = '?'
-        return row
+    def iter_row_objects(self, api):
+        for row in self.itervalues(api):
+            yield Row.from_dict(row)
