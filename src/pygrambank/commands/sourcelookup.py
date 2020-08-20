@@ -5,6 +5,7 @@ import pathlib
 import collections
 
 from termcolor import colored
+from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
 from pygrambank.cldf import refs
@@ -21,10 +22,23 @@ def register(parser):
         help="clone of glottolog/glottolog",
         type=pathlib.Path,
     )
+    parser.add_argument(
+        '--glottolog-version',
+        default=None,
+        help="tag to checkout glottolog/glottolog to",
+    )
 
 
 def run(args):
-    sources, unresolved, lgks = refs(args.repos, args.glottolog, Sheet(args.sheet))
+    if args.glottolog_version:  # pragma: no cover
+        with Catalog(args.glottolog, args.glottolog_version) as glottolog:
+            run_(args, glottolog.dir)
+    else:
+        run_(args, args.glottolog)
+
+
+def run_(args, glottolog):
+    sources, unresolved, lgks = refs(args.repos, glottolog, Sheet(args.sheet))
     seen = collections.defaultdict(list)
     print(colored('Resolved sources:', attrs=['bold']))
     for src in sources:

@@ -39,26 +39,19 @@ def bibdata(sheet, values, e, lgks, unresolved):
 
 
 def refs(api, glottolog, sheet):
-    glottocode = sheet.glottocode
     glottolog = Glottolog(glottolog)
-    languoid = glottolog.api.languoid(glottocode)
-    lang = None
+    languoid, lang = glottolog.api.languoid(sheet.glottocode), None
 
+    # Determine the associated language-level languoid:
     if languoid.level.name == 'dialect':
         for _, gc, _ in reversed(languoid.lineage):
             lang = glottolog.api.languoid(gc)
             if lang.level.name == 'language':
                 break
+    else:
+        lang = languoid
 
-    ids = set(nfilter([languoid.id, languoid.hid, languoid.iso]))
-    if lang:
-        ids = ids.union(set(nfilter([lang.id, lang.hid, lang.iso])))
-
-    descendants = collections.defaultdict(list)
-    descendants[languoid.id].append(languoid.id)
-    if languoid.lineage:
-        for _, gc, _ in languoid.lineage:
-            descendants[gc].append(languoid.id)
+    ids = set(nfilter([languoid.id, languoid.hid, languoid.iso, lang.id, lang.hid, lang.iso]))
 
     bibs = glottolog.bib('hh')
     bibs.update(api.bib)
