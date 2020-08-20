@@ -4,6 +4,6 @@ import pathlib
 def add_wiki_repos(parser):
     parser.add_argument(
         '--wiki_repos',
-        help="clone of glottobank/Grambank.wiki",
-        default=pathlib.Path('../Grambank.wiki'),
+        help="clone of grambank/grambank.wiki",
+        default=pathlib.Path('../grambank.wiki'),
         type=pathlib.Path)

@@ -2,7 +2,7 @@ import pathlib
 import collections
 
 import pyglottolog
-from clldutils.misc import lazyproperty
+from clldutils.misc import lazyproperty, nfilter
 from pycldf import StructureDataset
 from pycldf.dataset import GitRepository
 from pycldf.sources import Source
@@ -36,6 +36,47 @@ def bibdata(sheet, values, e, lgks, unresolved):
             row.Source = refs
             for src in sources:
                 yield src
+
+
+def refs(api, glottolog, sheet):
+    glottocode = sheet.glottocode
+    glottolog = Glottolog(glottolog)
+    languoid = glottolog.api.languoid(glottocode)
+    lang = None
+
+    if languoid.level.name == 'dialect':
+        for _, gc, _ in reversed(languoid.lineage):
+            lang = glottolog.api.languoid(gc)
+            if lang.level.name == 'language':
+                break
+
+    ids = set(nfilter([languoid.id, languoid.hid, languoid.iso]))
+    if lang:
+        ids = ids.union(set(nfilter([lang.id, lang.hid, lang.iso])))
+
+    descendants = collections.defaultdict(list)
+    descendants[languoid.id].append(languoid.id)
+    if languoid.lineage:
+        for _, gc, _ in languoid.lineage:
+            descendants[gc].append(languoid.id)
+
+    bibs = glottolog.bib('hh')
+    bibs.update(api.bib)
+
+    lgks = collections.defaultdict(set)
+    for key, (typ, fields) in bibs.items():
+        if 'lgcode' in fields:
+            for code in bib.lgcodestr(fields['lgcode']):
+                if code in ids:
+                    lgks[languoid.id].add(key)
+
+    def source(key):
+        type_, fields = bibs[key]
+        return key, type_, fields.get('author', fields.get('editor', '-')), fields.get('year', '-')
+
+    unresolved = collections.Counter()
+    res = bibdata(sheet, list(sheet.iter_row_objects(api)), bibs, lgks, unresolved)
+    return list(res), unresolved, [source(k) for k in lgks[languoid.id]]
 
 
 def create(api, glottolog, wiki, cldf_repos):
