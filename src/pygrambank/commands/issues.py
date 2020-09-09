@@ -128,12 +128,12 @@ def run(args):
             issue = Issue(issue, comments.get(str(issue['number']), []))
             if not issue.coding_problem:
                 continue
-            for c in issue.comments:
-                for url in c.iter_urls():
-                    print(url)
+            #for c in issue.comments:
+            #    for url in c.iter_urls():
+            #        print(url)
 
-            #t.append([
-            #    issue.id,
-            #    textwrap.shorten(issue.title, 50, placeholder=' […]'),
-            #    issue.user,
-            #    len(issue.comments)])
+            t.append([
+                issue.id,
+                textwrap.shorten(issue.title, 50, placeholder=' […]'),
+                issue.user,
+                len(issue.comments)])

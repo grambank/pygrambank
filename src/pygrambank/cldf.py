@@ -38,6 +38,18 @@ def bibdata(sheet, values, e, lgks, unresolved):
                 yield src
 
 
+class Bibs(dict):
+    def __init__(self, glottolog, api):
+        dict.__init__(self, glottolog.bib('hh'))
+        self.update(api.bib)
+
+    def iter_codes(self):
+        for key, (typ, fields) in self.items():
+            if 'lgcode' in fields:
+                for code in bib.lgcodestr(fields['lgcode']):
+                    yield key, code
+
+
 def refs(api, glottolog, sheet):
     glottolog = Glottolog(glottolog)
     languoid, lang = glottolog.api.languoid(sheet.glottocode), None
@@ -52,16 +64,12 @@ def refs(api, glottolog, sheet):
         lang = languoid
 
     ids = set(nfilter([languoid.id, languoid.hid, languoid.iso, lang.id, lang.hid, lang.iso]))
-
-    bibs = glottolog.bib('hh')
-    bibs.update(api.bib)
+    bibs = Bibs(glottolog, api)
 
     lgks = collections.defaultdict(set)
-    for key, (typ, fields) in bibs.items():
-        if 'lgcode' in fields:
-            for code in bib.lgcodestr(fields['lgcode']):
-                if code in ids:
-                    lgks[languoid.id].add(key)
+    for key, code in bibs.iter_codes():
+        if code in ids:
+            lgks[languoid.id].add(key)
 
     def source(key):
         type_, fields = bibs[key]
@@ -85,21 +93,18 @@ def create(api, glottolog, wiki, cldf_repos):
     descendants = glottolog.descendants_map
 
     print('loading bibs')
-    bibs = glottolog.bib('hh')
-    bibs.update(api.bib)
+    bibs = Bibs(glottolog, api)
 
     print('computing lang-to-refs mapping ...')
     lgks = collections.defaultdict(set)
-    for key, (typ, fields) in bibs.items():
-        if 'lgcode' in fields:
-            for code in bib.lgcodestr(fields['lgcode']):
-                if code in glottolog.languoids_by_ids:
-                    gc = glottolog.languoids_by_ids[code].id
-                    if gc in descendants:
-                        for cl in descendants[gc]:
-                            lgks[cl].add(key)
-                    else:
-                        print('---non-language', code)
+    for key, code in bibs.iter_codes():
+        if code in glottolog.languoids_by_ids:
+            gc = glottolog.languoids_by_ids[code].id
+            if gc in descendants:
+                for cl in descendants[gc]:
+                    lgks[cl].add(key)
+            else:
+                print('---non-language', code)
     print('... done')
 
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
