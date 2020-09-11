@@ -45,7 +45,7 @@ year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 
 refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
 
-capitals = 'ÅA-Z\x8e\x8f\x99\x9a'
+capitals = 'ÅA-Z\x8e\x8f\x99\x9aÉ'
 resrc = re.compile(
     "(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" +
     year + ")" + pg + "\)?")

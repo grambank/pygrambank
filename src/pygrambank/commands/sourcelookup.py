@@ -48,8 +48,12 @@ def run_(args, glottolog):
     if unresolved:
         print()
         print(colored('Unresolved sources:', attrs=['bold']))
-        for (author, year, code), v in unresolved.most_common():
-            print('{}\t{} {}'.format(v, author, year))
+        for spec, v in unresolved.most_common():
+            try:
+                author, year, code = spec
+                print('{}\t{} {}'.format(v, author, year))
+            except ValueError:
+                print(spec)
         if lgks:
             print()
             print(colored('Available sources:', attrs=['bold']))
