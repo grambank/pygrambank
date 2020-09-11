@@ -1,0 +1,57 @@
+[
+     {
+        "closed_at": "2019-06-14T01:22:25Z",
+        "body": "Hi Alena,\r\n\r\nI would just like to ",
+        "active_lock_reason": null,
+        "labels": [
+            {
+                "name": "coding problem",
+                "url": "https://api.github.com/repos/glottobank/Grambank/labels/coding%20problem",
+                "color": "0052cc",
+                "node_id": "MDU6TGFiZWw0MzE5MDI0NTM=",
+                "default": false,
+                "description": null,
+                "id": 431902453
+            }
+        ],
+        "url": "https://api.github.com/repos/glottobank/Grambank/issues/223",
+        "html_url": "https://github.com/glottobank/Grambank/issues/223",
+        "node_id": "MDU6SXNzdWUzODE5NDQ1Nzk=",
+        "user": {
+            "repos_url": "https://api.github.com/users/rhiannon-schembri/repos",
+            "followers_url": "https://api.github.com/users/rhiannon-schembri/followers",
+            "id": 32833669,
+            "organizations_url": "https://api.github.com/users/rhiannon-schembri/orgs",
+            "gravatar_id": "",
+            "html_url": "https://github.com/rhiannon-schembri",
+            "type": "User",
+            "starred_url": "https://api.github.com/users/rhiannon-schembri/starred{/owner}{/repo}",
+            "received_events_url": "https://api.github.com/users/rhiannon-schembri/received_events",
+            "gists_url": "https://api.github.com/users/rhiannon-schembri/gists{/gist_id}",
+            "avatar_url": "https://avatars1.githubusercontent.com/u/32833669?v=4",
+            "url": "https://api.github.com/users/rhiannon-schembri",
+            "login": "rhiannon-schembri",
+            "node_id": "MDQ6VXNlcjMyODMzNjY5",
+            "events_url": "https://api.github.com/users/rhiannon-schembri/events{/privacy}",
+            "following_url": "https://api.github.com/users/rhiannon-schembri/following{/other_user}",
+            "site_admin": false,
+            "subscriptions_url": "https://api.github.com/users/rhiannon-schembri/subscriptions"
+        },
+        "author_association": "CONTRIBUTOR",
+        "milestone": null,
+        "performed_via_github_app": null,
+        "state": "closed",
+        "labels_url": "https://api.github.com/repos/glottobank/Grambank/issues/223/labels{/name}",
+        "repository_url": "https://api.github.com/repos/glottobank/Grambank",
+        "id": 381944579,
+        "number": 223,
+        "comments": 1,
+        "created_at": "2018-11-18T09:43:21Z",
+        "updated_at": "2019-06-14T01:22:26Z",
+        "title": "GB401: Size of class for patient-labile verbs?",
+        "events_url": "https://api.github.com/repos/glottobank/Grambank/issues/223/events",
+        "assignees": [],
+        "comments_url": "https://api.github.com/repos/glottobank/Grambank/issues/223/comments",
+        "locked": false
+    }
+]

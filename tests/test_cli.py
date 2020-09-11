@@ -4,8 +4,7 @@ import argparse
 import pytest
 
 from pygrambank.__main__ import main
-from pygrambank.commands import cldf
-from pygrambank.commands import new
+from pygrambank.commands import cldf, new, issues
 
 
 @pytest.fixture
@@ -33,6 +32,22 @@ def test_cldf(args, tmpdir):
     args.wiki_repos = pathlib.Path('x')
     with pytest.raises(AttributeError):
         cldf.run(args)
+
+
+def test_issues(args, capsys):
+    args.id = None
+    args.format = 'simple'
+    issues.run(args)
+    out, _ = capsys.readouterr()
+    assert 'Comments' in out
+
+
+def test_issues_detail(args, capsys):
+    args.id = '223'
+    args.format = 'simple'
+    issues.run(args)
+    out, _ = capsys.readouterr()
+    assert 'Ping @' in out
 
 
 def test_new(args, tmpdir):

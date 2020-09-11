@@ -33,7 +33,7 @@ def run(args):
         ('Source', lambda f: ''),
         ('Comment', lambda f: ''),
         ('Contributed_datapoints', lambda f: ''),
-        ('Clarifying comments', lambda f: f.wiki['Summary']),
+        ('Clarifying comments', lambda f: f.wiki['Summary'].replace('\n', ' ')),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),

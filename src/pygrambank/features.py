@@ -55,6 +55,7 @@ class Feature(OrderedDict):
                 lines.append(line)
         if lines:
             res[header] = '\n'.join(lines).strip()
+        res['Patron'] = res['Patron'].split('\n')[0]
         return res
 
     @lazyproperty
