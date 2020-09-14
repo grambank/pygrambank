@@ -32,6 +32,7 @@ setup(
         'openpyxl==2.4.8',
         'pyglottolog>=2.0',
         'tqdm',
+        'beautifulsoup4>=4.9.1',
     ],
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],
