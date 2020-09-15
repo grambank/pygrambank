@@ -211,6 +211,7 @@ class Sheet(object):
 
     def itervalues(self, api):
         for row in self.iterrows():
+            print(self.valid_row(row, api), row)
             if self.valid_row(row, api):
                 yield row
 

@@ -37,7 +37,6 @@ setup(
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],
         'test': [
-            'mock',
             'pytest>=5.4',
             'pytest-mock',
             'pytest-cov',

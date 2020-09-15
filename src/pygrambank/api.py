@@ -1,5 +1,6 @@
 import collections
 
+from csvw.dsv import reader
 from clldutils.apilib import API
 from clldutils.misc import lazyproperty
 from pyglottolog.references.bibfiles import BibFile
@@ -23,6 +24,12 @@ class Grambank(API):
         for p in sorted(self.sheets_dir.iterdir(), key=lambda i: i.stem):
             if p.is_file() and p.name not in ['.gitattributes', '.DS_Store']:
                 yield Sheet(p)
+
+    @property
+    def exclude(self):
+        return {
+            r['Sheet']: r['Reason'] for r in
+            reader(self.path('exclude_from_cldf.tsv'), dicts=True, delimiter='\t')}
 
     @property
     def contributors(self):

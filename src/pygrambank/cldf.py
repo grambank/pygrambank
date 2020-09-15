@@ -83,7 +83,8 @@ def refs(api, glottolog, sheet):
 def create(api, glottolog, wiki, cldf_repos):
     glottolog = Glottolog(glottolog)
     sheets = [
-        Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)]
+        Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)
+        if f.name not in api.exclude]
     sheets = [(s, list(s.iter_row_objects(api))) for s in sheets]
 
     # Chose best sheet for indivdual Glottocodes:
