@@ -37,6 +37,7 @@ def run(args):
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),
+        ('Patron', lambda f: f.wiki['Patron']),
     ])
 
     with UnicodeWriter(name, delimiter='\t') as w:

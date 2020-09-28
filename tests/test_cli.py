@@ -55,7 +55,8 @@ def test_new(args, tmpdir):
     new.run(args)
     sheet = pathlib.Path(args.out)
     assert sheet.exists()
-    assert 'GB021' in sheet.read_text(encoding='utf-8')
+    text = sheet.read_text(encoding='utf-8')
+    assert all(s in text for s in ['GB021', 'Patron'])
 
 
 def test_remove_empty(tmpdir):
