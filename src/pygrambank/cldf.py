@@ -23,17 +23,19 @@ def bibdata(sheet, values, e, lgks, unresolved):
     for row in values:
         if row.Source:
             row.Source_comment = row.Source
-            refs, sources = [], []
+            refs, sources = collections.OrderedDict(), []
             res = srctok.source_to_refs(row.Source, sheet.glottocode, e, lgks, unresolved)
             for key, pages in res[0]:
                 typ, fields = e[key]
                 ref = key = clean_key(key)
-                if pages:
-                    ref += '[{0}]'.format(','.join(pages))
-                refs.append(ref)
+                if ref not in refs:
+                    refs[ref] = set()
+                refs[ref] = refs[ref].union(pages or [])
                 sources.append(Source(typ, key, **fields))
 
-            row.Source = refs
+            row.Source = [
+                '{}{}'.format(r, '[{}]'.format(','.join(sorted(p))) if p else '')
+                for r, p in refs.items()]
             for src in sources:
                 yield src
 
