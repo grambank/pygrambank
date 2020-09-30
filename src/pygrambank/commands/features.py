@@ -14,6 +14,11 @@ def register(parser):
 
 
 def run(args):
-    with Table(args, '#', 'ID', 'Title', 'Patron') as t:
+    contribs = {c.id: c.name for c in args.repos.contributors}
+    with Table(args, '#', 'ID', 'Title', 'Patrons') as t:
         for i, f in enumerate(args.repos.features.values(), start=1):
-            t.append([i, f.id, textwrap.shorten(f.wiki['title'], 50), f.wiki['Patron']])
+            t.append([
+                i,
+                f.id,
+                textwrap.shorten(f.wiki['title'], 50),
+                ' '.join([contribs[abbr] for abbr in f.patrons])])

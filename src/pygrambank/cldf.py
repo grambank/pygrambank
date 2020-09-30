@@ -130,7 +130,7 @@ def create(api, glottolog, wiki, cldf_repos):
             ID=fid,
             Name=feature.name,
             Description=feature.description,
-            patron=feature.patron,
+            Patrons=feature.patrons,
             name_in_french=feature.name_french,
             Grambank_ID_desc=feature['Grambank_ID_desc'],
             bound_morphology=feature['bound_morphology']
@@ -287,8 +287,9 @@ def create_schema(dataset):
     dataset.add_component(
         'ParameterTable',
         {
-            'name': 'patron',
-            'dc:description': 'Grambank editor responsible for this feature',
+            'name': 'Patrons',
+            'separator': ' ',
+            'dc:description': 'Grambank editors responsible for this feature',
         },
         'name_in_french',
         'Grambank_ID_desc',
@@ -298,6 +299,7 @@ def create_schema(dataset):
     dataset.add_columns('ValueTable', 'Source_comment', {"name": "Coders", "separator": ";"})
     dataset['ValueTable', 'Value'].null = ['?']
     dataset['ValueTable'].add_foreign_key('Coders', 'contributors.csv', 'ID')
+    dataset['ParameterTable'].add_foreign_key('Patrons', 'contributors.csv', 'ID')
 
     table = dataset.add_table('families.csv', 'ID', 'Newick')
     table.common_props['dc:conformsTo'] = None

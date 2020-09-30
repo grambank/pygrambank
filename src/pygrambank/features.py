@@ -4,6 +4,17 @@ from collections import OrderedDict
 from clldutils.misc import lazyproperty
 
 
+patrons = {
+    'Alena': 'AWM',
+    'Hannah': 'HJH',
+    'Harald': 'HH',
+    'Hedvig': 'HS',
+    'Jakob': 'JLE',
+    'Jeremy': 'JC',
+    'Jay': 'JLA',
+}
+
+
 class Feature(OrderedDict):
     def __init__(self, spec, wiki):
         OrderedDict.__init__(self, spec)
@@ -77,8 +88,10 @@ class Feature(OrderedDict):
         return self.get('Feature question in French')
 
     @lazyproperty
-    def patron(self):
-        return self['Feature patron']
+    def patrons(self):
+        return [
+            patrons[k] for k in
+            re.split('\s+(?:&|and)\s+', self.wiki['Patron'].strip())]
 
 
 class GB20(object):

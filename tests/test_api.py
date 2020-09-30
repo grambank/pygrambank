@@ -5,7 +5,7 @@ def test_features(api, wiki):
     f = api.features['GB021']
     assert f.description
     assert f.name
-    assert f.patron
+    assert f.patrons
     assert f.id
     assert 'Documentation' in api.features['GB020'].description
 
