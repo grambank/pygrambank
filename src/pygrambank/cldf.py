@@ -131,7 +131,6 @@ def create(api, glottolog, wiki, cldf_repos):
             Name=feature.name,
             Description=feature.description,
             Patrons=feature.patrons,
-            name_in_french=feature.name_french,
             Grambank_ID_desc=feature['Grambank_ID_desc'],
             bound_morphology=feature['bound_morphology']
         ))

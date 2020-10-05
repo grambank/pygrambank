@@ -84,10 +84,6 @@ class Feature(OrderedDict):
         return self['Feature']
 
     @lazyproperty
-    def name_french(self):
-        return self.get('Feature question in French')
-
-    @lazyproperty
     def patrons(self):
         return [
             patrons[k] for k in
