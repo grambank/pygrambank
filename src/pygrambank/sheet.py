@@ -36,6 +36,8 @@ class Row:
         fields = list(attr.fields_dict(cls).keys())
         kw = {}
         for k, v in d.items():
+            #if not k:
+            #    print(d)
             if ('ontributed' in k) and ('atapoint' in k):
                 k = 'contributed_datapoint'
             if k in fields:
