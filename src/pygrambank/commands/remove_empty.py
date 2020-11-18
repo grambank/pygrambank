@@ -20,7 +20,8 @@ def run(args):
             for i, row in enumerate(rows):
                 if i == 0:
                     not_empty = [i for i, k in enumerate(row) if k]
-
+                if set(row) == {''}:
+                    continue
                 # check other cells are empty
                 for i, e in enumerate(row):
                     if i not in not_empty and e:  # pragma: no cover
