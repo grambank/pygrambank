@@ -2,7 +2,7 @@
 
 Curation tools for [Grambank data](https://github.com/glottobank/Grambank).
 
-[![Build Status](https://travis-ci.org/glottobank/pygrambank.svg?branch=master)](https://travis-ci.org/glottobank/pygrambank)
+[![Build Status](https://github.com/glottobank/pygrambank/workflows/tests/badge.svg)](https://github.com/glottobank/pygrambank/actions?query=workflow%3Atests)
 [![codecov](https://codecov.io/gh/glottobank/pygrambank/branch/master/graph/badge.svg)](https://codecov.io/gh/glottobank/pygrambank)
 [![PyPI](https://img.shields.io/pypi/v/pygrambank.svg)](https://pypi.org/project/pygrambank)
 
