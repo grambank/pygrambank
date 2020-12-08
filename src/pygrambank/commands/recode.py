@@ -1,5 +1,5 @@
 """
-Recode a file
+Recode a file, i.e. change its encoding to UTF-8.
 """
 from clldutils.clilib import PathType
 

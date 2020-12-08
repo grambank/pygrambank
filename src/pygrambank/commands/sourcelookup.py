@@ -1,5 +1,5 @@
 """
-
+Lookup the references given in the `Source` column of a sheet in Glottolog or the Grambank bib.
 """
 import pathlib
 import collections

@@ -33,15 +33,27 @@ grambank --help
 
 More info on individual subcommands can be obtained running
 ```bash
-grambank help <SUBCOMMAND>
+grambank <SUBCOMMAND> -h
 ```
 e.g.
-```bash
-$ grambank help check
+```shell
+$ grambank describe -h
+usage: grambank describe [-h] [--columns] SHEET
 
-    grambank --repos PATH/TO/Grambank check
-    
-    Run data quality checks on a grambank repository.
+Describe a (set of) sheets.
+
+This includes checking for correctness - i.e. the functionality of `grambank check`.
+While references will be parsed, the corresponding sources will **not** be looked up
+in Glottolog (since this is slow). Thus, for a final check of a sheet, you must run
+`grambank sourcelookup`.
+
+positional arguments:
+  SHEET       Path of a specific TSV file to check or substring of a filename
+              (e.g. a glottocode)
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --columns   List columns of the sheet (default: False)
 ```
 
 

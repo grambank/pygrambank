@@ -1,5 +1,7 @@
 """
-
+Applies fixes to sheets imported from the HG project. Rows to fix are identified by
+- matching (Feature_ID, Value) against a list of known problems and
+- checking whether the original "Autotranslated" comment is still there.
 """
 import collections
 

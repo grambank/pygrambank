@@ -1,5 +1,5 @@
 """
-Fix sheet(s) by applying a lambda function to all its rows.
+Fix sheet(s) by applying a python lambda function to all its rows.
 """
 import pathlib
 

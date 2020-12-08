@@ -1,5 +1,5 @@
 """
-
+List active features.
 """
 import textwrap
 

@@ -1,5 +1,5 @@
 """
-Removes empty columns from a tsv file
+Removes empty columns and rows from a tsv file.
 """
 from csvw import dsv
 from clldutils.clilib import PathType

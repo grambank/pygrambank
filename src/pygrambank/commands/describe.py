@@ -1,5 +1,10 @@
 """
 Describe a (set of) sheets.
+
+This includes checking for correctness - i.e. the functionality of `grambank check`.
+While references will be parsed, the corresponding sources will **not** be looked up
+in Glottolog (since this is slow). Thus, for a final check of a sheet, you must run
+`grambank sourcelookup`.
 """
 import collections
 
