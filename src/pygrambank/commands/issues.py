@@ -2,9 +2,7 @@
 
 """
 import re
-import pathlib
 import textwrap
-from urllib.request import urlretrieve
 
 import dateutil.parser
 from bs4 import BeautifulSoup as bs

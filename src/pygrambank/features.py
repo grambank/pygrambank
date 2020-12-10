@@ -37,7 +37,6 @@ class Feature(OrderedDict):
         assert len(set(i[0] for i in items)) == len(items)
         res = cls(items, wiki)
         for k, v in res.wiki.items():
-            #print(k)
             if k in res:
                 if res[k] != v:
                     print('++++', k, res[k], v)

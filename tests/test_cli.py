@@ -1,5 +1,6 @@
 import pathlib
 import argparse
+import collections
 
 import pytest
 
@@ -60,7 +61,7 @@ def test_new(args, tmpdir):
 
 
 def test_remove_empty(tmpdir):
-    content = """a\tb\tc\t\t\t\n1\t2\t3\t\t\t\n"""
+    content = """a\tb\tc\t\t\t\n\t\t\t\t\t\n1\t2\t3\t\t\t\n"""
     tsv = tmpdir.join('XX_aaaa1234.tsv')
     tsv.write_text(content, encoding="utf8")
     main(['remove_empty', str(tsv)])
@@ -68,9 +69,9 @@ def test_remove_empty(tmpdir):
 
 
 def test_check(repos, capsys, tmpdir):
-    main(['--repos', str(repos), 'check', '--report', str(tmpdir.join('report.tsv'))])
+    main(['--repos', str(repos), 'check', '--verbose', '--report', str(tmpdir.join('report.tsv'))])
     out, err = capsys.readouterr()
-    assert all(word in out for word in ['WARNING', 'ERROR'])
+    assert all(word in out for word in ['WARNING', 'ERROR', 'Selecting', 'skipping'])
     main([
         '--repos', str(repos),
         'check',
@@ -88,6 +89,13 @@ def test_fix(repos):
     ])
     text = fname.read_text(encoding='utf8')
     assert ('book2018' not in text) and ('bookxyz' in text)
+
+
+def test_features(repos, capsys, mocker):
+    mocker.patch('pygrambank.features.patrons', collections.defaultdict(lambda: 'HJH'))
+    main(['--repos', str(repos), 'features'])
+    out, err = capsys.readouterr()
+    assert 'Patron' in out
 
 
 def test_cldf2(repos, tmpdir):

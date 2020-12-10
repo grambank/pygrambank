@@ -20,6 +20,11 @@ def register(parser):
         help="Path of TSV file, to which results will be written.",
         default=None,
     )
+    parser.add_argument(
+        '--verbose',
+        default=False,
+        action='store_true',
+    )
 
 
 def run(args):
@@ -30,7 +35,7 @@ def run(args):
         sheets = [Sheet(args.filename)]
     else:
         sheets = [(s, list(s.itervalues(api))) for s in api.iter_sheets()]
-        sheets = (s[0] for s in iterunique(sheets))
+        sheets = (s[0] for s in iterunique(sheets, verbose=args.verbose))
 
     for sheet in sheets:
         n = sheet.check(api, report=report)
