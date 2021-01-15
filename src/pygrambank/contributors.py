@@ -1,6 +1,7 @@
 import collections
 
 import attr
+from clldutils.markup import iter_markdown_tables
 
 
 @attr.s
@@ -22,18 +23,8 @@ def norm_header(s):
 class Contributors(list):
     @classmethod
     def from_md(cls, fname):
-        header = None
-        rows = []
-        for line in fname.open():
-            line = line.strip()
-            if line.startswith('|') and line.endswith('|'):
-                row = [c.strip() for c in line[1:-1].split('|')]
-                if header is None:
-                    header = [norm_header(s) for s in row]
-                    continue
-                elif set(line) == set('|:-'):
-                    continue
-                rows.append(Contributor(**dict(zip(header, row))))
+        header, rows = next(iter_markdown_tables(fname.read_text(encoding='utf8')))
+        rows = [Contributor(**dict(zip([norm_header(c) for c in header], row))) for row in rows]
         byid = collections.Counter([r.id for r in rows])
         if byid.most_common(1)[0][1] > 1:  # pragma: no cover
             raise ValueError(

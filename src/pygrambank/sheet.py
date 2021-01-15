@@ -58,7 +58,7 @@ class Sheet(object):
         match = self.name_pattern.match(path.name)
         assert match, 'Invalid sheet name: {0}'.format(path.name)
         self.path = path
-        self.coders = match.group('coders').split('-')
+        self.coders = match.group('coders').replace('CB-PE-AS', 'HunterGatherer').split('-')
         self.glottocode = match.group('glottocode')
         self._rows = None
 
@@ -197,16 +197,23 @@ class Sheet(object):
             features.add(row['Feature_ID'])
             res.append(row)
 
-        for gbid, rows in groupby(
-            sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID']
-        ):
-            rows = list(rows)
-            if len(rows) > 1:
-                # A feature is coded multiple times! If the codings are inconsistent, we raise
-                # an error, otherwise the first value takes precedence.
-                if len(set(r['Value'] for r in rows)) > 1:
-                    log('inconsistent multiple codings: {0}'.format([r['Value'] for r in rows]))
-
+        try:
+            for gbid, rows in groupby(
+                sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID']
+            ):
+                rows = list(rows)
+                if len(rows) > 1:
+                    # A feature is coded multiple times! If the codings are inconsistent, we raise
+                    # an error, otherwise the first value takes precedence.
+                    if len(set(r['Value'] for r in rows)) > 1:
+                        log('inconsistent multiple codings: {0}'.format([r['Value'] for r in rows]))
+        except:
+            for row in res:
+                if not row['Feature_ID']:
+                    print(row)
+                    break
+            print(self.path)
+            raise
         return nvalid
 
     def itervalues(self, api):

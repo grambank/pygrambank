@@ -24,9 +24,9 @@ setup(
     platforms='any',
     python_requires='>=3.5',
     install_requires=[
+        'clldutils>=3.6',
         'cldfcatalog',
         'pycldf>=1.6.2',
-        'clldutils>=3.1.1',
         'csvw>=1.5.5',
         'xlrd',
         'openpyxl==2.4.8',

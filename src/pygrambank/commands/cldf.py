@@ -46,3 +46,6 @@ def run(args):
     if not args.dev:
         ds = Dataset.from_metadata(args.cldf_repos / 'cldf' / 'StructureDataset-metadata.json')
         ds.validate(log=args.log)
+    #
+    # FIXME: write .zenodo.json
+    #
