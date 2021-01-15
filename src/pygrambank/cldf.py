@@ -290,7 +290,6 @@ def create_schema(dataset):
             'separator': ' ',
             'dc:description': 'Grambank editors responsible for this feature',
         },
-        'name_in_french',
         'Grambank_ID_desc',
         'bound_morphology',
     )
