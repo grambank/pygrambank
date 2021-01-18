@@ -144,7 +144,7 @@ def create(api, glottolog, wiki, cldf_repos):
             Description=feature.description,
             Patrons=feature.patrons,
         )
-        d.update({k: feature[k] for k in FEATURE_METADATA})
+        d.update({k: feature.get(k, '') for k in FEATURE_METADATA})
         data['ParameterTable'].append(d)
         for code, desc in sorted(feature.domain.items(), key=lambda i: int(i[0])):
             data['CodeTable'].append(dict(
