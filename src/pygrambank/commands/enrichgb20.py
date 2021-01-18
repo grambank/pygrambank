@@ -1,6 +1,7 @@
 """
 
 """
+import pathlib
 import itertools
 
 from csvw.dsv import reader
@@ -11,11 +12,16 @@ def register(parser):  # pragma: no cover
 
 
 def run(args):  # pragma: no cover
-    groupings = {r['ID']: r for r in reader(args.groupings, dicts=True, delimiter='\t')}
-    new_features = []
-    for feature in args.repos.ordered_features:
-        for k, v in itertools.dropwhile(
-                lambda i: i[0] != 'bound_morphology', groupings[feature.id].items()):
-            feature[k] = v
-        new_features.append(feature)
+    for p in pathlib.Path(args.groupings).glob('*.csv'):
+        groupings = {r['Feature_ID']: r for r in reader(p, dicts=True)}
+        new_features = []
+        for feature in args.repos.ordered_features:
+            for k, v in groupings[feature.id].items():
+                if k != 'Feature_ID':
+                    if k in feature:
+                        pass
+                        #assert feature[k] == v, '{}: {} -> {}'.format(k, feature[k], v)
+                    else:
+                        feature[k] = v
+            new_features.append(feature)
     args.repos.gb20.save(new_features)

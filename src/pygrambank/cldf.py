@@ -14,6 +14,18 @@ from pygrambank.util import iterunique
 
 # FIXME: These should be fixed in the data!
 INVALID = ['9', '.?']
+FEATURE_METADATA = [
+    'Grambank_ID_desc',
+    'bound_morphology',
+    'Flexivity',
+    'Gender/noun class',
+    'HM/DM',
+    'HM DM Score for counting',
+    'OV vs VO types (excl affixes)',
+    'OV VO score for counting',
+    'OV vs VO types (incl affixation)',
+    'informativity',
+]
 
 
 def bibdata(sheet, values, e, lgks, unresolved):
@@ -126,14 +138,14 @@ def create(api, glottolog, wiki, cldf_repos):
     data, families = collections.defaultdict(list), set()
 
     for fid, feature in sorted(api.features.items()):
-        data['ParameterTable'].append(dict(
+        d = dict(
             ID=fid,
             Name=feature.name,
             Description=feature.description,
             Patrons=feature.patrons,
-            Grambank_ID_desc=feature['Grambank_ID_desc'],
-            bound_morphology=feature['bound_morphology']
-        ))
+        )
+        d.update({k: feature[k] for k in FEATURE_METADATA})
+        data['ParameterTable'].append(d)
         for code, desc in sorted(feature.domain.items(), key=lambda i: int(i[0])):
             data['CodeTable'].append(dict(
                 ID='{0}-{1}'.format(fid, code),
@@ -290,8 +302,7 @@ def create_schema(dataset):
             'separator': ' ',
             'dc:description': 'Grambank editors responsible for this feature',
         },
-        'Grambank_ID_desc',
-        'bound_morphology',
+        *FEATURE_METADATA,
     )
     dataset.add_component('CodeTable')
     dataset.add_columns('ValueTable', 'Source_comment', {"name": "Coders", "separator": ";"})
