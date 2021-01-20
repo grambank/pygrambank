@@ -33,11 +33,11 @@ def run(args):
     if args.glottolog_version:  # pragma: no cover
         with Catalog(args.glottolog, args.glottolog_version) as glottolog:
             run_(args, glottolog.dir)
-    else:
+    else:  # pragma: no cover
         run_(args, args.glottolog)
 
 
-def run_(args, glottolog):
+def run_(args, glottolog):  # pragma: no cover
     sources, unresolved, lgks = refs(args.repos, glottolog, Sheet(args.sheet))
     seen = collections.defaultdict(list)
     print(colored('Resolved sources:', attrs=['bold']))

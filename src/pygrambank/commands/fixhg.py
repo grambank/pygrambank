@@ -8,7 +8,7 @@ import collections
 from csvw.dsv import reader
 
 
-class Fix:
+class Fix:  # pragma: no cover
     def __init__(self, spec):
         self.spec = collections.defaultdict(list)
         for r in reader(spec, dicts=True):
@@ -27,7 +27,7 @@ class Fix:
         return True
 
 
-def run(args):
+def run(args):  # pragma: no cover
     fix = Fix(args.repos.repos / 'HG_import' / 'HG_GB_mapping_JV_HS_revise.csv')
     for sheet in args.repos.iter_sheets():
         if sheet.path.stem.startswith('CB-'):

@@ -2,7 +2,6 @@
 
 """
 import pathlib
-import itertools
 
 from csvw.dsv import reader
 
@@ -20,7 +19,6 @@ def run(args):  # pragma: no cover
                 if k != 'Feature_ID':
                     if k in feature:
                         pass
-                        #assert feature[k] == v, '{}: {} -> {}'.format(k, feature[k], v)
                     else:
                         feature[k] = v
             new_features.append(feature)

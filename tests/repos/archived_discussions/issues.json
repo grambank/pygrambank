@@ -1,7 +1,7 @@
 [
      {
         "closed_at": "2019-06-14T01:22:25Z",
-        "body": "Hi Alena,\r\n\r\nI would just like to ",
+        "body": "Hi Alena,\r\n\r\nsee http://example.org and #34 and [ex](http://example.com) or ![alt](http://example.org/image.jpg)",
         "active_lock_reason": null,
         "labels": [
             {

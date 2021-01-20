@@ -207,7 +207,7 @@ class Sheet(object):
                     # an error, otherwise the first value takes precedence.
                     if len(set(r['Value'] for r in rows)) > 1:
                         log('inconsistent multiple codings: {0}'.format([r['Value'] for r in rows]))
-        except:
+        except:  # pragma: no cover  # noqa
             for row in res:
                 if not row['Feature_ID']:
                     print(row)

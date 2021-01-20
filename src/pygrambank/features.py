@@ -38,7 +38,7 @@ class Feature(OrderedDict):
         res = cls(items, wiki)
         for k, v in res.wiki.items():
             if k in res:
-                if res[k] != v:
+                if res[k] != v:  # pragma: no cover
                     print('++++', k, res[k], v)
         return res
 
@@ -72,7 +72,7 @@ class Feature(OrderedDict):
     def description(self):
         if self._wiki.joinpath('{0}.md'.format(self.id)).exists():
             return self._wiki.joinpath('{0}.md'.format(self.id)).read_text(encoding='utf-8-sig')
-        return self['Clarifying Comments']
+        return self['Clarifying Comments']  # pragma: no cover
 
     @lazyproperty
     def id(self):

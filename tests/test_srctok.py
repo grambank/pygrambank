@@ -3,7 +3,7 @@ from collections import Counter, defaultdict
 import pytest
 
 from pygrambank import bib
-from pygrambank.srctok import source_to_refs
+from pygrambank.srctok import source_to_refs, allmax, matchauthor
 
 
 @pytest.fixture
@@ -27,6 +27,8 @@ def test_source_to_refs(capsys):
     assert unresolved
     assert not source_to_refs('', 'x', {}, {}, unresolved)[0]
     assert source_to_refs('Gwynn&Krishnamurti1985, p.144', 'x', {}, {}, unresolved)[0] == []
+    res = source_to_refs('Meier 2007', 'x', {}, {}, Counter(), {('Meier', '2007', 'x'): 'abc'})
+    assert res[0][0][0] == 'abc'
 
 
 def test_source_to_refs_multi_word_name(bibs_and_lgks):
@@ -41,3 +43,12 @@ def test_source_to_refs_disambiguation_by_title(bibs_and_lgks):
     assert source_to_refs('Author_alpha 2020', 'abc', bibs, lgks, {})[0] == [('book2020a', [])]
     unresolved = Counter()
     assert source_to_refs('Author nd', 'abc', bibs, lgks, unresolved)[0] == [('bookc', [])]
+
+
+def test_misc():
+    assert allmax({}) == {}
+
+
+def test_matchauthor():
+    assert not matchauthor('Hans Meier', '', [])
+    assert matchauthor('Hans Meier', 'Hans Meier', [])

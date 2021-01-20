@@ -34,6 +34,7 @@ setup(
         'tqdm',
         'beautifulsoup4>=4.9.1',
         'ftfy',
+        'html5lib',
     ],
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],

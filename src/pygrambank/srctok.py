@@ -124,7 +124,8 @@ def iter_key_pages(lg, ayp, e, lgks):
             yield k, p
 
 
-def source_to_refs(src, lgid, e, lgks, unresolved):
+def source_to_refs(src, lgid, e, lgks, unresolved, fixrefs=None):
+    fixrefs = fixrefs or REFS
     ays = list(iter_ayps(src))
     refs = sorted(
         set(ref for s in ays for ref in iter_key_pages(lgid, s, e, lgks)),
@@ -152,8 +153,8 @@ def source_to_refs(src, lgid, e, lgks, unresolved):
         else:
             if ays:
                 for author, year, pages, word_from_title in ays:
-                    if (author, year, lgid) in REFS:
-                        refs.append((REFS[(author, year, lgid)], pages))
+                    if (author, year, lgid) in fixrefs:
+                        refs.append((fixrefs[(author, year, lgid)], pages))
                     else:
                         unresolved.update([(author, year, lgid)])
             else:

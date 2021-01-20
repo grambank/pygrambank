@@ -69,7 +69,7 @@ def refs(api, glottolog, sheet):
     languoid, lang = glottolog.api.languoid(sheet.glottocode), None
 
     # Determine the associated language-level languoid:
-    if languoid.level.name == 'dialect':
+    if languoid.level.name == 'dialect':  # pragma: no cover
         for _, gc, _ in reversed(languoid.lineage):
             lang = glottolog.api.languoid(gc)
             if lang.level.name == 'language':
@@ -119,7 +119,7 @@ def create(api, glottolog, wiki, cldf_repos):
                 for cl in descendants[gc]:
                     lgks[cl].add(key)
             else:
-                print('---non-language', code)
+                print('---non-language', code)  # pragma: no cover
     print('... done')
 
     dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
@@ -168,7 +168,7 @@ def create(api, glottolog, wiki, cldf_repos):
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
         for c in sheet.coders:
-            if c not in cids:
+            if c not in cids:  # pragma: no cover
                 raise ValueError('unknown coder ID: {0} in {1}'.format(c, sheet.path))
         ld = dict(
             ID=sheet.glottocode,
@@ -180,11 +180,11 @@ def create(api, glottolog, wiki, cldf_repos):
         ld.update(sheet.metadata(glottolog))
         data['LanguageTable'].append(ld)
         if ld['Family_id']:
-            families.add(ld['Family_id'])
+            families.add(ld['Family_id'])  # pragma: no cover
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
         for row in sorted(values, key=lambda r: r.Feature_ID):
             if row.Value in INVALID:
-                continue
+                continue  # pragma: no cover
             data['ValueTable'].append(dict(
                 ID='{0}-{1}'.format(row.Feature_ID, sheet.glottocode),
                 Language_ID=sheet.glottocode,
@@ -207,7 +207,7 @@ def create(api, glottolog, wiki, cldf_repos):
     dataset.write(**data)
 
     per_sheet = collections.defaultdict(list)
-    for k, v in reversed(unresolved.most_common()):
+    for k, v in reversed(unresolved.most_common()):  # pragma: no cover
         print(k, v)
         per_sheet[k[-1]].append(k[:-1])
     print(sum(unresolved.values()))

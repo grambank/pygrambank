@@ -3,11 +3,13 @@ import collections
 from csvw.dsv import reader
 from clldutils.apilib import API
 from clldutils.misc import lazyproperty
+from clldutils import jsonlib
 from pyglottolog.references.bibfiles import BibFile
 
 from pygrambank.features import GB20
 from pygrambank.contributors import Contributors
 from pygrambank.sheet import Sheet
+from pygrambank.issues import Issue
 
 
 class Grambank(API):
@@ -46,6 +48,12 @@ class Grambank(API):
     @lazyproperty
     def features(self):
         return collections.OrderedDict([(f['Grambank ID'], f) for f in self.ordered_features])
+
+    @lazyproperty
+    def issues(self):
+        issues = jsonlib.load(self.path('archived_discussions', 'issues.json'))
+        comments = jsonlib.load(self.path('archived_discussions', 'comments.json'))
+        return [Issue(issue, comments.get(str(issue['number']), [])) for issue in issues]
 
     def visit_feature(self, visitor):
         features = []
