@@ -84,7 +84,10 @@ def describe(args, sheet):
     coders_by_id = {c.id: c.name for c in args.repos.contributors}
 
     for k, v in coders.most_common():
-        print('{}\t{}:\t{}'.format(k, coders_by_id[k], str(v).rjust(3)))
+        if k in coders_by_id:
+            print('{}\t{}:\t{}'.format(k, coders_by_id[k], str(v).rjust(3)))
+        else:
+            args.log.error('Unknown coder: "{}"'.format(k))  # pragma: no cover
 
     if args.columns:
         head('Columns')
