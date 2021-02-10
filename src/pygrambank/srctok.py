@@ -43,7 +43,7 @@ repageonly = re.compile("[\d+\;\s\-etseqpassim\.]+$")
 pg = "(?:\:\s*(?P<p>[\d\,\s\-]+))?"
 year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 
-refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>)\s*" + pg + "\)?")
+refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>" + year + ")\s*" + pg + "\)?")
 
 capitals = 'ÅA-Z\x8e\x8f\x99\x9aÉ'
 resrc = re.compile(
