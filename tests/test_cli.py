@@ -6,7 +6,7 @@ import collections
 import pytest
 
 from pygrambank.__main__ import main
-from pygrambank.commands import cldf, new, issues
+from pygrambank.commands import new, issues
 
 
 @pytest.fixture
@@ -27,16 +27,6 @@ def test_describe(api, capsys, tmpdir):
     p = pathlib.Path(str(tmpdir)) / 'ABBR_abcd1234.tsv'
     shutil.copy(str(api.sheets_dir.joinpath('ABBR_abcd1234.tsv')), str(p))
     main(['--repos', str(api.repos), 'describe', str(p), '--columns'])
-
-
-def test_cldf(args, tmpdir):
-    with pytest.raises(AttributeError):
-        cldf.run(args)
-
-    args.glottolog = str(tmpdir)
-    args.wiki_repos = pathlib.Path('x')
-    with pytest.raises(AttributeError):
-        cldf.run(args)
 
 
 def test_issues(args, capsys):
@@ -111,14 +101,3 @@ def test_features(repos, capsys, mocker):
     ])
     out, err = capsys.readouterr()
     assert 'Patron' in out
-
-
-def test_cldf2(repos, tmpdir):
-    d = pathlib.Path(__file__).parent
-    main([
-        '--repos', str(repos),
-        'cldf',
-        '--wiki_repos', str(d / 'Grambank.wiki'),
-        '--cldf_repos', str(tmpdir),
-        str(d / 'glottolog'),
-    ])

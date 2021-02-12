@@ -94,7 +94,7 @@ def refs(api, glottolog, sheet):
     return list(res), unresolved, [source(k) for k in lgks[languoid.id]]
 
 
-def create(api, glottolog, wiki, cldf_repos):
+def create(dataset, api, glottolog):
     glottolog = Glottolog(glottolog)
     sheets = [
         Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)
@@ -122,15 +122,13 @@ def create(api, glottolog, wiki, cldf_repos):
                 print('---non-language', code)  # pragma: no cover
     print('... done')
 
-    dataset = StructureDataset.in_dir(cldf_repos / 'cldf')
     dataset.add_provenance(
         wasDerivedFrom=[
             GitRepository('https://github.com/glottobank/Grambank', clone=api.repos),
-            GitRepository('https://github.com/glottolog/glottolog', clone=glottolog.api.repos),
-            GitRepository('https://github.com/glottobank/Grambank/wiki', clone=wiki),
+            GitRepository('https://github.com/grambank/grambank/wiki', clone=api.wiki),
         ],
         wasGeneratedBy=GitRepository(
-            'https://github.com/glottobank/pygrambank',
+            'https://github.com/grambank/pygrambank',
             clone=pathlib.Path(__file__).parent.parent.parent),
     )
     create_schema(dataset)
@@ -220,7 +218,7 @@ class Glottolog(object):
     A custom facade to the Glottolog API.
     """
     def __init__(self, repos):
-        self.api = pyglottolog.Glottolog(repos)
+        self.api = repos if isinstance(repos, pyglottolog.Glottolog) else pyglottolog.Glottolog(repos)
 
     def bib(self, key):
         """
@@ -269,7 +267,8 @@ class Glottolog(object):
 
 
 def create_schema(dataset):
-    dataset.add_table('contributors.csv', 'ID', 'Name')
+    table = dataset.add_table('contributors.csv', 'ID', 'Name')
+    table.tableSchema.primaryKey = ['ID']
 
     table = dataset.add_component(
         'LanguageTable',
