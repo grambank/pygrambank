@@ -16,14 +16,11 @@ from pygrambank.util import iterunique
 INVALID = ['9', '.?']
 FEATURE_METADATA = [
     'Grambank_ID_desc',
-    'bound_morphology',
+    'boundness',
     'Flexivity',
     'Gender/noun class',
-    'HM/DM',
-    'HM DM Score for counting',
-    'OV vs VO types (excl affixes)',
-    'OV VO score for counting',
-    'OV vs VO types (incl affixation)',
+    'locus of marking',
+    'word order',
     'informativity',
 ]
 
