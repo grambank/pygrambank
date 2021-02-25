@@ -124,7 +124,7 @@ class Sheet(object):
         self._rows = None
         return (len(rows), count)
 
-    def valid_row(self, row, api, log=None, features=None):
+    def valid_row(self, row, api, lineno=None, log=None, features=None):
         fid = row.get('Feature_ID')
         if not fid:
             return False
@@ -132,67 +132,67 @@ class Sheet(object):
         if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
             if row.get('Value'):
                 if log:
-                    log('invalid Feature_ID: {0}'.format(fid), level='ERROR', row_=row)
+                    log('invalid Feature_ID: {0}'.format(fid), lineno, level='ERROR', row_=row)
             res = False
         if fid not in api.features:
             return False
         if row.get('Value'):
             if row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
                 if log:
-                    log('invalid value {0}'.format(row['Value']), row_=row)
+                    log('invalid value: {0}'.format(row['Value']), lineno, row_=row)
                 res = False
         else:
             res = False
 
         if row['Value'] and not row['Source']:
             if log:
-                log('value without source', level='WARNING', row_=row)
+                log('value without source', lineno, level='WARNING', row_=row)
             res = False
         if row['Source'] and not row['Value']:
             if log:
-                log('source given, but no value', level='WARNING', row_=row)
+                log('source given, but no value', lineno, level='WARNING', row_=row)
             res = False
         if row['Comment'] and not row['Value']:
             if log:
-                log('comment given, but no value', level='WARNING', row_=row)
+                log('comment given, but no value', lineno, level='WARNING', row_=row)
             res = False
         if row['Feature_ID'] in (features or set()):
             if log:
                 log('duplicate value for feature {0}'.format(
-                    row['Feature_ID']), level='ERROR', row_=row)
+                    row['Feature_ID']), lineno, level='ERROR', row_=row)
             res = False
         return res
 
     def check(self, api, report=None):
-        def log(msg, row_=None, level='ERROR'):
-            msg = [self.path.stem, level, row_['Feature_ID'] if row_ else '', msg]
+        def log(msg, lineno, row_=None, level='ERROR'):
+            msg = [self.path.stem, level, "L%d" % lineno, row_['Feature_ID'] if row_ else '', msg]
             print('\t'.join(msg))
             if report is not None:
                 report.append(msg)
 
         # Check the header:
         empty_index = []
-        for i, row in enumerate(self._reader()):
-            if i == 0:
+        for lineno, row in enumerate(self._reader()):
+            if lineno == 0:
                 for col in ['Feature_ID', 'Value', 'Comment', 'Source']:
                     if col not in row:
-                        log('missing column {0}'.format(col))
+                        log('missing column {0}'.format(col), lineno)
                 for j, c in enumerate(row):
                     if not c:
                         empty_index.append(j)
                 if len(set(row)) != len(row):
                     dupes = Counter([h for h in row if row.count(h) > 1])
-                    log('duplicate header column(s) %r' % dupes)
+                    log('duplicate header column(s) %r' % dupes, lineno)
             else:
                 if not empty_index:
                     break
                 for j in empty_index:
                     if row[j]:
-                        log('non-empty cell with empty header: {0}'.format(row[j]), level='WARNING')
+                        log('non-empty cell with empty header: {0}'.format(row[j]), lineno, level='WARNING')
 
         res, nvalid, features = [], 0, set()
-        for row in self.iterrows():
-            if self.valid_row(row, api, log=log, features=features):
+        for lineno, row in enumerate(self.iterrows(), 2):  # +2 to get line number correct
+            if self.valid_row(row, api, lineno=lineno, log=log, features=features):
                 nvalid += 1
             features.add(row['Feature_ID'])
             res.append(row)
