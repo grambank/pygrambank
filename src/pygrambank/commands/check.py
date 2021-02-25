@@ -35,7 +35,7 @@ def register(parser):
 def is_legacy(pathname):
     """Returns True if pathname matches one of the legacy datasets"""
     pathname = str(pathname)
-    for legacy in ['CB-PE-AS_', 'MD-GR-RSI_']:
+    for legacy in ['CB-PE-AS_', 'MD-GR-RSI_', 'SD_']:
         if pathname.startswith(legacy):
             return True
     return False
@@ -48,13 +48,13 @@ def run(args):
     if args.filename:
         sheets = [Sheet(args.filename)]
     else:
-        sheets = [(s, list(s.itervalues(api))) for s in api.iter_sheets()]
+        sheets = [s for s in api.iter_sheets()]
+        if not args.legacy:  # filter out legacy datasets
+            sheets = [s for s in sheets if not is_legacy(s.path.stem)]
+        sheets = [(s, list(s.itervalues(api))) for s in sheets]
         sheets = (s[0] for s in iterunique(sheets, verbose=args.verbose))
     
     for sheet in sorted(sheets, key=lambda s: s.path):
-        # filter out legacy datasets
-        if not args.filename and not args.legacy and is_legacy(sheet.path.stem):
-            continue
         n = sheet.check(api, report=report)
         if (sheet.glottocode not in counts) or (n > counts[sheet.glottocode][0]):
             counts[sheet.glottocode] = (n, sheet.path.stem)
