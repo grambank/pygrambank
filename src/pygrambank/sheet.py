@@ -164,8 +164,8 @@ class Sheet(object):
         return res
 
     def check(self, api, report=None):
-        def log(msg, lineno, row_=None, level='ERROR'):
-            msg = [self.path.stem, level, "L%d" % lineno, row_['Feature_ID'] if row_ else '', msg]
+        def log(msg, lineno="?", row_=None, level='ERROR'):
+            msg = [self.path.stem, level, "L{}".format(lineno), row_['Feature_ID'] if row_ else '', msg]
             print('\t'.join(msg))
             if report is not None:
                 report.append(msg)
