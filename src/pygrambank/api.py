@@ -50,9 +50,17 @@ class Grambank(API):
         return collections.OrderedDict([(f['Grambank ID'], f) for f in self.ordered_features])
 
     @lazyproperty
+    def issues_path(self):
+        return self.path('archived_discussions', 'issues.json')
+
+    @lazyproperty
+    def comments_path(self):
+        return self.path('archived_discussions', 'comments.json')
+
+    @lazyproperty
     def issues(self):
-        issues = jsonlib.load(self.path('archived_discussions', 'issues.json'))
-        comments = jsonlib.load(self.path('archived_discussions', 'comments.json'))
+        issues = jsonlib.load(self.issues_path)
+        comments = jsonlib.load(self.comments_path)
         return [Issue(issue, comments.get(str(issue['number']), [])) for issue in issues]
 
     def visit_feature(self, visitor):
