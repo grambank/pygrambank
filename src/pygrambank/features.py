@@ -23,7 +23,7 @@ class Feature(OrderedDict):
         spec = self['Possible Values'].replace('multistate', '').strip()
         delimiter = ',' if ',' in spec else ';'
         for val in spec.split(delimiter):
-            val, desc = re.split('\s*:\s*', val.strip())
+            val, desc = re.split(r'\s*:\s*', val.strip())
             int(val)
             self.domain[val] = desc
 
@@ -32,7 +32,7 @@ class Feature(OrderedDict):
         items = []
         for line in chunk.split('\n'):
             if ':' in line and not line.startswith('#'):
-                items.append(re.split('\s*:\s*', line.strip(), 1))
+                items.append(re.split(r'\s*:\s*', line.strip(), 1))
         # Make sure there are no duplicate keys:
         assert len(set(i[0] for i in items)) == len(items)
         res = cls(items, wiki)
@@ -86,7 +86,7 @@ class Feature(OrderedDict):
     def patrons(self):
         return [
             patrons[k] for k in
-            re.split('\s+(?:&|and)\s+', self.wiki['Patron'].strip())]
+            re.split(r'\s+(?:&|and)\s+', self.wiki['Patron'].strip())]
 
 
 class GB20(object):
@@ -109,7 +109,7 @@ class GB20(object):
         fn = wiki / "List-of-all-features.md"
         currentlist = []
         for m in re.finditer(
-            "\*\s*(?P<gbid>(GB)?\d\d\d)\s+\[(?P<feature>[^\]]+)\]\((?P<link>[^)]+)\)",
+            r"\*\s*(?P<gbid>(GB)?\d\d\d)\s+\[(?P<feature>[^]]+)]\((?P<link>[^)]+)\)",
             fn.read_text(encoding='utf-8')
         ):
             res = m.groupdict()

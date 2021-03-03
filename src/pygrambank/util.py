@@ -9,7 +9,7 @@ import xlrd
 
 GB_COLS = collections.OrderedDict([
     ("Language_ID", ["iso-639-3", "Language", "Glottocode", "glottocode"]),
-    ("Feature_ID", ["GramBank ID", "Grambank ID", "\* Feature number", "Grambank"]),
+    ("Feature_ID", ["GramBank ID", "Grambank ID", r"\* Feature number", "Grambank"]),
     ("Value", []),
     ("Source", []),
     ("Comment", ["Freetext comment"]),

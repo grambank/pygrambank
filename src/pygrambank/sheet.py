@@ -1,6 +1,6 @@
 import re
-from collections import Counter
-from itertools import groupby
+import itertools
+import collections
 
 import attr
 from csvw import dsv
@@ -52,7 +52,7 @@ class Sheet(object):
     Processing workflow:
     """
     name_pattern = re.compile(
-        '(?P<coders>[A-Z]+(-[A-Z]+)*)_(?P<glottocode>[a-z0-9]{4}[0-9]{4})\.tsv$')
+        r'(?P<coders>[A-Z]+(-[A-Z]+)*)_(?P<glottocode>[a-z0-9]{4}[0-9]{4})\.tsv$')
 
     def __init__(self, path):
         match = self.name_pattern.match(path.name)
@@ -78,7 +78,7 @@ class Sheet(object):
             print('--- no macroareas: {}'.format(self.glottocode))
         return dict(
             level=languoid.level.name,
-            lineage=[l[1] for l in languoid.lineage],
+            lineage=[lang[1] for lang in languoid.lineage],
             Language_ID=language.id,
             # Macroareas are assigned to language level nodes:
             Macroarea=language.macroareas[0].name if language.macroareas else '',
@@ -165,7 +165,12 @@ class Sheet(object):
 
     def check(self, api, report=None):
         def log(msg, lineno="?", row_=None, level='ERROR'):
-            msg = [self.path.stem, level, "L{}".format(lineno), row_['Feature_ID'] if row_ else '', msg]
+            msg = [
+                self.path.stem,
+                level,
+                "L{}".format(lineno),
+                row_['Feature_ID'] if row_ else '',
+                msg]
             print('\t'.join(msg))
             if report is not None:
                 report.append(msg)
@@ -181,14 +186,16 @@ class Sheet(object):
                     if not c:
                         empty_index.append(j)
                 if len(set(row)) != len(row):
-                    dupes = Counter([h for h in row if row.count(h) > 1])
+                    dupes = collections.Counter([h for h in row if row.count(h) > 1])
                     log('duplicate header column(s) %r' % dupes, lineno)
             else:
                 if not empty_index:
                     break
                 for j in empty_index:
                     if row[j]:
-                        log('non-empty cell with empty header: {0}'.format(row[j]), lineno, level='WARNING')
+                        log('non-empty cell with empty header: {0}'.format(row[j]),
+                            lineno,
+                            level='WARNING')
 
         res, nvalid, features = [], 0, set()
         for lineno, row in enumerate(self.iterrows(), 2):  # +2 to get line number correct
@@ -198,7 +205,7 @@ class Sheet(object):
             res.append(row)
 
         try:
-            for gbid, rows in groupby(
+            for gbid, rows in itertools.groupby(
                 sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID']
             ):
                 rows = list(rows)

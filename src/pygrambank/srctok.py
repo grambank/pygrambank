@@ -39,20 +39,20 @@ def allmax(d, f=max):
     return filterd(lambda k: d[k] == v, d)
 
 
-repageonly = re.compile("[\d+\;\s\-etseqpassim\.]+$")
-pg = "(?:\:\s*(?P<p>[\d\,\s\-]+))?"
-year = "(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
+repageonly = re.compile(r"[\d+;\s\-etseqpassim.]+$")
+pg = r"(?:\:\s*(?P<p>[\d\,\s\-]+))?"
+year = r"(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 
-refullsrc = re.compile("^(?P<a>[^,]+)\,[^\(\d]+[\s\(](?P<y>" + year + ")\s*" + pg + "\)?")
+refullsrc = re.compile(r"^(?P<a>[^,]+),[^(\d]+[\s(](?P<y>" + year + r")\s*" + pg + r"\)?")
 
-capitals = 'ÅA-Z\x8e\x8f\x99\x9aÉ'
+capitals = r'ÅA-Z\x8e\x8f\x99\x9aÉ'
 resrc = re.compile(
-    "(?P<a>(?<![^\s\(])[" + capitals + "vd][a-z]*\D*[^\d\,\.])\.?\s\(?(?P<y>" +
-    year + ")" + pg + "\)?")
+    r"(?P<a>(?<![^\s(])[" + capitals + r"vd][a-z]*\D*[^\d,.])\.?\s\(?(?P<y>" +  # noqa: W504
+    year + r")" + pg + r"\)?")
 
 # Gwynn&Krishnamurti1985, p.144
 altrefullsrc = re.compile(
-    "^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
+    r"^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
 
 def iter_ayps(s, word_from_title=None):
@@ -88,7 +88,7 @@ def priok(ks, e):
 
 
 devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der", "El", "De la", "De"]
-respa = re.compile("[\s\,\,\.\-]+")
+respa = re.compile(r"[\s,.\-]+")
 
 
 def matchsingleauthor(ca, ba):
@@ -99,7 +99,7 @@ def matchsingleauthor(ca, ba):
     return firsttoken in batokens
 
 
-resau = re.compile("\s*[\&\/]\s*| and ")
+resau = re.compile(r"\s*[&/]\s*| and ")
 
 
 def matchauthor(a, fas, extraauthors):

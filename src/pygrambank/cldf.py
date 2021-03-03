@@ -3,7 +3,6 @@ import collections
 
 import pyglottolog
 from clldutils.misc import lazyproperty, nfilter
-from pycldf import StructureDataset
 from pycldf.dataset import GitRepository
 from pycldf.sources import Source
 
@@ -218,7 +217,8 @@ class Glottolog(object):
     A custom facade to the Glottolog API.
     """
     def __init__(self, repos):
-        self.api = repos if isinstance(repos, pyglottolog.Glottolog) else pyglottolog.Glottolog(repos)
+        self.api = repos if isinstance(repos, pyglottolog.Glottolog) \
+            else pyglottolog.Glottolog(repos)
 
     def bib(self, key):
         """
@@ -237,16 +237,16 @@ class Glottolog(object):
 
     @lazyproperty
     def languoids_by_glottocode(self):
-        return {l.id: l for l in self.languoids}
+        return {lang.id: lang for lang in self.languoids}
 
     @lazyproperty
     def descendants_map(self):
         res = collections.defaultdict(list)
-        for l in self.languoids:
-            res[l.id].append(l.id)
-            if l.lineage:
-                for _, gc, _ in l.lineage:
-                    res[gc].append(l.id)
+        for lang in self.languoids:
+            res[lang.id].append(lang.id)
+            if lang.lineage:
+                for _, gc, _ in lang.lineage:
+                    res[gc].append(lang.id)
         return res
 
     @lazyproperty
@@ -256,13 +256,13 @@ class Glottolog(object):
         where hid takes precedence over ISO 639-3 code.
         """
         res = {}
-        for l in self.languoids:
-            res[l.id] = l
-            if l.iso:
-                res[l.iso] = l
-        for l in self.languoids:
-            if l.hid:
-                res[l.hid] = l
+        for lang in self.languoids:
+            res[lang.id] = lang
+            if lang.iso:
+                res[lang.iso] = lang
+        for lang in self.languoids:
+            if lang.hid:
+                res[lang.hid] = lang
         return res
 
 

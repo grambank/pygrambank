@@ -39,7 +39,7 @@ class Base:
         return markdown(self.d['body'])
 
     def iter_urls(self):
-        for m in re.finditer('(?P<url>http(s)?://[^\s\)]+)', self.stripped_body):
+        for m in re.finditer(r'(?P<url>http(s)?://[^\s)]+)', self.stripped_body):
             yield m.group('url')
 
     def iter_issue_links(self):

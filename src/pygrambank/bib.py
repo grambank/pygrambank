@@ -4,18 +4,18 @@ from clldutils.misc import nfilter
 
 AUTHOR_PATTERNS = [
     re.compile(p) for p in [
-        "(?P<lastname>[^,]+),\s((?P<jr>[JS]r\.|[I]+),\s)?(?P<firstname>[^,]+)$",
-        "(?P<firstname>[^{][\S]+(\s[A-Z][\S]+)*)\s"
-        "(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
-        "(?P<firstname>\\{[\S]+\\}[\S]+(\s[A-Z][\S]+)*)\s"
-        "(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
-        "(?P<firstname>[\s\S]+?)\s\{(?P<lastname>[\s\S]+)\}(?P<jr>,\s[JS]r\.|[I]+)?$",
-        "\{(?P<firstname>[\s\S]+)\}\s(?P<lastname>[\s\S]+?)(?P<jr>,\s[JS]r\.|[I]+)?$",
-        "(?P<lastname>[A-Z][\S]+)$",
-        "\{(?P<lastname>[\s\S]+)\}$",
-        "(?P<lastname>[aA]nonymous)$",
-        "(?P<lastname>\?)$",
-        "(?P<lastname>[\s\S]+)$",
+        r"(?P<lastname>[^,]+),\s((?P<jr>[JS]r\.|[I]+),\s)?(?P<firstname>[^,]+)$",
+        r"(?P<firstname>[^{][\S]+(\s[A-Z][\S]+)*)\s"
+        r"(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
+        r"(?P<firstname>\\{[\S]+\\}[\S]+(\s[A-Z][\S]+)*)\s"
+        r"(?P<lastname>([a-z]+\s)*[A-Z\\\\][\S]+)(?P<jr>,\s[JS]r\.|[I]+)?$",
+        r"(?P<firstname>[\s\S]+?)\s\{(?P<lastname>[\s\S]+)\}(?P<jr>,\s[JS]r\.|[I]+)?$",
+        r"\{(?P<firstname>[\s\S]+)\}\s(?P<lastname>[\s\S]+?)(?P<jr>,\s[JS]r\.|[I]+)?$",
+        r"(?P<lastname>[A-Z][\S]+)$",
+        r"\{(?P<lastname>[\s\S]+)\}$",
+        r"(?P<lastname>[aA]nonymous)$",
+        r"(?P<lastname>\?)$",
+        r"(?P<lastname>[\s\S]+)$",
     ]
 ]
 
@@ -32,10 +32,10 @@ def pauthor(s):
     return nfilter(psingleauthor(a.strip()) for a in s.replace(" & ", " and ").split(' and '))
 
 
-reca = re.compile("\s*[,\&]\s*")
+reca = re.compile(r"\s*[,&]\s*")
 
-relu = re.compile("\s+|(d\')(?=[A-Z])")
-recapstart = re.compile("\[?[A-Z]")
+relu = re.compile(r"\s+|(d\')(?=[A-Z])")
+recapstart = re.compile(r"\[?[A-Z]")
 
 
 def lowerupper(s):
@@ -84,9 +84,9 @@ def iter_authors(key):
         yield acc
 
 
-reisobrack = re.compile("\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
-recomma = re.compile("[,/]\s?")
-reiso = re.compile("[a-z][a-z][a-z]$|NOCODE_[A-Z][^\s\]]+$")
+reisobrack = re.compile(r"\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
+recomma = re.compile(r"[,/]\s?")
+reiso = re.compile(r"[a-z][a-z][a-z]$|NOCODE_[A-Z][^\s\]]+$")
 
 
 def lgcodestr(lgcstr):
@@ -100,8 +100,8 @@ def lgcodestr(lgcstr):
 
 
 def hhtype(f):
-    rekillparen = re.compile(" \([^)]*\)")
-    respcomsemic = re.compile("[;,]\s?")
+    rekillparen = re.compile(r" \([^)]*\)")
+    respcomsemic = re.compile(r"[;,]\s?")
     return respcomsemic.split(rekillparen.sub("", f.get("hhtype", "unknown")))
 
 
