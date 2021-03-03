@@ -37,7 +37,7 @@ def run(args):
         sheets = [(s, list(s.itervalues(api))) for s in api.iter_sheets()]
         sheets = (s[0] for s in iterunique(sheets, verbose=args.verbose))
 
-    for sheet in sheets:
+    for sheet in sorted(sheets, key=lambda s: s.path):
         n = sheet.check(api, report=report)
         if (sheet.glottocode not in counts) or (n > counts[sheet.glottocode][0]):
             counts[sheet.glottocode] = (n, sheet.path.stem)
