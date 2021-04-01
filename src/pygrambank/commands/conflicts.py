@@ -7,6 +7,8 @@ import itertools
 from clldutils.clilib import PathType
 from csvw.dsv import UnicodeWriter
 
+from pygrambank.sheet import Row
+
 
 def register(parser):
     parser.add_argument(
@@ -55,6 +57,7 @@ def run(args):
                 'Select',
                 'Sheet',
                 'Source',
+                'Contributed_Datapoint',
                 'Comment',
                 'Warnings',
             ])
@@ -73,6 +76,7 @@ def run(args):
                         '',
                         sheet.path.stem,
                         row.get('Source', ''),
+                        ' '.join(Row.from_dict(row).contributed_datapoint),
                         row.get('Comment', ''),
                         warnings.messages,
                     ])
