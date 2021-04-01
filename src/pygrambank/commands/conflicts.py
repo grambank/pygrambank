@@ -7,21 +7,6 @@ import itertools
 from clldutils.clilib import PathType
 from csvw.dsv import UnicodeWriter
 
-"""
-2 only keep the following columns: "Source", "Value" "Contributed_Datapints", "Feature_ID" and "Comment"
-3 add resp. filename as column
-4 merge in columns from the output of pygrambank check
-5 pull apart filename into coder and glottocode
-6 do some basic checks for duplicates of Feature_ID + glottocode and check for conflicts
-7 for any glottocode where there is at least one conflict, output glottocode-specific sheet 
-(with name of selected sheet for that glottocode but containing all coding for that glottocode) 
-with cols for "Conflict" and "Check warning" into a separate file in the repos from original_sheet. 
-Add empty cols for "Classification of conflict" and "Select" for coder workflow
-8 together with a small set of GB coders, go through a few of these sheets using a standardised 
-set of possibly classification of conflicts (and solve check warnings along the way when relevant)
-9 evaluate classification schema with coders
-10 go through rest of sheets with at least one conflict
-"""
 
 def register(parser):
     parser.add_argument(
