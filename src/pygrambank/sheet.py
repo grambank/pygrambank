@@ -224,9 +224,14 @@ class Sheet(object):
         return nvalid
 
     def itervalues(self, api):
-        for row in self.iterrows():
-            if self.valid_row(row, api):
-                yield row
+        try:
+            for row in self.iterrows():
+                if self.valid_row(row, api):
+                    yield row
+        except:
+            print(self.path)
+            raise
+
 
     def iter_row_objects(self, api):
         for row in self.itervalues(api):
