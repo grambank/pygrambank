@@ -18,7 +18,8 @@ class Fix:  # pragma: no cover
         if (row['Feature_ID'], row['Value']) in self.spec:
             # We found a matching datapoint ...
             for spec in self.spec[(row['Feature_ID'], row['Value'])]:
-                if spec['Mapping'] in row['Comment']:
+                if spec['Mapping'] in row['Comment'] and ( 
+                        not row['Comment'].replace(spec['Mapping'], '').strip()):
                     # ... with a matching "Autotranslated" comment.
                     fid, val = spec['replace'].replace('GB86', 'GB086').split(':')
                     assert fid == row['Feature_ID'], spec
