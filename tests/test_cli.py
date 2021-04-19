@@ -21,7 +21,9 @@ def test_recode(tmp_path):
 
 
 def test_updatefeatures(api, capsys):
-    main(['--repos', str(api.repos), 'updatefeatures', 'ABBR'])
+    main(['--repos', str(api.repos),
+          'updatefeatures', 'ABBR',
+          '--wiki_repos', str(pathlib.Path(__file__).parent / 'Grambank.wiki')])
 
 
 def test_describe(api, capsys, tmp_path):
