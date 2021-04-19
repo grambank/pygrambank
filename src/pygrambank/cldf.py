@@ -307,5 +307,4 @@ def create_schema(dataset):
     dataset['ParameterTable'].add_foreign_key('Patrons', 'contributors.csv', 'ID')
 
     table = dataset.add_table('families.csv', 'ID', 'Newick')
-    table.common_props['dc:conformsTo'] = None
     table.tableSchema.primaryKey = ['ID']
