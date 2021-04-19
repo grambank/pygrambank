@@ -4,8 +4,8 @@ from pycldf import StructureDataset
 from pygrambank import cldf
 
 
-def test_create(api, wiki, capsys, tmpdir):
-    cldf_repos = Path(str(tmpdir))
+def test_create(api, wiki, capsys, tmp_path):
+    cldf_repos = tmp_path
     cldf.create(
         StructureDataset.in_dir(cldf_repos / 'cldf'),
         api,

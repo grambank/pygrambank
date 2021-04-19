@@ -2,8 +2,7 @@
 
 Curation tools for [Grambank data](https://github.com/glottobank/Grambank).
 
-[![Build Status](https://github.com/glottobank/pygrambank/workflows/tests/badge.svg)](https://github.com/glottobank/pygrambank/actions?query=workflow%3Atests)
-[![codecov](https://codecov.io/gh/glottobank/pygrambank/branch/master/graph/badge.svg)](https://codecov.io/gh/glottobank/pygrambank)
+[![Build Status](https://github.com/grambank/pygrambank/workflows/tests/badge.svg)](https://github.com/grambank/pygrambank/actions?query=workflow%3Atests)
 [![PyPI](https://img.shields.io/pypi/v/pygrambank.svg)](https://pypi.org/project/pygrambank)
 
 
@@ -13,7 +12,7 @@ Curation tools for [Grambank data](https://github.com/glottobank/Grambank).
 ```bash
 pip install pygrambank
 ```
-or from a clone of [`glottobank/pygrambank`]:
+or from a clone of [`grambank/pygrambank`]:
 ```bash
 git clone ...
 cd pygrambank
@@ -73,3 +72,4 @@ PosixPath('original_sheets')
 ... 
 original_sheets/AH_alag1248.tsv
 ```
+

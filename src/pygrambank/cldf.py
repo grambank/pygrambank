@@ -265,22 +265,36 @@ class Glottolog(object):
 
 def create_schema(dataset):
     table = dataset.add_table('contributors.csv', 'ID', 'Name')
+    table.common_props['dc:description'] = \
+        "Grambank is a collaborative effort. The people listed in this table contributed by " \
+        "coding languages or guiding the coding as feature patrons or by facilitating the " \
+        "project through funding, technical assitance, etc."
     table.tableSchema.primaryKey = ['ID']
 
     table = dataset.add_component(
         'LanguageTable',
         {
             'name': 'Coders',
-            'dc:description': 'the contributor of the codings for this language',
+            'dc:description': 'References the contributors of the codings for this language',
             'separator': ';',
         },
         {
             'name': 'provenance',
-            'dc:description': 'name and last modification of the contributed file',
+            'dc:description': 'Name of the contributed file',
         },
-        'Family_name',
-        'Family_id',
-        'Language_id',
+        {
+            'name': 'Family_name',
+            'dc:description': 'Name of the top-level language family the variety belongs to',
+        },
+        {
+            'name': 'Family_id',
+            'dc:description': 'Glottocode of the top-level language family',
+        },
+        {
+            'name': 'Language_id',
+            'dc:description': 'Glottocode of the language-level languoid a variety belongs to - '
+                              'in case of doalects',
+        },
         'level',
         {
             'name': 'lineage',
@@ -288,6 +302,7 @@ def create_schema(dataset):
             'dc:description': 'list of ancestor groups in the Glottolog classification',
         },
     )
+    table.common_props['dc:description'] = "Languageś and dialects for which Grambank has codings."
     table.add_foreign_key('Family_id', 'families.csv', 'ID')
     table.add_foreign_key('Coders', 'contributors.csv', 'ID')
 
@@ -306,6 +321,8 @@ def create_schema(dataset):
     dataset['ValueTable'].add_foreign_key('Coders', 'contributors.csv', 'ID')
     dataset['ParameterTable'].add_foreign_key('Patrons', 'contributors.csv', 'ID')
 
-    table = dataset.add_table('families.csv', 'ID', 'Newick')
-    table.common_props['dc:conformsTo'] = None
+    table = dataset.add_table(
+        'families.csv',
+        'ID',
+        'Newick')
     table.tableSchema.primaryKey = ['ID']

@@ -228,10 +228,9 @@ class Sheet(object):
             for row in self.iterrows():
                 if self.valid_row(row, api):
                     yield row
-        except:
+        except:  # pragma: no cover # noqa: E722
             print(self.path)
             raise
-
 
     def iter_row_objects(self, api):
         for row in self.itervalues(api):
