@@ -63,7 +63,7 @@ def run(args):
             ])
             # Iterate over rows grouped by feature ID:
             for fid, rows in grouped_rows(sheets):
-                conflict = len(set(r[0]['Value'] for r in rows)) > 1
+                conflict = len(set(r[0]['Value'] for r in rows if r[0]['Value'])) > 1
                 for row, sheet in rows:
                     # See what "grambank check" would do with the row:
                     warnings = Warnings()
