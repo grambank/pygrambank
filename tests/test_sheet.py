@@ -12,9 +12,9 @@ def sheet_abbr(api):
 
 
 @pytest.fixture
-def sheet_factory(tmpdir):
+def sheet_factory(tmp_path):
     def _make_one(text, name='ABBR_bcde1234.tsv'):
-        fname = pathlib.Path(str(tmpdir)) / name
+        fname = tmp_path / name
         fname.write_text(text, encoding='utf8')
         return sheet.Sheet(fname)
     return _make_one
@@ -59,7 +59,7 @@ def test_values(sheet_abbr, api):
     assert len(list(sheet_abbr.iter_row_objects(api))) == 1
 
 
-def test_Sheet(tmpdir, api, capsys, mocker, sheet_factory):
+def test_Sheet(api, capsys, sheet_factory):
     s = sheet_factory("""Feature_ID\tValue\tSource\tComment\tContributed datapoints
 GB020\t0\tMeier 2007\t\tHJH\n""")
     assert str(s).endswith('tsv')

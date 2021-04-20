@@ -5,9 +5,9 @@ import pytest
 
 
 @pytest.fixture
-def repos(tmpdir):
-    shutil.copytree(str(Path(__file__).parent / 'repos'), str(tmpdir.join('repos')))
-    return Path(str(tmpdir.join('repos')))
+def repos(tmp_path):
+    shutil.copytree(Path(__file__).parent / 'repos', tmp_path / 'repos')
+    return tmp_path / 'repos'
 
 
 @pytest.fixture
@@ -18,6 +18,6 @@ def api(repos):
 
 
 @pytest.fixture
-def wiki(tmpdir):
-    shutil.copytree(str(Path(__file__).parent / 'Grambank.wiki'), str(tmpdir.join('Grambank.wiki')))
-    return Path(str(tmpdir.join('Grambank.wiki')))
+def wiki(tmp_path):
+    shutil.copytree(Path(__file__).parent / 'Grambank.wiki', tmp_path / 'Grambank.wiki')
+    return tmp_path / 'Grambank.wiki'

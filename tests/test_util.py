@@ -12,6 +12,6 @@ from pygrambank import util
         ('Yet Another Coder_New Lang [abcd1234].xls', 0),
     ]
 )
-def test_write_tsv(api, tmpdir, fname, nrows):
+def test_write_tsv(api, tmp_path, fname, nrows):
     assert nrows == util.write_tsv(
-        api.path('obsolete_sheets', fname), str(tmpdir.join('t.tsv')), 'abcd1234')
+        api.path('obsolete_sheets', fname), tmp_path / 't.tsv', 'abcd1234')
