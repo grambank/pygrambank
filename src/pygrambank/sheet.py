@@ -79,13 +79,13 @@ class Sheet(object):
         return dict(
             level=languoid.level.name,
             lineage=[lang[1] for lang in languoid.lineage],
-            Language_ID=language.id,
+            Language_level_ID=language.id,
             # Macroareas are assigned to language level nodes:
             Macroarea=language.macroareas[0].name if language.macroareas else '',
             Latitude=languoid.latitude if languoid.latitude else language.latitude,
             Longitude=languoid.longitude if languoid.longitude else language.longitude,
             Family_name=languoid.lineage[0][0] if languoid.lineage else None,
-            Family_id=languoid.lineage[0][1] if languoid.lineage else None,
+            Family_level_ID=languoid.lineage[0][1] if languoid.lineage else None,
         )
 
     def _reader(self, **kw):

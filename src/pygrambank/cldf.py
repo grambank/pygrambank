@@ -173,8 +173,8 @@ def create(dataset, api, glottolog):
         )
         ld.update(sheet.metadata(glottolog))
         data['LanguageTable'].append(ld)
-        if ld['Family_id']:
-            families.add(ld['Family_id'])  # pragma: no cover
+        if ld['Family_level_ID']:
+            families.add(ld['Family_level_ID'])  # pragma: no cover
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
         for row in sorted(values, key=lambda r: r.Feature_ID):
             if row.Value in INVALID:
@@ -287,11 +287,11 @@ def create_schema(dataset):
             'dc:description': 'Name of the top-level language family the variety belongs to',
         },
         {
-            'name': 'Family_id',
+            'name': 'Family_level_ID',
             'dc:description': 'Glottocode of the top-level language family',
         },
         {
-            'name': 'Language_id',
+            'name': 'Language_level_ID',
             'dc:description': 'Glottocode of the language-level languoid a variety belongs to - '
                               'in case of doalects',
         },
@@ -303,7 +303,7 @@ def create_schema(dataset):
         },
     )
     table.common_props['dc:description'] = "Languageś and dialects for which Grambank has codings."
-    table.add_foreign_key('Family_id', 'families.csv', 'ID')
+    table.add_foreign_key('Family_level_ID', 'families.csv', 'ID')
     table.add_foreign_key('Coders', 'contributors.csv', 'ID')
 
     dataset.add_component(
