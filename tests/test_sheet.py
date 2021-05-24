@@ -69,7 +69,7 @@ GB020\t0\tMeier 2007\t\tHJH\n""")
     md = s.metadata(Glottolog(pathlib.Path(__file__).parent / 'glottolog'))
     out, _ = capsys.readouterr()
     assert 'no macroareas' in out
-    assert md['Language_ID'] == 'abcd1234'
+    assert md['Language_level_ID'] == 'abcd1234'
     assert s.visit() == (1, 1)
 
 
