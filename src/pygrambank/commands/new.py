@@ -8,7 +8,7 @@ from csvw.dsv import UnicodeWriter
 
 from pygrambank.cli_util import add_wiki_repos
 
-FNAME = 'For_coders/GramBank_most_updated_sheet.tsv'
+FNAME = 'For_coders/Grambank_most_updated_sheet.tsv'
 
 
 def register(parser):
@@ -32,7 +32,7 @@ def run(args):
         ('Value', lambda f: ''),
         ('Source', lambda f: ''),
         ('Comment', lambda f: ''),
-        ('Contributed_datapoints', lambda f: ''),
+        ('Contributed_Datapoints', lambda f: ''),
         ('Clarifying comments', lambda f: f.wiki['Summary'].replace('\n', ' ')),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
