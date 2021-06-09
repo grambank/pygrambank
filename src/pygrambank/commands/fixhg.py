@@ -15,16 +15,16 @@ class Fix:  # pragma: no cover
             self.spec[tuple(r['find'].split(':'))].append(r)
 
     def __call__(self, row):
-        if (row['Feature_ID'], row['Value']) in self.spec:
-            # We found a matching datapoint ...
-            for spec in self.spec[(row['Feature_ID'], row['Value'])]:
-                if spec['Mapping'] in row['Comment'] and (
-                        not row['Comment'].replace(spec['Mapping'], '').strip()):
-                    # ... with a matching "Autotranslated" comment.
-                    fid, val = spec['replace'].replace('GB86', 'GB086').split(':')
-                    assert fid == row['Feature_ID'], spec
-                    row['Value'] = val
-                    break
+        for key in [(row['Feature_ID'], row['Value']), (row['Feature_ID'], '*')]:
+            if key in self.spec:
+                # We found a matching datapoint ...
+                for spec in self.spec[key]:
+                    if spec['Mapping'] in row['Comment'] and (not 'MM' in row['Comment']):
+                        # ... with a matching "Autotranslated" comment.
+                        fid, val = spec['replace'].replace('GB86', 'GB086').split(':')
+                        assert fid == row['Feature_ID'], spec
+                        row['Value'] = val
+                        break
         return True
 
 
