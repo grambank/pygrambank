@@ -12,9 +12,15 @@ class Fix:  # pragma: no cover
     def __init__(self, spec):
         self.spec = collections.defaultdict(list)
         for r in reader(spec, dicts=True):
-            self.spec[tuple(r['find'].split(':'))].append(r)
+            if r['find']:
+                assert ':' in r['find'], r['find']
+                self.spec[tuple(r['find'].split(':'))].append(r)
 
     def __call__(self, row):
+        for k, v in row.items():
+            if ('ontributed' in k) and ('atapoint' in k):
+                if v.strip():
+                    return True
         for key in [(row['Feature_ID'], row['Value']), (row['Feature_ID'], '*')]:
             if key in self.spec:
                 # We found a matching datapoint ...
@@ -24,6 +30,9 @@ class Fix:  # pragma: no cover
                         fid, val = spec['replace'].replace('GB86', 'GB086').split(':')
                         assert fid == row['Feature_ID'], spec
                         row['Value'] = val
+                        if not val.strip():
+                            row['Comment'] = ''
+                            row['Source'] = ''
                         break
         return True
 

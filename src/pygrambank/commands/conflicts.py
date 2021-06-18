@@ -22,7 +22,7 @@ def grouped_rows(sheets):
             key=lambda i: (i[0]['Feature_ID'], i[1].path.name)),
         lambda r: r[0]['Feature_ID'],
     ):
-        yield fid, list(vals)
+        yield fid, [(r, s) for r, s in vals if r['Value']]
 
 
 class Warnings:
