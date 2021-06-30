@@ -32,7 +32,10 @@ def bibdata(sheet, values, e, lgks, unresolved):
         if row.Source:
             row.Source_comment = row.Source
             refs, sources = collections.OrderedDict(), []
+            uc = sum(list(unresolved.values()))
             res = srctok.source_to_refs(row.Source, sheet.glottocode, e, lgks, unresolved)
+            if sum(list(unresolved.values())) > uc:
+                row.Source_comment += ' (source not confirmed)'
             for key, pages in res[0]:
                 typ, fields = e[key]
                 ref = key = clean_key(key)
@@ -177,7 +180,7 @@ def create(dataset, api, glottolog):
             families.add(ld['Family_level_ID'])  # pragma: no cover
         dataset.add_sources(*list(bibdata(sheet, values, bibs, lgks, unresolved)))
         for row in sorted(values, key=lambda r: r.Feature_ID):
-            if row.Value in INVALID:
+            if (row.Value in INVALID) or ('source not confirmed' in row.Source_comment):
                 continue  # pragma: no cover
             data['ValueTable'].append(dict(
                 ID='{0}-{1}'.format(row.Feature_ID, sheet.glottocode),
