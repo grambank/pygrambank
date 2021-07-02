@@ -122,10 +122,6 @@ def create(dataset, api, glottolog):
     print('... done')
 
     dataset.add_provenance(
-        wasDerivedFrom=[
-            GitRepository('https://github.com/glottobank/Grambank', clone=api.repos),
-            GitRepository('https://github.com/grambank/grambank/wiki', clone=api.wiki),
-        ],
         wasGeneratedBy=GitRepository(
             'https://github.com/grambank/pygrambank',
             clone=pathlib.Path(__file__).parent.parent.parent),
