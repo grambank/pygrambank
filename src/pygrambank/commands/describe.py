@@ -28,6 +28,12 @@ def register(parser):
         action='store_true',
         help='List columns of the sheet',
     )
+    parser.add_argument(
+        '--read-only',
+        default=False,
+        action='store_true',
+        help='Do not roundtrip',
+    )
 
 
 def run(args):
@@ -37,6 +43,8 @@ def run(args):
         sheets = [s for s in args.repos.iter_sheets() if args.filename.name in s.path.name]
     for sheet in sheets:
         describe(args, sheet)
+        if not args.read_only:
+            sheet.visit(lambda r: r)
 
 
 def describe(args, sheet):
