@@ -15,6 +15,7 @@ classes = {
     'typo': 'there is no apparent reason, given the source(s) and the comment the inaccurate coding appears to be a typo',
     'overcautious': '',
     'overconfident': '',
+    'new source was consulted in other coding': '',
     'feature interpretation': "the different coders have interpreted the feature differently (some perhaps coded outside of the project and weren't in the loop with the specifics)",
     'source interpretation': "the different coders have interpreted the source(s) differently",
     'sources disagree': '',
