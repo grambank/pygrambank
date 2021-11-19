@@ -6,12 +6,19 @@ from clldutils.misc import lazyproperty
 
 patrons = {
     'Alena': 'AWM',
+    'Alena Witzlack-Makarevich': 'AWM',
     'Hannah': 'HJH',
+    'Hannah J. Haynie': 'HJH',
     'Harald': 'HH',
+    'Harald Hammarström': 'HH',
     'Hedvig': 'HS',
+    'Hedvig Skirgård': 'HS',
     'Jakob': 'JLE',
+    'Jakob Lesage': 'JLE',
     'Jeremy': 'JC',
+    'Jeremy Collins': 'JC',
     'Jay': 'JLA',
+    'Jay Latarche': 'JLA',
 }
 
 

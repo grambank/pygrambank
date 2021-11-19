@@ -87,7 +87,7 @@ def priok(ks, e):
     return set(allmax(d).keys())
 
 
-devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der", "El", "De la", "De"]
+devon = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der", "El", "De la", "De", "d'"]
 respa = re.compile(r"[\s,.\-]+")
 
 
@@ -112,6 +112,9 @@ def matchauthor(a, fas, extraauthors):
 
 
 def iter_key_pages(lg, ayp, e, lgks):
+    #
+    # FIXME: only yield at most one match!?
+    #
     a, y, p, wft = ayp
     if lg in lgks:
         for k in priok([
