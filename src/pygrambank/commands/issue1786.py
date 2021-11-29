@@ -167,8 +167,10 @@ def fixer(datapoints, row):
         # wrong sheets.)
         # Sluggifying the comment strings makes for a simple "fuzzy" matching.
         if slug(row['Comment']) == slug(datapoints[row['Feature_ID']]):
+            assert row['Value'] == '0'
+            row['Value'] = '?'
+            row['Comment'] = ''
             # We delete the datapoint to be able to check for completeness of the fixing lateron.
-            # Here we'd change row['Value'] and append a note to row['Comment']
             del datapoints[row['Feature_ID']]
     return row
 
