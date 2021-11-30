@@ -25,39 +25,47 @@ classes = {
     'unclear': "it is not clear why there is a conflict",
 }
 
-def run(args):
+
+def norm(r, k):
+    return r[k].strip().lower()
+
+
+def check(sheet, log=None):
+    ok = True
     conflicts = 0
 
-    def norm(r, k):
-        return r[k].strip().lower()
+    def error(msg):
+        if log:
+            log.error(msg)
+        return False
 
     for fid, rows in itertools.groupby(
-        sorted(reader(args.sheet, dicts=True, delimiter='\t'), key=lambda r: r['Feature_ID']),
-        lambda r: r['Feature_ID'],
+            sorted(reader(sheet, dicts=True, delimiter='\t'), key=lambda r: r['Feature_ID']),
+            lambda r: r['Feature_ID'],
     ):
         rows = [(r, norm(r, 'Conflict'), norm(r, 'Select'), norm(r, 'Classification of conflict'))
                 for r in rows]
         if all(r[1] == 'true' for r in rows):
             selected_value = set(r[0]['Value'] for r in rows if r[2] == 'true')
             if len(selected_value) != 1:
-                args.log.error('Different values selected for {}'.format(fid))
+                ok = error('Different values selected for {}'.format(fid))
 
             # For every set of same features where there is "True" for conflict, at least one should
             # have "True" in the col "Select"
             if not any(r[2] == 'true' for r in rows):
-                args.log.error('No selected row for {}'.format(fid))
+                ok = error('No selected row for {}'.format(fid))
 
             for row, _, select, cls in rows:
                 # For every feature where there is "True" for conflict and nothing for "Select", there should be
                 # something in the col "classification of conflict" that comes from this specific list
                 if not select:
                     if cls not in classes:
-                        args.log.error('Invalid classification for {}: {}'.format(fid, cls))
+                        ok = error('Invalid classification for {}: {}'.format(fid, cls))
 
                 # Every feature which is True for select should also have "Correct" in "classification of conflict"
                 if select == 'true':
                     if cls != 'correct':
-                        args.log.error('Selected row not classified as correct for {}'.format(fid))
+                        ok = error('Selected row not classified as correct for {}'.format(fid))
 
                 # Every feature where there is "True" for conflict and "Correct" in "classification of conflict"
                 # but nothing in "Select" should have the same Value as whichever row has "Select" =" True in
@@ -65,8 +73,16 @@ def run(args):
                 # of more than 2 sheets and one row happens to be better Comment or Source-wise).
                 if cls == 'correct' and not select:
                     if row['Value'] not in selected_value:
-                        args.log.error('Row classified as correct, but value is different from selected value for {}'.format(fid))
+                        ok = error('Row classified as correct, but value is different from selected value for {}'.format(fid))
 
             conflicts += 1
 
-    args.log.info('{} conflicts'.format(conflicts))
+    return ok, conflicts
+
+
+def run(args):
+    ok, conflicts = check(args.sheet, args.log)
+    if ok:
+        args.log.info('{} conflicts'.format(conflicts))
+    else:
+        args.log.warning('There were errors in the {} conflicts'.format(conflicts))
