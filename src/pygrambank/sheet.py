@@ -152,9 +152,13 @@ class Sheet(object):
             if log:
                 log('source given, but no value', lineno, level='WARNING', row_=row)
             res = False
-        if row['Comment'] and not row['Value']:
-            if log:
-                log('comment given, but no value', lineno, level='WARNING', row_=row)
+        if row['Comment']:
+            if re.search('check', row['Comment'].lower()):
+                if log:
+                    log('comment contains string "check"', lineno, level='WARNING', row_=row)
+            if not row['Value']:
+                if log:
+                    log('comment given, but no value', lineno, level='WARNING', row_=row)
             res = False
         if row['Feature_ID'] in (features or set()):
             if log:
