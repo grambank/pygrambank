@@ -44,6 +44,8 @@ def run(args):
     for gc, sheets in itertools.groupby(
             sorted(api.iter_sheets(), key=lambda s: s.glottocode),
             lambda s: s.glottocode):
+        if gc not in ['sina1266', 'meke1243']:
+            continue
         sheets = list(sheets)
         if len(sheets) == 1:
             continue

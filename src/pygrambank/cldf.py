@@ -95,9 +95,14 @@ def refs(api, glottolog, sheet):
 
 def create(dataset, api, glottolog):
     glottolog = Glottolog(glottolog)
-    sheets = [
-        Sheet(f) for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem)
-        if f.name not in api.exclude]
+    sheets = []
+    for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem):
+        if f.name not in api.exclude:
+            sheet = Sheet(f)
+            if sheet.glottocode in glottolog.languoids_by_glottocode:
+                sheets.append(sheet)
+            else:
+                print('skipping unknown Glottocode: {}'.format(f.name))
     sheets = [(s, list(s.iter_row_objects(api))) for s in sheets]
 
     # Chose best sheet for indivdual Glottocodes:
