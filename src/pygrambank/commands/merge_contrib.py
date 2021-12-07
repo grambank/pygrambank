@@ -55,14 +55,12 @@ def get_row(contrib, md):
 
 
 def run(args):
-    for c in args.repos.ordered_contributors:
-        print(c.name, c.id)
-    return
     roles = collections.Counter()
     for c in args.repos.contributors:
-        roles.update(c.roles)
+        roles.update([c.bio])
     for k, v in roles.most_common():
         print(k, v)
+        break
     return
 
     bios = {r[0]: (r[1], r[2]) for r in iter_html_data(args.html)}

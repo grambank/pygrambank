@@ -37,14 +37,6 @@ class Grambank(API):
     def contributors(self):
         return Contributors.from_md(self.repos / 'CONTRIBUTORS.md')
 
-    @property
-    def ordered_contributors(self):
-        if self.path('contributors_order.txt').exists():  # pragma: no cover
-            ids = self.path('contributors_order.txt').read_text().split()
-        else:
-            ids = []
-        return sorted(self.contributors, key=lambda c: ids.index(c.id) if c.id in ids else 1000)
-
     @lazyproperty
     def bib(self):
         return {e.key: (e.type, e.fields) for e in BibFile(self.repos / 'gb.bib').iterentries()}

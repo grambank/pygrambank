@@ -160,9 +160,9 @@ def create(dataset, api, glottolog):
     data['contributors.csv'] = [dict(
         ID=c.id,
         Name=c.name,
-        Description=c.bio,
+        Description=c.bio or '',
         Roles=c.roles,
-        Photo=c.photo) for c in api.ordered_contributors]
+        Photo=c.photo or '') for c in api.contributors]
     cids = set(d['ID'] for d in data['contributors.csv'])
 
     def coders(sheet, row):
