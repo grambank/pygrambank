@@ -1,3 +1,4 @@
+import shutil
 import pathlib
 import collections
 
@@ -95,6 +96,8 @@ def refs(api, glottolog, sheet):
 
 
 def create(dataset, api, glottolog):
+    shutil.copy(api.wiki / 'FAQ-(general).md', dataset.directory / 'FAQ.md')
+
     glottolog = Glottolog(glottolog)
     sheets = []
     for f in sorted(api.sheets_dir.glob('*.tsv'), key=lambda p: p.stem):

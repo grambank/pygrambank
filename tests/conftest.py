@@ -19,5 +19,5 @@ def api(repos):
 
 @pytest.fixture
 def wiki(tmp_path):
-    shutil.copytree(Path(__file__).parent / 'Grambank.wiki', tmp_path / 'Grambank.wiki')
-    return tmp_path / 'Grambank.wiki'
+    shutil.copytree(Path(__file__).parent / 'grambank.wiki', tmp_path / 'grambank.wiki')
+    return tmp_path / 'grambank.wiki'

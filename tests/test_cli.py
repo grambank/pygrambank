@@ -23,7 +23,7 @@ def test_recode(tmp_path):
 def test_updatefeatures(api, capsys):
     main(['--repos', str(api.repos),
           'updatefeatures', 'ABBR',
-          '--wiki_repos', str(pathlib.Path(__file__).parent / 'Grambank.wiki')])
+          '--wiki_repos', str(pathlib.Path(__file__).parent / 'grambank.wiki')])
 
 
 def test_describe(api, capsys, tmp_path):
@@ -102,7 +102,7 @@ def test_features(repos, capsys, mocker):
     mocker.patch('pygrambank.features.patrons', collections.defaultdict(lambda: 'HJH'))
     main([
         '--repos', str(repos), 'features',
-        '--wiki_repos', str(pathlib.Path(__file__).parent / 'Grambank.wiki'),
+        '--wiki_repos', str(pathlib.Path(__file__).parent / 'grambank.wiki'),
     ])
     out, err = capsys.readouterr()
     assert 'Patron' in out
