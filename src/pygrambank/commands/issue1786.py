@@ -8,7 +8,7 @@ from clldutils.misc import slug
 
 # flake8: noqa
 
-DATAPOINTS = """\
+DATAPOINTS = """
 GB068 | Edelsten & Lijongwa (2010: 40, 67-71) | Compare adjectival concord and verbal concord. | ndam1239
 GB069 | Edelsten & Lijongwa (2010: 40, 67-71) | Compare adjectival concord and verbal concord. | ndam1239
 GB069 | Hansson (2017:893) | Adjectives are for the most part stative verbs, but when used attributively they must be preceded either by adjectival prefix 'jɔ-', or by a reduplicated syllable of the head noun; the two constructions denote temporary and inherent properties respectively. | akha1245
@@ -148,7 +148,7 @@ def split_dp(line):
     )
 
 
-DATAPOINTS = [split_dp(row) for row in DATAPOINTS]
+DATAPOINTS = [split_dp(row) for row in DATAPOINTS if row]
 DATAPOINTS = sorted(DATAPOINTS, key=lambda i: (i[-1], i[0]))
 # Turn datapoints into nested dicts. This allows us to keep track of everything we found by deleting
 # the corresponding entry.

@@ -55,6 +55,13 @@ def get_row(contrib, md):
 
 
 def run(args):
+    roles = collections.Counter()
+    for c in args.repos.contributors:
+        roles.update(c.roles)
+    for k, v in roles.most_common():
+        print(k, v)
+    return
+
     bios = {r[0]: (r[1], r[2]) for r in iter_html_data(args.html)}
 
     # id | Last name | First name | Node | Status | Language competence | GitHub-username | email

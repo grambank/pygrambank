@@ -1,6 +1,7 @@
 
 def test_api_contributors(api):
     assert api.contributors[0].photo == 'abc'
+    assert len(api.contributors[0].roles) == 2
 
 
 def test_features(api, wiki):

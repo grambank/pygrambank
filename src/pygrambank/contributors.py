@@ -5,7 +5,16 @@ import attr
 from clldutils.markup import iter_markdown_tables
 
 PHOTO_URI = 'https://glottobank.org/photos/{Photo}'
-
+ROLES = [
+    'Coder',
+    'Node leader',
+    'Patron',
+    'Methods-team',
+    'Senior advisor',
+    'Project leader',
+    'Project coordinator',
+    'Database manager',
+]
 
 def parse_photo(s):
     match = re.search(r'src="(?P<url>[^"]+)"', s)
@@ -13,12 +22,22 @@ def parse_photo(s):
         return match.group('url').split('/')[-1]
 
 
+def parse_roles(s):
+    return [r.strip() for r in s.split(',') if r.strip()]
+
+
+def valid_roles(instance, attribute, value):
+    validator = attr.validators.in_(ROLES)
+    for vv in value:
+        validator(instance, attribute, vv)
+
+
 @attr.s
 class Contributor(object):
     id = attr.ib()
     last_name = attr.ib()
     first_name = attr.ib()
-    contribution = attr.ib()
+    contribution = attr.ib(converter=parse_roles, validator=valid_roles)
     node = attr.ib()
     status = attr.ib()
     language_competence = attr.ib()
@@ -30,6 +49,10 @@ class Contributor(object):
     @property
     def name(self):
         return '{0.first_name} {0.last_name}'.format(self)
+
+    @property
+    def roles(self):
+        return self.contribution
 
 
 def norm_header(s):
