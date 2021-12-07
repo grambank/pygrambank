@@ -55,6 +55,9 @@ def get_row(contrib, md):
 
 
 def run(args):
+    for c in args.repos.ordered_contributors:
+        print(c.name, c.id)
+    return
     roles = collections.Counter()
     for c in args.repos.contributors:
         roles.update(c.roles)

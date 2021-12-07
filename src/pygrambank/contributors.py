@@ -6,15 +6,16 @@ from clldutils.markup import iter_markdown_tables
 
 PHOTO_URI = 'https://glottobank.org/photos/{Photo}'
 ROLES = [
-    'Coder',
-    'Node leader',
-    'Patron',
-    'Methods-team',
-    'Senior advisor',
     'Project leader',
     'Project coordinator',
     'Database manager',
+    'Patron',
+    'Node leader',
+    'Coder',
+    'Methods-team',
+    'Senior advisor',
 ]
+
 
 def parse_photo(s):
     match = re.search(r'src="(?P<url>[^"]+)"', s)
@@ -52,7 +53,7 @@ class Contributor(object):
 
     @property
     def roles(self):
-        return self.contribution
+        return sorted(self.contribution, key=lambda r: ROLES.index(r))
 
 
 def norm_header(s):
