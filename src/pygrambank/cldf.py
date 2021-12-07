@@ -10,6 +10,7 @@ from pygrambank import bib
 from pygrambank import srctok
 from pygrambank.sheet import Sheet
 from pygrambank.util import iterunique
+from pygrambank.contributors import PHOTO_URI
 
 # FIXME: These should be fixed in the data!
 INVALID = ['9', '.?']
@@ -152,7 +153,8 @@ def create(dataset, api, glottolog):
                 Description=desc,
             ))
 
-    data['contributors.csv'] = [dict(ID=c.id, Name=c.name) for c in api.contributors]
+    data['contributors.csv'] = [dict(
+        ID=c.id, Name=c.name, Description=c.bio, Photo=c.photo) for c in api.contributors]
     cids = set(d['ID'] for d in data['contributors.csv'])
 
     def coders(sheet, row):
@@ -268,7 +270,13 @@ class Glottolog(object):
 
 
 def create_schema(dataset):
-    table = dataset.add_table('contributors.csv', 'ID', 'Name')
+    table = dataset.add_table(
+        'contributors.csv',
+        'ID',
+        'Name',
+        'Description',
+        {'name': 'Photo', 'valueUrl': PHOTO_URI},
+    )
     table.common_props['dc:description'] = \
         "Grambank is a collaborative effort. The people listed in this table contributed by " \
         "coding languages or guiding the coding as feature patrons or by facilitating the " \

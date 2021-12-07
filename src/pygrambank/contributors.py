@@ -1,7 +1,15 @@
+import re
 import collections
 
 import attr
 from clldutils.markup import iter_markdown_tables
+
+PHOTO_URI = 'https://glottobank.org/photos/{Photo}'
+
+def parse_photo(s):
+    match = re.search(r'src="(?P<url>[^"]+)"', s)
+    if match:
+        return match.group('url').split('/')[-1]
 
 
 @attr.s
@@ -10,6 +18,13 @@ class Contributor(object):
     last_name = attr.ib()
     first_name = attr.ib()
     contribution = attr.ib()
+    node = attr.ib()
+    status = attr.ib()
+    language_competence = attr.ib()
+    github_username = attr.ib()
+    email = attr.ib()
+    photo = attr.ib(converter=parse_photo)
+    bio = attr.ib()
 
     @property
     def name(self):
@@ -17,7 +32,7 @@ class Contributor(object):
 
 
 def norm_header(s):
-    return s.lower().replace(' ', '_')
+    return s.lower().replace(' ', '_').replace('-', '_')
 
 
 class Contributors(list):
