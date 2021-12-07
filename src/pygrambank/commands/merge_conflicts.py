@@ -10,6 +10,7 @@ from clldutils.misc import nfilter
 
 from .check_conflicts import check
 
+# flake8: noqa
 
 CODERS = collections.OrderedDict([
     ('SydneyRey', 'SR'),

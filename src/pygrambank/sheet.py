@@ -132,7 +132,10 @@ class Sheet(object):
         if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
             if row.get('Value'):
                 if log:
-                    log('invalid Feature_ID: {0}'.format(fid), lineno=lineno, level='ERROR', row_=row)
+                    log('invalid Feature_ID: {0}'.format(fid),
+                        lineno=lineno,
+                        level='ERROR',
+                        row_=row)
             res = False
         if fid not in api.features:
             return False
@@ -154,7 +157,7 @@ class Sheet(object):
             res = False
         if row['Comment']:
             if re.search('check', row['Comment'].lower()):
-                if log:
+                if log:  # pragma: no cover
                     log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
             if not row['Value']:
                 if log:

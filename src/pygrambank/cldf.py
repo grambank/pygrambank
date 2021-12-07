@@ -36,7 +36,7 @@ def bibdata(sheet, values, e, lgks, unresolved):
             refs, sources = collections.OrderedDict(), []
             uc = sum(list(unresolved.values()))
             res = srctok.source_to_refs(row.Source, sheet.glottocode, e, lgks, unresolved)
-            if sum(list(unresolved.values())) > uc:
+            if sum(list(unresolved.values())) > uc:  # pragma: no cover
                 row.Source_comment += ' (source not confirmed)'
             for key, pages in res[0]:
                 typ, fields = e[key]
@@ -105,7 +105,7 @@ def create(dataset, api, glottolog):
             sheet = Sheet(f)
             if sheet.glottocode in glottolog.languoids_by_glottocode:
                 sheets.append(sheet)
-            else:
+            else:  # pragma: no cover
                 print('skipping unknown Glottocode: {}'.format(f.name))
     sheets = [(s, list(s.iter_row_objects(api))) for s in sheets]
 

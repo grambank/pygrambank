@@ -4,6 +4,8 @@
 import itertools
 import functools
 
+# flake8: noqa
+
 DATAPOINTS = """\
 GB146 | Double check with Daria if there really is no concstruction of this type. | Mishchenko, Daria (p.c. 2013) | HS_loma1260.tsv
 GB146 | Double check with Elena if there really is no such construction | Perekhvalskaya, Elena (p.c 2013) | HS_mwan1250.tsv

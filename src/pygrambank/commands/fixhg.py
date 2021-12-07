@@ -25,7 +25,7 @@ class Fix:  # pragma: no cover
             if key in self.spec:
                 # We found a matching datapoint ...
                 for spec in self.spec[key]:
-                    if spec['Mapping'] in row['Comment'] and (not 'MM' in row['Comment']):
+                    if spec['Mapping'] in row['Comment'] and ('MM' not in row['Comment']):
                         # ... with a matching "Autotranslated" comment.
                         fid, val = spec['replace'].replace('GB86', 'GB086').split(':')
                         assert fid == row['Feature_ID'], spec

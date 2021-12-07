@@ -20,17 +20,17 @@ def run(args):
             # encoded differently ...
             c = []
             for line in p.read_bytes().split(b'\n'):
-                l = []
+                li = []
                 for chunk in line.split(b'\t'):
                     try:
-                        l.append(chunk.decode('utf8'))
-                    except:
+                        li.append(chunk.decode('utf8'))
+                    except:  # noqa: E722
                         try:
-                            l.append(chunk.decode('cp1252'))
-                        except:
+                            li.append(chunk.decode('cp1252'))
+                        except:  # noqa: E722
                             print(chunk)
                             raise
-                c.append('\t'.join(l))
+                c.append('\t'.join(li))
             c = '\n'.join(c)
         else:
             c = p.read_text(encoding=args.encoding)

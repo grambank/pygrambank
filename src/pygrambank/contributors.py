@@ -6,6 +6,7 @@ from clldutils.markup import iter_markdown_tables
 
 PHOTO_URI = 'https://glottobank.org/photos/{Photo}'
 
+
 def parse_photo(s):
     match = re.search(r'src="(?P<url>[^"]+)"', s)
     if match:

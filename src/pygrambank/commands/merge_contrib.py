@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup as bs
 from clldutils.clilib import PathType
 from clldutils.markup import iter_markdown_tables
 
+# flake8: noqa
+
 NAME2ID = {
     'Hoju Cha': 'HC',
     'Roberto E. Herrera Miranda': 'RHE',

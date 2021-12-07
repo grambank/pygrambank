@@ -6,6 +6,8 @@ import itertools
 
 from clldutils.misc import slug
 
+# flake8: noqa
+
 DATAPOINTS = """\
 GB068 | Edelsten & Lijongwa (2010: 40, 67-71) | Compare adjectival concord and verbal concord. | ndam1239
 GB069 | Edelsten & Lijongwa (2010: 40, 67-71) | Compare adjectival concord and verbal concord. | ndam1239
