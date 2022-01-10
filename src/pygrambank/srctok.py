@@ -1,4 +1,5 @@
 import re
+import logging
 from itertools import groupby
 
 from clldutils.misc import nfilter, slug
@@ -115,6 +116,7 @@ def iter_key_pages(lg, ayp, e, lgks):
     #
     # FIXME: only yield at most one match!?
     #
+    matched = False
     a, y, p, wft = ayp
     if lg in lgks:
         for k in priok([
@@ -125,6 +127,9 @@ def iter_key_pages(lg, ayp, e, lgks):
             e=e
         ):
             yield k, p
+            matched = True
+    if not matched:
+        logging.getLogger(__name__).warning('unmatched ref: {}'.format(ayp))
 
 
 def source_to_refs(src, lgid, e, lgks, unresolved, fixrefs=None):
