@@ -15,6 +15,7 @@ REFS = {
     ('Lee', '2005a', 'mada1285'): 'Lee2005a',
     ('Lee', '2005b', 'mada1285'): 'Lee2005b',
 }
+UNMATCHED = set()
 
 
 def undiacritic(s):
@@ -129,7 +130,9 @@ def iter_key_pages(lg, ayp, e, lgks):
             yield k, p
             matched = True
     if not matched:
-        logging.getLogger(__name__).warning('unmatched ref: {}'.format(ayp))
+        if ayp not in UNMATCHED:
+            logging.getLogger(__name__).warning('unmatched ref: {}'.format(ayp))
+            UNMATCHED.add(ayp)
 
 
 def source_to_refs(src, lgid, e, lgks, unresolved, fixrefs=None):
