@@ -55,7 +55,7 @@ def describe(args, sheet):
         print(colored(s + ':', attrs=['bold']))
 
     head('Path')
-    print(colored(str(sheet.path), 'green'))
+    print(str(sheet.path))
 
     head('Check')
     sheet.check(args.repos)
@@ -95,7 +95,7 @@ def describe(args, sheet):
         if k in coders_by_id:
             print('{}\t{}:\t{}'.format(k, coders_by_id[k], str(v).rjust(3)))
         else:
-            args.log.error('Unknown coder: "{}"'.format(k))  # pragma: no cover
+            args.log.error(colored('Unknown coder: "{}"'.format(k), color = 'red'))  # pragma: no cover
 
     if args.columns:
         head('Columns')
