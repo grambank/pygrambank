@@ -1,5 +1,5 @@
 """
-Lookup the references given in the `Source` column of a sheet in Glottolog or the Grambank bib.
+Lookup the references given in the `Source` column of a sheet in Glottolog hh.bib or the Grambank bib.
 """
 import pathlib
 import collections
@@ -13,13 +13,13 @@ from pygrambank.cldf import refs
 
 def register(parser):
     parser.add_argument(
-        'sheet',
-        type=pathlib.Path,
-    )
-    parser.add_argument(
         'glottolog',
         metavar='GLOTTOLOG',
         help="clone of glottolog/glottolog",
+        type=pathlib.Path,
+    )
+    parser.add_argument(
+        'sheet',
         type=pathlib.Path,
     )
     parser.add_argument(
