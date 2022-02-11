@@ -1,6 +1,7 @@
 import re
 import itertools
 import collections
+from termcolor import colored
 
 import attr
 from csvw import dsv
@@ -178,7 +179,7 @@ class Sheet(object):
                 "{}".format(lineno if lineno != -1 else '?'),
                 row_['Feature_ID'] if row_ else '',
                 msg]
-            print('\t'.join(msg))
+            print(colored('\t'.join(msg), color = 'red'))
             if report is not None:
                 report.append(msg)
 
