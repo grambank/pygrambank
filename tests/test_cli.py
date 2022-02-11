@@ -81,8 +81,8 @@ def test_sourcelookup(repos, capsys):
     main([
         '--repos', str(repos),
         'sourcelookup',
-        str(repos / 'original_sheets' / 'ABBR_abcd1234.tsv'),
-        str(pathlib.Path(__file__).parent / 'glottolog')])
+        str(pathlib.Path(__file__).parent / 'glottolog')]),
+        str(repos / 'original_sheets' / 'ABBR_abcd1234.tsv')
 
 
 def test_fix(repos):
