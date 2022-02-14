@@ -29,6 +29,7 @@ def run(args):
         ('Feature_ID', lambda f: f.id),
         ('Feature', lambda f: f.wiki['title']),
         ('Possible Values', lambda f: f['Possible Values']),
+        ('Language_ID', lambda f: ''),
         ('Value', lambda f: ''),
         ('Source', lambda f: ''),
         ('Comment', lambda f: ''),
