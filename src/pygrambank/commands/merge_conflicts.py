@@ -17,6 +17,7 @@ CODERS = collections.OrderedDict([
     ('Michael90EVAMPI', 'MM'),
     ('Michael', 'MM'),
     ('Jill', 'JSA'),
+    ('vickygruner', 'VG'),
     ('Hedvig', 'HS'),
 ])
 
