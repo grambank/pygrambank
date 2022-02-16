@@ -32,14 +32,14 @@ def get_coder(p):
             return initials
 
 
-def merged_rows(rows):
+def merged_rows(rows, active):
     if all(r['Conflict'].lower().startswith('true') for r in rows):
         for row in rows:
-            if row['Select'].lower() == 'true':
+            if row['Select'].lower().strip() == 'true':
                 return row
-        assert 'inactive' in rows[0]['Conflict'], str(rows)
+        assert rows[0]['Feature_ID'] not in active, str(rows)
         return None
-    elif all(r['Conflict'].lower() == 'false' for r in rows):
+    elif all(r['Conflict'].lower().strip() == 'false' for r in rows):
         row = rows[0]
         for k in ['Sheet', 'Comment', 'Source']:
             row[k] = [row[k]]
@@ -52,7 +52,7 @@ def merged_rows(rows):
     raise ValueError(rows)
 
 
-def rows_and_sourcesheets(sheet):
+def rows_and_sourcesheets(sheet, active):
     allrows, sourcesheets = [], []
 
     def clean_row(row):
@@ -77,7 +77,7 @@ def rows_and_sourcesheets(sheet):
         if len(rows) == 1:
             clean_row(rows[0])
         else:
-            row = merged_rows(rows)
+            row = merged_rows(rows, active)
             if row:
                 clean_row(row)
     return allrows, set(sourcesheets)
@@ -100,12 +100,15 @@ def write(p, rows, features):
 
 
 def run(args):
+    active = list(args.repos.features)
+
     for sheet in sorted(args.repos.path('conflicts').glob('*.tsv'), key=lambda p: p.name):
         #if sheet.stem != 'brah1256':
         #    continue
         ok, nc = check(sheet)
         if ok and nc:
-            rows, sources = rows_and_sourcesheets(sheet)
+            print(sheet.stem)
+            rows, sources = rows_and_sourcesheets(sheet, active)
             coder = get_coder(sheet)
             if sheet.stem == 'sout2989':
                 coder = 'JE-HS'
