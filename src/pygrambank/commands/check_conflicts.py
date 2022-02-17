@@ -61,10 +61,10 @@ def check(sheet, log=None):
                 ok = error('No selected row for {}'.format(fid))
 
             for row, _, select, cls in rows:
-                # For every feature where there is "True" for conflict and nothing for "Select",
+                # For every feature where there is "True" for conflict and not "True" for "Select",
                 # there should be something in the col "classification of conflict" that comes
                 # from this specific list
-                if not select:
+                if select != 'true':
                     if cls not in classes:
                         ok = error('Invalid classification for {}: {}'.format(fid, cls))
 
