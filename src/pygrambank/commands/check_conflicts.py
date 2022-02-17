@@ -73,6 +73,8 @@ def check(sheet, log=None):
                 if select == 'true':
                     if cls != 'correct':
                         ok = error('Selected row not classified as correct for {}'.format(fid))
+                    if not row['Contributed_Datapoint']:
+                        ok = error('Selected row has no code specified in Contributed_Datapoint')
 
                 # Every feature where there is "True" for conflict and "Correct" in
                 # "classification of conflict" but nothing in "Select" should have the same Value
