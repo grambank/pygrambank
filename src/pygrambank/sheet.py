@@ -157,7 +157,12 @@ class Sheet(object):
                 log('source given, but no value', lineno=lineno, level='WARNING', row_=row)
             res = False
         if row['Comment']:
-            if re.search('check', row['Comment'].lower()) and not re.search('HG', row['Comment']):  
+            if re.search('check', row['Comment'].lower()) and \
+            not re.search('HG', row['Comment']) and \
+            not re.search('checked by coder', row['Comment'].lower()) and\
+            not re.search('check by coder', row['Comment'].lower()) and\
+            not re.search('wrong import', row['Comment'].lower()) and\
+            not re.search('checked by GB coder', row['Comment'].lower()):  
 #            if re.search('check', row['Comment'].lower()):
                 if log:  # pragma: no cover
                     log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
