@@ -211,12 +211,16 @@ class Sheet(object):
                             lineno=line,
                             level='WARNING')
 
-        res, nvalid, features = [], 0, set()
+        res, nvalid, features, comments = [], 0, set(), 0
         for line, row in enumerate(self.iterrows(), 2):  # +2 to get line number correct
             if self.valid_row(row, api, lineno=line, log=log, features=features):
                 nvalid += 1
+                comments += 1 if row['Comment'] else 0
             features.add(row['Feature_ID'])
             res.append(row)
+
+        if comments < 25:
+            log('Less than 25 datapoints have comments', level='WARNING')
 
         try:
             for gbid, rows in itertools.groupby(
