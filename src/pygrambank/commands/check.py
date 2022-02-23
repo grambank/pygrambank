@@ -48,7 +48,7 @@ def run(args):
 
     if report and args.report:
         with UnicodeWriter(args.report, delimiter='\t') as w:
-            w.writerow(['sheet', 'selected', 'level', 'feature', 'message'])
+            w.writerow(['sheet', 'selected', 'level', 'line', 'feature', 'message'])
             w.writerows(report)
         args.log.info('Report written to {0}'.format(args.report))
     args.log.error('Repos check found WARNINGs or ERRORs')
