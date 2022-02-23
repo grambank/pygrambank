@@ -60,7 +60,7 @@ altrefullsrc = re.compile(
 
 def iter_ayps(s, word_from_title=None):
     for x in s.replace("), ", "); ").split(";"):
-        if (x.find("p.c.") != -1) and x.strip().startswith("p.c"):
+        if "p.c." in x:
             continue
 
         condensed = False
