@@ -58,11 +58,10 @@ altrefullsrc = re.compile(
     r"^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
 
-def iter_ayps(s, word_from_title=None):
+def iter_ayps(s):
     for x in s.replace("), ", "); ").split(";"):
         if "p.c." in x:
             continue
-
         condensed = False
         x = x.strip()
         m = refullsrc.search(x)
@@ -75,6 +74,7 @@ def iter_ayps(s, word_from_title=None):
             a, y, p = m.groups()
             if condensed:
                 a = a.replace('&', ' and ')
+            word_from_title = None
             wft = a.find("_")
             if wft != - 1:
                 word_from_title = a[wft + 1:].lower()
