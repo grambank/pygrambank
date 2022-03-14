@@ -125,7 +125,10 @@ def iter_key_pages(lg, ayp, e, lgks):
             k for k in lgks[lg]
             if e[k][1].get("year", "").find(y) != -1
                 and (not wft or e[k][1].get("title", "").lower().find(wft.replace('_', ' ')) != -1)
-                and matchauthor(a, e[k][1].get("author", ""), list(bib.iter_authors(k)))],
+                and matchauthor(
+                a,
+                e[k][1].get("author", e[k][1].get("editor", "")),
+                list(bib.iter_authors(k)))],
             e=e
         ):
             yield k, p
