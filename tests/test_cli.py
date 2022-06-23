@@ -60,11 +60,33 @@ def test_new(args, tmp_path):
 
 
 def test_remove_empty(tmp_path):
-    content = """a\tb\tc\t\t\t\n\t\t\t\t\t\n1\t2\t3\t\t\t\n"""
-    tsv = tmp_path / 'XX_aaaa1234.tsv'
-    tsv.write_text(content, encoding="utf8")
-    main(['remove_empty', str(tsv)])
-    assert tsv.read_text(encoding='utf8') == "a\tb\tc\n1\t2\t3\n"
+    # contains empty columns and rows that need to be stripped
+    content_a = (
+        '\t\ta\t\tb\t\tc\t\t\t\n'
+        '\t\t\t\t\t\t\t\t\t\n'
+        '\t\t1\t\t2\t\t3\t\t\t\n'
+        '\t\t\t\t\t\t\t\t\t\n'
+        '\t\t\t\t\t\t\t\t\t\n')
+    tsv_a = tmp_path / 'XX_aaaa1234.tsv'
+    tsv_a.write_text(content_a, encoding="utf8")
+
+    # contains rows that are too short
+    content_b = 'a\tb\tc\n\n1\t2\nx\n'
+    tsv_b = tmp_path / 'XX_bbbb1234.tsv'
+    tsv_b.write_text(content_b, encoding="utf8")
+
+    # contains missing column label that will raise an error
+    content_c = 'a\tb\t\n1\t2\t3\nx\ty\tz\n'
+    tsv_c = tmp_path / 'XX_cccc1234.tsv'
+    tsv_c.write_text(content_c, encoding="utf8")
+
+    main(['remove_empty', str(tsv_a), str(tsv_b)])
+    assert tsv_a.read_text(encoding='utf8') == "a\tb\tc\n1\t2\t3\n"
+    assert tsv_b.read_text(encoding='utf8') == 'a\tb\tc\n1\t2\t\nx\t\t\n'
+    with pytest.raises(ValueError):
+        main(['remove_empty', str(tsv_c)])
+    # input file remains unchanged
+    assert tsv_c.read_text(encoding='utf8') == 'a\tb\t\n1\t2\t3\nx\ty\tz\n'
 
 
 def test_check(repos, capsys, tmp_path):
