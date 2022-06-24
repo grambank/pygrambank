@@ -77,6 +77,7 @@ def run(args):
         nonutf8_detected = False
 
         for index, raw_line in enumerate(raw_lines):
+            raw_line = raw_line.rstrip(b'\r\n')
             lineno = index + 1
             try:
                 unicode_line = raw_line.decode('utf-8')
