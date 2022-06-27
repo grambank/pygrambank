@@ -6,7 +6,7 @@ import collections
 import pytest
 
 from pygrambank.__main__ import main
-from pygrambank.commands import new, issues
+from pygrambank.commands import new, issues, check_encoding
 
 
 @pytest.fixture
@@ -128,3 +128,45 @@ def test_features(repos, capsys, mocker):
     ])
     out, err = capsys.readouterr()
     assert 'Patron' in out
+
+
+def test_check_encoding_for_repl_chars():
+    line = "�We don't want those dreaded ��� characters anywhere in our stuff!�"
+    matches = list(check_encoding.find_replacement_chars(line))
+    assert matches[0] == "�We don't want those "
+    assert matches[1] == ' want those dreaded ��� characters anywhere'
+    assert matches[2] == 'ywhere in our stuff!�'
+
+
+def test_check_encoding_for_non_ascii():
+    line = b"w\xe9 don't want non-utf-8 e\xf1\xe7\xf6ding anywhere in our st\xfcff"
+    matches = list(check_encoding.find_non_ascii(line))
+    assert matches[0] == b"w\xe9 don't want non-utf-"
+    assert matches[1] == b"n't want non-utf-8 e\xf1\xe7\xf6ding anywhere in our"
+    assert matches[2] == b'g anywhere in our st\xfcff'
+
+
+def test_check_encoding_suggestions():
+    line = b'wr\xf6ng enc\xf6ding'
+    suggestions = check_encoding.suggest_encodings(line)
+    assert suggestions['cp1252'] == 'wröng encöding'
+    assert suggestions['macroman'] == 'wrˆng encˆding'
+
+
+def test_check_encoding(tmp_path):
+    good_utf8 = str(tmp_path / 'good_utf8.txt')
+    corrupted_utf8 = str(tmp_path / 'corrupted-utf8.txt')
+    not_utf8 = str(tmp_path / 'not-utf8.txt')
+    mixed_encodings = str(tmp_path / 'mixed-encodings.txt')
+
+    with open(good_utf8, 'wb') as f:
+        f.write('Zum Gruße!\n'.encode('utf-8'))
+    with open(corrupted_utf8, 'wb') as f:
+        f.write('Zum Gu�e!\n'.encode('utf-8'))
+    with open(not_utf8, 'wb') as f:
+        f.write('Zum Gruße!\n'.encode('cp1252'))
+    with open(mixed_encodings, 'wb') as f:
+        f.write('Zum Gruße!\n'.encode('utf-8'))
+        f.write('Zum Gruße!\n'.encode('cp1252'))
+
+    main(['check_encoding', good_utf8, corrupted_utf8, not_utf8, mixed_encodings])
