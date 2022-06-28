@@ -6,7 +6,7 @@ import collections
 import pytest
 
 from pygrambank.__main__ import main
-from pygrambank.commands import new, issues, check_encoding
+from pygrambank.commands import new, issues, check_encoding, recode
 
 
 @pytest.fixture
@@ -14,10 +14,52 @@ def args(api, wiki):
     return argparse.Namespace(repos=api, wiki_repos=wiki)
 
 
+def test_recode_single_encoding():
+    good_text = 'tèst'.encode('cp1252')
+    bad_text = 'tèst'.encode('macroman')
+    assert recode.decode_line(good_text, 'cp1252') == 'tèst'
+    assert recode.decode_line(bad_text, 'cp1252') is None
+
+
+def test_recode_mixed_encoding():
+    good_text = b' -- '.join(['tèst'.encode('utf-8'), 'tèst'.encode('cp1252')])
+    bad_text = b' -- '.join(['tèst'.encode('utf-8'), 'tèst'.encode('macroman')])
+    assert recode.decode_line(good_text, 'mixed-cp1252') == 'tèst -- tèst'
+    assert recode.decode_line(bad_text, 'mixed-cp1252') is None
+
+
 def test_recode(tmp_path):
-    tmp_path.joinpath('test').write_text('äöü', encoding='macroman')
-    main(['recode', '--encoding', 'macroman', str(tmp_path / 'test')])
-    assert tmp_path.joinpath('test').read_text(encoding='utf8') == 'äöü'
+    good_single_enc = str(tmp_path / 'good_single_enc.txt')
+    bad_single_enc = str(tmp_path / 'bad_single_enc.txt')
+    good_mixed_enc = str(tmp_path / 'good_mixed_enc.txt')
+    bad_mixed_enc = str(tmp_path / 'bad_mixed_enc.txt')
+
+    with open(good_single_enc, 'wb') as f:
+        f.write('tèst'.encode('cp1252'))
+    with open(bad_single_enc, 'wb') as f:
+        f.write('tèst'.encode('macroman'))
+    with open(good_mixed_enc, 'wb') as f:
+        f.write('tèst '.encode('cp1252'))
+        f.write('tèst'.encode('utf-8'))
+    with open(bad_mixed_enc, 'wb') as f:
+        f.write('tèst '.encode('macroman'))
+        f.write('tèst'.encode('utf-8'))
+
+    main(['recode', '--encoding', 'cp1252', good_single_enc, bad_single_enc])
+    main(['recode', '--encoding', 'mixed-cp1252', good_mixed_enc, bad_mixed_enc])
+
+    with open(good_single_enc, 'rb') as f:
+        assert f.read() == 'tèst\n'.encode('utf-8')
+    with open(bad_single_enc, 'rb') as f:
+        # file is unchanged
+        assert f.read() == 'tèst'.encode('macroman')
+    with open(good_mixed_enc, 'rb') as f:
+        assert f.read() == 'tèst tèst\n'.encode('utf-8')
+    with open(bad_mixed_enc, 'rb') as f:
+        # file is unchanged
+        assert f.read() == b' '.join([
+            'tèst'.encode('macroman'),
+            'tèst'.encode('utf-8')])
 
 
 def test_updatefeatures(api, capsys):
