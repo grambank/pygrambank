@@ -64,7 +64,7 @@ def suggest_encodings(raw_line):
         try:
             suggestions[enc] = raw_line.decode(enc)
         except:  # pragma: nocover
-            pass
+            suggestions[enc] = '<could not decode from {}>'.format(enc)
     return suggestions
 
 
@@ -94,8 +94,8 @@ def run(args):
                 for match in find_non_ascii(raw_line):
                     print('{}:{}: Non-UTF8 character found: {}'.format(
                         p, lineno, repr(match)))
-                    for enc, res in sorted(suggest_encodings(raw_line).items()):
-                        print(' * {}:\t{}'.format(enc, res))
+                    for enc, res in sorted(suggest_encodings(match).items()):
+                        print(" * {}:\t'{}'".format(enc, res.rstrip('\r\n')))
 
         if utf8_detected and nonutf8_detected:
             print(
