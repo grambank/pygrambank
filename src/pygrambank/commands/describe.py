@@ -110,7 +110,7 @@ def check_feature_dependencies(rows, log):
         if _value(feat) == '1' and not _comment(feat):
             log.error(colored(
                 '{} should not be coded 1 without a comment'.format(feat),
-                color='red'))
+                color='red'))  # pragma: nocover
 
 
 def describe(args, sheet):
