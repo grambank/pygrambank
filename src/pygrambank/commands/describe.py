@@ -103,6 +103,15 @@ def check_feature_dependencies(rows, log):
                     ' if GB333, GB334, GB335, and GB336 are all 0'.format(feat),
                     color='red'))
 
+    for feat in (
+        'GB026', 'GB303', 'GB320', 'GB166', 'GB197', 'GB129', 'GB285', 'GB336',
+        'GB260', 'GB165', 'GB319'
+    ):
+        if _value(feat) == '1' and not _comment(feat):
+            log.error(colored(
+                '{} should not be coded 1 without a comment'.format(feat),
+                color='red'))
+
 
 def describe(args, sheet):
     rows = list(sheet.iter_row_objects(args.repos))
