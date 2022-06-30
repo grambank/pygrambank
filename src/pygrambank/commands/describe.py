@@ -47,6 +47,72 @@ def run(args):
             sheet.visit(lambda r: r)
 
 
+def check_feature_dependencies(rows, log):
+    values = {
+        r.Feature_ID: r
+        for r in rows
+        if r.Feature_ID and r.Value}
+
+    def _value(feat):
+        row = values.get(feat)
+        return row.Value if row else None
+
+    def _comment(feat):   # pragma: nocover
+        row = values.get(feat)
+        return row.Comment if row else None
+
+    if (_value('GB408')
+        == _value('GB409')
+        == _value('GB410')
+        == '0'
+    ):
+        log.error(colored(
+            "GB408, GB409, and GB410 can't all be 0",
+            color='red'))  # pragma: nocover
+
+    if (_value('GB131')
+        == _value('GB132')
+        == _value('GB133')
+        == '0'
+    ):
+        log.error(colored(
+            "GB131, GB132, and GB133 can't all be 0",
+            color='red'))  # pragma: nocover
+
+    if (_value('GB083')
+        == _value('GB084')
+        == _value('GB121')
+        == _value('GB521')
+        == _value('GB309')
+        == '0'
+    ):
+        log.error(colored(
+            "GB309 can't be 0 if GB083, GB084, GB121 and GB521 are all 0",
+            color='red'))  # pragma: nocover
+
+    if (_value('GB333')
+        == _value('GB334')
+        == _value('GB335')
+        == _value('GB336')
+        == '0'
+    ):
+        for feat in ('GB333', 'GB334', 'GB335', 'GB336'):  # pragma: nocover
+            if not _comment(feat):
+                log.error(colored(
+                    '{} must have a comment'
+                    ' if GB333, GB334, GB335, and GB336 are all 0'.format(feat),
+                    color='red'))
+
+    for feat in (
+        'GB026', 'GB303', 'GB320', 'GB166', 'GB197', 'GB129', 'GB285', 'GB336',
+        'GB260', 'GB165', 'GB319'
+    ):
+        if _value(feat) == '1' and not _comment(feat):
+            log.error(colored(
+                '{} should not be coded 1 without a comment'.format(feat),
+                color='red'))  # pragma: nocover
+
+
 def describe(args, sheet):
     rows = list(sheet.iter_row_objects(args.repos))
 
@@ -72,6 +138,8 @@ def describe(args, sheet):
         print('{}\t{}'.format(k, str(v).rjust(3)))
     print(colored('\t{}'.format(str(sum(stats.values())).rjust(3)), attrs=['bold']))
 
+    check_feature_dependencies(rows, args.log)
+
     refs = collections.Counter()
     for row in rows:
         for ref in row.sources:
@@ -95,7 +163,7 @@ def describe(args, sheet):
         if k in coders_by_id:
             print('{}\t{}:\t{}'.format(k, coders_by_id[k], str(v).rjust(3)))
         else:
-            args.log.error(colored('Unknown coder: "{}"'.format(k), color = 'red'))  # pragma: no cover
+            args.log.error(colored('Unknown coder: "{}"'.format(k), color='red'))  # pragma: no cover
 
     if args.columns:
         head('Columns')
