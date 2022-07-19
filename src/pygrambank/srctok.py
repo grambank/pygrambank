@@ -64,6 +64,9 @@ def iter_ayps(s):
             continue
         condensed = False
         x = x.strip()
+        # In cases like `Author2 2011 via Author1 2012` only consider the bit
+        # after the `via`
+        x = re.split(r'\s+via\s+', x)[-1]
         m = refullsrc.search(x)
         if not m:
             m = resrc.search(x)

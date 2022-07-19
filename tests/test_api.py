@@ -16,7 +16,7 @@ def test_features(api, wiki):
 
 
 def test_bib(api):
-    assert len(api.bib) == 6
+    assert len(api.bib) == 7
 
 
 def test_sheets(api):

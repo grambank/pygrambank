@@ -45,6 +45,11 @@ def test_source_to_refs_disambiguation_by_title(bibs_and_lgks):
     assert source_to_refs('Author nd', 'abc', bibs, lgks, unresolved)[0] == [('bookc', [])]
 
 
+def test_source_to_refs_ignore_via_clauses(bibs_and_lgks):
+    bibs, lgks = bibs_and_lgks
+    assert source_to_refs('OtherGuy 1972 via Author 2022', 'abc', bibs, lgks, Counter())[0] == [('book2022', [])]
+
+
 def test_misc():
     assert allmax({}) == {}
 
