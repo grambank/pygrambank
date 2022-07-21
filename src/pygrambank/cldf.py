@@ -66,34 +66,37 @@ class Bibs(dict):
                     yield key, code
 
 
-def refs(api, glottolog, sheet):
-    glottolog = Glottolog(glottolog)
-    languoid, lang = glottolog.api.languoid(sheet.glottocode), None
+def languoid_id_map(glottolog, glottocodes):
+    id_map = {}
 
-    # Determine the associated language-level languoid:
-    if languoid.level.name == 'dialect':  # pragma: no cover
-        for _, gc, _ in reversed(languoid.lineage):
-            lang = glottolog.api.languoid(gc)
-            if lang.level.name == 'language':
-                break
-    else:
-        lang = languoid
+    for glottocode in glottocodes:
+        languoid = glottolog.api.languoid(glottocode)
+        lang = None
 
-    ids = set(nfilter([languoid.id, languoid.hid, languoid.iso, lang.id, lang.hid, lang.iso]))
-    bibs = Bibs(glottolog, api)
+        # Determine the associated language-level languoid:
+        if languoid.level.name == 'dialect':  # pragma: no cover
+            for _, gc, _ in reversed(languoid.lineage):
+                lang = glottolog.api.languoid(gc)
+                if lang.level.name == 'language':
+                    break
+        else:
+            lang = languoid
 
-    lgks = collections.defaultdict(set)
-    for key, code in bibs.iter_codes():
-        if code in ids:
-            lgks[languoid.id].add(key)
+        potential_ids = [
+            languoid.id, languoid.hid, languoid.iso, lang.id, lang.hid, lang.iso]
+        id_map.update((id_, glottocode) for id_ in potential_ids if id_)
 
+    return id_map
+
+
+def refs(api, glottocode, bibs, lgks, sheet):
     def source(key):
         type_, fields = bibs[key]
         return key, type_, fields.get('author', fields.get('editor', '-')), fields.get('year', '-')
 
     unresolved = collections.Counter()
     res = bibdata(sheet, list(sheet.iter_row_objects(api)), bibs, lgks, unresolved)
-    return list(res), unresolved, [source(k) for k in lgks[languoid.id]]
+    return list(res), unresolved, [source(k) for k in lgks[glottocode]]
 
 
 def create(dataset, api, glottolog):
