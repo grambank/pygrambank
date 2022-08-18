@@ -19,6 +19,13 @@ def register(parser):
     add_wiki_repos(parser)
 
 
+def normalised_summary(f):
+    summary = f.wiki['Summary']
+    summary = summary.replace('\n', ' ')
+    summary = summary.replace('\t', ' ')
+    return summary
+
+
 def run(args):
     if args.out == FNAME:  # pragma: no cover
         name = args.repos.path(args.out)
@@ -34,7 +41,7 @@ def run(args):
         ('Source', lambda f: ''),
         ('Comment', lambda f: ''),
         ('Contributed_Datapoints', lambda f: ''),
-        ('Clarifying comments', lambda f: f.wiki['Summary'].replace('\n', ' ')),
+        ('Clarifying comments', normalised_summary),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),
