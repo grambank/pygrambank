@@ -83,11 +83,11 @@ def check_feature_dependencies(rows, log):
         == _value('GB084')
         == _value('GB121')
         == _value('GB521')
-        == _value('GB309')
         == '0'
+        and _value('GB309') == '1'
     ):
         log.error(colored(
-            "GB309 can't be 0 if GB083, GB084, GB121 and GB521 are all 0",
+            "GB309 can't be 1 if GB083, GB084, GB121 and GB521 are all 0",
             color='red'))  # pragma: nocover
 
     if (_value('GB333')
