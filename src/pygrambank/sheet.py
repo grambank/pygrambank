@@ -9,6 +9,69 @@ from csvw import dsv
 from pygrambank.srctok import iter_ayps
 
 
+def check_feature_dependencies(rows):
+    values = {
+        r.Feature_ID: r
+        for r in rows
+        if r.Feature_ID and r.Value}
+
+    def _value(feat):
+        row = values.get(feat)
+        return row.Value if row else None
+
+    def _comment(feat):   # pragma: nocover
+        row = values.get(feat)
+        return row.Comment if row else None
+
+    errors = []
+
+    if (_value('GB408')
+        == _value('GB409')
+        == _value('GB410')
+        == '0'
+    ):
+        errors.append("GB408, GB409, and GB410 can't all be 0")  # pragma: nocover
+
+    if (_value('GB131')
+        == _value('GB132')
+        == _value('GB133')
+        == '0'
+    ):
+        errors.append("GB131, GB132, and GB133 can't all be 0")  # pragma: nocover
+
+    if (_value('GB083')
+        == _value('GB084')
+        == _value('GB121')
+        == _value('GB521')
+        == '0'
+        and _value('GB309') == '1'
+    ):
+        errors.append(
+            "GB309 can't be 1 if GB083, GB084, GB121 and GB521 are all 0")  # pragma: nocover
+
+    if (_value('GB333')
+        == _value('GB334')
+        == _value('GB335')
+        == _value('GB336')
+        == '0'
+    ):
+        for feat in ('GB333', 'GB334', 'GB335', 'GB336'):  # pragma: nocover
+            if not _comment(feat):
+                errors.append(
+                    '{} must have a comment'
+                    ' if GB333, GB334, GB335, and GB336 are all 0'.format(feat))  # pragma: nocover
+
+    for feat in (
+        'GB026', 'GB303', 'GB320', 'GB166', 'GB197', 'GB129', 'GB285', 'GB336',
+        'GB260', 'GB165', 'GB319'
+    ):
+        if _value(feat) == '1' and not _comment(feat):
+            errors.append(
+                '{} should not be coded 1 without a comment'.format(feat))  # pragma: nocover
+
+    return errors
+
+
 @attr.s
 class Source:
     author = attr.ib()
@@ -162,7 +225,7 @@ class Sheet(object):
             not re.search('checked by coder', row['Comment'].lower()) and\
             not re.search('check by coder', row['Comment'].lower()) and\
             not re.search('wrong import', row['Comment'].lower()) and\
-            not re.search('checked by GB coder', row['Comment'].lower()):  
+            not re.search('checked by GB coder', row['Comment'].lower()):
 #            if re.search('check', row['Comment'].lower()):
                 if log:  # pragma: no cover
                     log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
@@ -239,6 +302,10 @@ class Sheet(object):
                     break
             print(self.path)
             raise
+
+        for msg in check_feature_dependencies(self.iter_row_objects(api)):
+            log(msg)  # pragma: nocover
+
         return nvalid
 
     def itervalues(self, api):
