@@ -1,4 +1,4 @@
-# Description of conditions pygrambank commands check Grambank language coding sheets
+# Description of conditions pygrambank commands check Grambank language coding sheets for
 
 There are two pygrambank commands that are run on language coding sheets upon submission to do a basic quality check: `sourcelookup` and `describe` (which calls `check`).
 
@@ -17,3 +17,5 @@ Each coding sheet should have a column called "Source". The pygrambank sourceloo
 If there is more than one publication with the same author(s), year and lgcode we differentiate them by using a unique word from the title. This is done by author_UNIQUE WORD YEAR, for example: `Shaver_relaciones 1982`. 
 
 If the source contains the string "p.c", it is ignored for further scrutiny. It is not matched to an entry in gb.bib or hh.bib.
+
+More details [here](https://github.com/grambank/grambank/wiki/Referencing-sources-in-Grambank).
