@@ -87,6 +87,21 @@ def check_feature_dependencies(rows):
                 'GB273 should have a comment'
                 ' if GB273, GB266, and GB273 are all 0')
 
+    if (_value('GB072')
+        == _value('GB073')
+        == _value('GB074')
+        == _value('GB075')
+        == 0
+    ):
+        if not _comment('GB074'):
+            errors.append(
+                'GB074 should have a comment'
+                ' if GB072, GB073, GB074, and GB075 are all 0')
+        if not _comment('GB075'):
+            errors.append(
+                'GB075 should have a comment'
+                ' if GB072, GB073, GB074, and GB075 are all 0')
+
     return errors
 
 
