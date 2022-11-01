@@ -69,6 +69,24 @@ def check_feature_dependencies(rows):
             errors.append(
                 '{} should not be coded 1 without a comment'.format(feat))  # pragma: nocover
 
+    if (_value('GB265')
+        == _value('GB266')
+        == _value('GB273')
+        == 0
+    ):
+        if not _comment('GB265'):
+            errors.append(
+                'GB265 should have a comment'
+                ' if GB265, GB266, and GB273 are all 0')
+        if not _comment('GB266'):
+            errors.append(
+                'GB266 should have a comment'
+                ' if GB265, GB266, and GB273 are all 0')
+        if not _comment('GB273'):
+            errors.append(
+                'GB273 should have a comment'
+                ' if GB273, GB266, and GB273 are all 0')
+
     return errors
 
 
