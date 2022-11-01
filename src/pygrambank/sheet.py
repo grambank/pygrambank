@@ -23,6 +23,10 @@ def check_feature_dependencies(rows):
         row = values.get(feat)
         return row.Comment if row else None
 
+    def _require_comment(feat, reason):
+        if not _comment(feat):
+            errors.append('{} must have a comment if {}'.format(feat, reason))
+
     errors = []
 
     if (_value('GB408')
@@ -55,37 +59,26 @@ def check_feature_dependencies(rows):
         == _value('GB336')
         == '0'
     ):
+        reason = 'GB333, GB334, GB335, and GB336 are all 0'
         for feat in ('GB333', 'GB334', 'GB335', 'GB336'):  # pragma: nocover
-            if not _comment(feat):
-                errors.append(
-                    '{} must have a comment'
-                    ' if GB333, GB334, GB335, and GB336 are all 0'.format(feat))  # pragma: nocover
+            _require_comment(feat, reason)
 
     for feat in (
         'GB026', 'GB303', 'GB320', 'GB166', 'GB197', 'GB129', 'GB285', 'GB336',
         'GB260', 'GB165', 'GB319'
     ):
-        if _value(feat) == '1' and not _comment(feat):
-            errors.append(
-                '{} should not be coded 1 without a comment'.format(feat))  # pragma: nocover
+        if _value(feat) == '1':
+            _require_comment(feat, reason='it is coded 1')  # pragma: nocover
 
     if (_value('GB265')
         == _value('GB266')
         == _value('GB273')
         == 0
     ):
-        if not _comment('GB265'):
-            errors.append(
-                'GB265 should have a comment'
-                ' if GB265, GB266, and GB273 are all 0')
-        if not _comment('GB266'):
-            errors.append(
-                'GB266 should have a comment'
-                ' if GB265, GB266, and GB273 are all 0')
-        if not _comment('GB273'):
-            errors.append(
-                'GB273 should have a comment'
-                ' if GB273, GB266, and GB273 are all 0')
+        reason = 'GB265, GB266, and GB273 are all 0'
+        _require_comment('GB265', reason)
+        _require_comment('GB266', reason)
+        _require_comment('GB273', reason)
 
     if (_value('GB072')
         == _value('GB073')
@@ -93,14 +86,9 @@ def check_feature_dependencies(rows):
         == _value('GB075')
         == 0
     ):
-        if not _comment('GB074'):
-            errors.append(
-                'GB074 should have a comment'
-                ' if GB072, GB073, GB074, and GB075 are all 0')
-        if not _comment('GB075'):
-            errors.append(
-                'GB075 should have a comment'
-                ' if GB072, GB073, GB074, and GB075 are all 0')
+        reason = 'GB072, GB073, GB074, and GB075 are all 0'
+        _require_comment('GB074', reason)
+        _require_comment('GB075', reason)
 
     return errors
 
