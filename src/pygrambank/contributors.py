@@ -46,6 +46,7 @@ class Contributor(object):
     email = attr.ib()
     photo = attr.ib(converter=parse_photo)
     bio = attr.ib()
+    should_be_included_despite_no_coding = attr.ib()
 
     @property
     def name(self):
