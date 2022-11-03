@@ -211,6 +211,18 @@ def create(dataset, api, glottolog):
         for c in api.contributors
         if c.should_be_included_despite_no_coding == 'Yes' or c.id in coder_ids]
 
+    # check for typos in coder abbreviations
+    contributor_ids = {c['ID'] for c in data['contributors.csv']}
+    for value in data['ValueTable']:  # pragma: nocover
+        unknown_coders = [
+            coder
+            for coder in value['Coders']
+            if coder not in contributor_ids]
+        if unknown_coders:
+            raise ValueError('ERROR: {}: unknown coders: {}'.format(
+                value['Language_ID'],
+                unknown_coders))
+
     print('computing newick trees')
     data['families.csv'] = sorted([
         {
