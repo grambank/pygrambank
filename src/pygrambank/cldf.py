@@ -185,7 +185,6 @@ def create(dataset, api, glottolog):
             ID=sheet.glottocode,
             Name=lang.name,
             Glottocode=sheet.glottocode,
-            Coders=sheet.coders,
             provenance=sheet.path.name,
         )
         ld.update(sheet.metadata(glottolog))
@@ -302,11 +301,6 @@ def create_schema(dataset):
     table = dataset.add_component(
         'LanguageTable',
         {
-            'name': 'Coders',
-            'dc:description': 'References the contributors of the codings for this language',
-            'separator': ';',
-        },
-        {
             'name': 'provenance',
             'dc:description': 'Name of the contributed file',
         },
@@ -332,7 +326,6 @@ def create_schema(dataset):
     )
     table.common_props['dc:description'] = "Languageś and dialects for which Grambank has codings."
     table.add_foreign_key('Family_level_ID', 'families.csv', 'ID')
-    table.add_foreign_key('Coders', 'contributors.csv', 'ID')
 
     dataset.add_component(
         'ParameterTable',
