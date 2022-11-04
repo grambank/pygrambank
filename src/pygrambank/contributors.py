@@ -1,5 +1,6 @@
 import re
 import collections
+from itertools import zip_longest
 
 import attr
 from clldutils.markup import iter_markdown_tables
@@ -46,6 +47,7 @@ class Contributor(object):
     email = attr.ib()
     photo = attr.ib(converter=parse_photo)
     bio = attr.ib()
+    should_be_included_despite_no_coding = attr.ib()
 
     @property
     def name(self):
@@ -64,7 +66,10 @@ class Contributors(list):
     @classmethod
     def from_md(cls, fname):
         header, rows = next(iter_markdown_tables(fname.read_text(encoding='utf8')))
-        rows = [Contributor(**dict(zip([norm_header(c) for c in header], row))) for row in rows]
+        header = [norm_header(c) for c in header]
+        rows = [
+            Contributor(**dict(zip_longest(header, row, fillvalue='')))
+            for row in rows]
         byid = collections.Counter([r.id for r in rows])
         if byid.most_common(1)[0][1] > 1:  # pragma: no cover
             raise ValueError(

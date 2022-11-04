@@ -160,14 +160,6 @@ def create(dataset, api, glottolog):
                 Description=desc,
             ))
 
-    data['contributors.csv'] = [dict(
-        ID=c.id,
-        Name=c.name,
-        Description=c.bio or '',
-        Roles=c.roles,
-        Photo=c.photo or '') for c in api.contributors]
-    cids = set(d['ID'] for d in data['contributors.csv'])
-
     def coders(sheet, row):
         return sorted(set(sheet.coders).union(row.contributed_datapoint))
 
@@ -178,9 +170,6 @@ def create(dataset, api, glottolog):
             continue
         lang = glottolog.languoids_by_glottocode[sheet.glottocode]
         coded_sheets[sheet.glottocode] = sheet
-        for c in sheet.coders:
-            if c not in cids:  # pragma: no cover
-                raise ValueError('unknown coder ID: {0} in {1}'.format(c, sheet.path))
         ld = dict(
             ID=sheet.glottocode,
             Name=lang.name,
@@ -206,6 +195,32 @@ def create(dataset, api, glottolog):
                 Source_comment=row.Source_comment,
                 Coders=coders(sheet, row),
             ))
+
+    coder_ids = {
+        coder
+        for dp in data['ValueTable']
+        for coder in dp['Coders']}
+    data['contributors.csv'] = [
+        dict(
+            ID=c.id,
+            Name=c.name,
+            Description=c.bio or '',
+            Roles=c.roles,
+            Photo=c.photo or '')
+        for c in api.contributors
+        if c.should_be_included_despite_no_coding == 'Yes' or c.id in coder_ids]
+
+    # check for typos in coder abbreviations
+    contributor_ids = {c['ID'] for c in data['contributors.csv']}
+    for value in data['ValueTable']:  # pragma: nocover
+        unknown_coders = [
+            coder
+            for coder in value['Coders']
+            if coder not in contributor_ids]
+        if unknown_coders:
+            raise ValueError('ERROR: {}: unknown coders: {}'.format(
+                value['Language_ID'],
+                unknown_coders))
 
     print('computing newick trees')
     data['families.csv'] = sorted([
