@@ -27,7 +27,7 @@ setup(
         'clldutils>=3.6',
         'cldfcatalog',
         'csvw>=1.10',
-        'pycldf>=1.6.2',
+        'pycldf>=1.29',
         'xlrd',
         'openpyxl==2.4.8',
         'pyglottolog>=2.0',
