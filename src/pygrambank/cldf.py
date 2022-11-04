@@ -215,7 +215,7 @@ def create(dataset, api, glottolog):
             'Newick': glottolog.api.newick_tree(
                 gc, template='{l.id}', nodes=glottolog.languoids_by_glottocode),
         } for gc in families], key=lambda d: d['ID'])
-    dataset.write(**data)
+    dataset.write(zipped=['ValueTable'], **data)
 
     per_sheet = collections.defaultdict(list)
     for k, v in reversed(unresolved.most_common()):  # pragma: no cover
