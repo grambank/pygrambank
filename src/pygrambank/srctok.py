@@ -1,5 +1,4 @@
 import re
-import logging
 from termcolor import colored
 from itertools import groupby
 
@@ -136,7 +135,7 @@ def iter_key_pages(lg, ayp, e, lgks):
     if not matched:
         if ayp not in UNMATCHED:
             print(colored('PARTIAL FAIL', color='red'))
-            logging.getLogger(__name__).warning('unmatched ref: {}'.format(ayp))
+            print('WARNING: unmatched reference: {}'.format(ayp))
             UNMATCHED.add(ayp)
 
 
