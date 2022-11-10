@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from pygrambank.cldf import Glottolog
+from pygrambank.cldf import GlottologGB
 from pygrambank import sheet
 
 
@@ -66,7 +66,7 @@ GB020\t0\tMeier 2007\t\tHJH\n""")
     rows = list(s.iter_row_objects(api))
     assert rows[0].sources[0].key == ('Meier', '2007', None)
     assert len(rows) == 1
-    md = s.metadata(Glottolog(pathlib.Path(__file__).parent / 'glottolog'))
+    md = s.metadata(GlottologGB(pathlib.Path(__file__).parent / 'glottolog'))
     out, _ = capsys.readouterr()
     assert 'no macroareas' in out
     assert md['Language_level_ID'] == 'abcd1234'

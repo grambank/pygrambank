@@ -86,8 +86,7 @@ def refs(api, glottocode, bibs, lgks, sheet):
     return list(res), unresolved, [source(k) for k in lgks[glottocode]]
 
 
-# TODO this is confusing and needs to be renamed...
-class Glottolog(object):
+class GlottologGB(object):
     """
     A custom facade to the Glottolog API.
     """
