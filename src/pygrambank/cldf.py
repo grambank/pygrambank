@@ -1,17 +1,11 @@
-import re
-import shutil
-import pathlib
 import collections
 
 import pyglottolog
-from clldutils.misc import lazyproperty, nfilter
-from pycldf.dataset import GitRepository
+from clldutils.misc import lazyproperty
 from pycldf.sources import Source
 
 from pygrambank import bib
 from pygrambank import srctok
-from pygrambank.sheet import Sheet
-from pygrambank.contributors import PHOTO_URI, ROLES
 
 
 def bibdata(sheet, values, e, lgks, unresolved):
