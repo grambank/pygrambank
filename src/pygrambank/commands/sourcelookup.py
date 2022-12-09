@@ -8,7 +8,7 @@ from termcolor import colored
 from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
-from pygrambank.cldf import refs, Glottolog, Bibs, languoid_id_map
+from pygrambank.cldf import refs, GlottologGB, Bibs, languoid_id_map
 
 
 def register(parser):
@@ -42,7 +42,7 @@ def run_(args, glottolog):  # pragma: no cover
     sheets = [Sheet(sh) for sh in args.sheets]
 
     print('Reading languoid ids from Glottolog...')
-    glottolog = Glottolog(glottolog)
+    glottolog = GlottologGB(glottolog)
     id_to_glottocode = languoid_id_map(glottolog, [s.glottocode for s in sheets])
 
     print('Loading bibliography...')
