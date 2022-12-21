@@ -9,6 +9,7 @@ from csvw.dsv import reader, UnicodeWriter
 from clldutils.misc import nfilter
 
 from .check_conflicts import check
+from pygrambank.sheet import Sheet
 
 # flake8: noqa
 
@@ -114,11 +115,24 @@ def run(args):
             if sheet.stem == 'sout2989':
                 coder = 'JE-HS'
             assert coder, str(sheet)
-            write(args.repos.path('original_sheets', '{}_{}.tsv'.format(coder, sheet.stem)), rows, args.repos.features)
+            merged_sheet_name = args.repos.path(
+                'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
+            write(merged_sheet_name, rows, args.repos.features)
             for src in sources:
                 if src.split('_')[0] != coder:
                     p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
                     if p.exists():
                         p.unlink()
                     else:
-                        args.log.warning('Unknown source sheet: {}'.format(p))
+                        print('Unknown source sheet:', p)
+            print('checks for', merged_sheet_name)
+            merged_sheet = Sheet(merged_sheet_name)
+            merged_sheet.check(args.repos)
+            archive_dest = args.repos.path('conflicts_resolved', sheet.name)
+            if archive_dest.exists():
+                print(
+                    "ERROR: won't move", sheet, 'to', archive_dest,
+                    '-- destination already exists.')
+            else:
+                print(sheet, '->', archive_dest)
+                sheet.rename(archive_dest)
