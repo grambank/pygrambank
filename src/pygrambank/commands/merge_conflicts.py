@@ -105,15 +105,18 @@ def run(args):
     active = list(args.repos.features)
 
     for sheet in sorted(args.repos.path('conflicts').glob('*.tsv'), key=lambda p: p.name):
+        print('\n#', sheet.stem)
         ok, nc = check(sheet)
         if not ok or not nc:
+            print(
+                'Skipping {}:'.format(sheet.stem),
+                '`grambank check_conflicts` found errors.')
             continue
 
-        print(sheet.stem)
         try:
             rows, sources = rows_and_sourcesheets(sheet, active)
         except ValueError as e:
-            print('Failed to merge rows:', e)
+            print('Skipping {}: Failed to merge rows: {}'.format(sheet.stem, e))
             continue
         coder = get_coder(sheet)
         if sheet.stem == 'sout2989':
@@ -122,19 +125,22 @@ def run(args):
 
         merged_sheet_name = args.repos.path(
             'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
-        print('writing', merged_sheet_name)
+        source_sheets = [
+            args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
+            for src in sources
+            if src.split('_')[0] != coder]
+
+        print('{{{}}} -> {}'.format(
+            '; '.join(str(p) for p in sorted(source_sheets)),
+            merged_sheet_name))
         write(merged_sheet_name, rows, args.repos.features)
+        for p in source_sheets:
+            if p.exists():
+                p.unlink()
+            else:
+                print('{}: file not found'.format(p))
 
-        for src in sources:
-            if src.split('_')[0] != coder:
-                p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
-                if p.exists():
-                    print('removing', p)
-                    p.unlink()
-                else:
-                    print("ERROR: won't remove", p, '-- file not found')
-
-        print('checks for', merged_sheet_name)
+        print('checks for {}:'.format(merged_sheet_name))
         merged_sheet = Sheet(merged_sheet_name)
         merged_sheet.check(args.repos)
 
