@@ -108,41 +108,43 @@ def run(args):
         #if sheet.stem != 'brah1256':
         #    continue
         ok, nc = check(sheet)
-        if ok and nc:
-            print(sheet.stem)
-            try:
-                rows, sources = rows_and_sourcesheets(sheet, active)
-            except ValueError as e:
-                print('Failed to merge rows:', e)
-                continue
-            coder = get_coder(sheet)
-            if sheet.stem == 'sout2989':
-                coder = 'JE-HS'
-            assert coder, str(sheet)
+        if not ok or not nc:
+            continue
 
-            merged_sheet_name = args.repos.path(
-                'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
-            print('writing', merged_sheet_name)
-            write(merged_sheet_name, rows, args.repos.features)
+        print(sheet.stem)
+        try:
+            rows, sources = rows_and_sourcesheets(sheet, active)
+        except ValueError as e:
+            print('Failed to merge rows:', e)
+            continue
+        coder = get_coder(sheet)
+        if sheet.stem == 'sout2989':
+            coder = 'JE-HS'
+        assert coder, str(sheet)
 
-            for src in sources:
-                if src.split('_')[0] != coder:
-                    p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
-                    if p.exists():
-                        print('removing', p)
-                        p.unlink()
-                    else:
-                        print("ERROR: won't remove", p, '-- file not found')
+        merged_sheet_name = args.repos.path(
+            'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
+        print('writing', merged_sheet_name)
+        write(merged_sheet_name, rows, args.repos.features)
 
-            print('checks for', merged_sheet_name)
-            merged_sheet = Sheet(merged_sheet_name)
-            merged_sheet.check(args.repos)
+        for src in sources:
+            if src.split('_')[0] != coder:
+                p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
+                if p.exists():
+                    print('removing', p)
+                    p.unlink()
+                else:
+                    print("ERROR: won't remove", p, '-- file not found')
 
-            archive_dest = args.repos.path('conflicts_resolved', sheet.name)
-            if archive_dest.exists():
-                print(
-                    "ERROR: won't move", sheet, 'to', archive_dest,
-                    '-- destination already exists.')
-            else:
-                print(sheet, '->', archive_dest)
-                sheet.rename(archive_dest)
+        print('checks for', merged_sheet_name)
+        merged_sheet = Sheet(merged_sheet_name)
+        merged_sheet.check(args.repos)
+
+        archive_dest = args.repos.path('conflicts_resolved', sheet.name)
+        if archive_dest.exists():
+            print(
+                "ERROR: won't move", sheet, 'to', archive_dest,
+                '-- destination already exists.')
+        else:
+            print(sheet, '->', archive_dest)
+            sheet.rename(archive_dest)
