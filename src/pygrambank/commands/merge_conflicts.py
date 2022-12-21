@@ -115,19 +115,25 @@ def run(args):
             if sheet.stem == 'sout2989':
                 coder = 'JE-HS'
             assert coder, str(sheet)
+
             merged_sheet_name = args.repos.path(
                 'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
+            print('writing', merged_sheet_name)
             write(merged_sheet_name, rows, args.repos.features)
+
             for src in sources:
                 if src.split('_')[0] != coder:
                     p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
                     if p.exists():
+                        print('removing', p)
                         p.unlink()
                     else:
-                        print('Unknown source sheet:', p)
+                        print("ERROR: won't remove", p, '-- file not found')
+
             print('checks for', merged_sheet_name)
             merged_sheet = Sheet(merged_sheet_name)
             merged_sheet.check(args.repos)
+
             archive_dest = args.repos.path('conflicts_resolved', sheet.name)
             if archive_dest.exists():
                 print(
