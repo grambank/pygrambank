@@ -110,7 +110,11 @@ def run(args):
         ok, nc = check(sheet)
         if ok and nc:
             print(sheet.stem)
-            rows, sources = rows_and_sourcesheets(sheet, active)
+            try:
+                rows, sources = rows_and_sourcesheets(sheet, active)
+            except ValueError as e:
+                print('Failed to merge rows:', e)
+                continue
             coder = get_coder(sheet)
             if sheet.stem == 'sout2989':
                 coder = 'JE-HS'
