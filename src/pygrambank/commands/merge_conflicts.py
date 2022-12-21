@@ -105,8 +105,6 @@ def run(args):
     active = list(args.repos.features)
 
     for sheet in sorted(args.repos.path('conflicts').glob('*.tsv'), key=lambda p: p.name):
-        #if sheet.stem != 'brah1256':
-        #    continue
         ok, nc = check(sheet)
         if not ok or not nc:
             continue
