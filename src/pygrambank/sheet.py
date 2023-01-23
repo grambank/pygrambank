@@ -6,7 +6,7 @@ from termcolor import colored
 import attr
 from csvw import dsv
 
-from pygrambank.srctok import iter_ayps
+from pygrambank.srctok import iter_authoryearpages
 
 
 def check_feature_dependencies(rows):
@@ -134,7 +134,7 @@ class Row:
 
     @property
     def sources(self):
-        return [Source(*ayp) for ayp in iter_ayps(self.Source)]
+        return [Source(*ayp) for ayp in iter_authoryearpages(self.Source)]
 
 
 class Sheet(object):

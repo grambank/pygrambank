@@ -20,7 +20,7 @@ AUTHOR_PATTERNS = [
 ]
 
 
-def psingleauthor(n):
+def parse_single_author(n):
     for p in AUTHOR_PATTERNS:
         match = p.match(n)
         if match:
@@ -28,8 +28,12 @@ def psingleauthor(n):
     return None
 
 
-def pauthor(s):
-    return nfilter(psingleauthor(a.strip()) for a in s.replace(" & ", " and ").split(' and '))
+def parse_authors(author_string):
+    author_string = author_string.replace(' & ', ' and ')
+    authors = author_string.split(' and ')
+    authors = [parse_single_author(a.strip()) for a in authors]
+    authors = [a for a in authors if a]
+    return authors
 
 
 reca = re.compile(r"\s*[,&]\s*")
@@ -62,26 +66,28 @@ def lastvon(author):
     return r
 
 
-def iter_authors(key):
+def bibkey_authors(bibkey):
     """
     Generator yielding author names as encountered in a citation key.
     """
-    if ':' in key:  # A citation key as used in hh.bib!
-        n = key.split(':')[1]
-    else:
-        n = key
-    acc = ''
-    for i, c in enumerate(n):
-        if c.isdigit():  # For citation keys of the form "Meier2018" we stop at the start of year.
+    # A citation key as used in hh.bib!
+    # FIXME that's a bold assumption..
+    if ':' in bibkey:
+        bibkey = bibkey.split(':')[1]
+
+    current_name = ''
+    for char in bibkey:
+        # For keys of the form "Meier2018" we stop at the start of year.
+        if char.isdigit():
             break
-        if c.isupper() and acc not in ['Mac', 'De']:
-            if acc:
-                yield acc
-            acc = c
+        elif char.isupper() and current_name not in ('Mac', 'De'):
+            if current_name:
+                yield current_name
+            current_name = char
         else:
-            acc += c
-    if acc:
-        yield acc
+            current_name += char
+    if current_name:
+        yield current_name
 
 
 reisobrack = re.compile(r"\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
@@ -99,13 +105,13 @@ def lgcodestr(lgcstr):
     return codes
 
 
-def hhtype(f):
-    rekillparen = re.compile(r" \([^)]*\)")
-    respcomsemic = re.compile(r"[;,]\s?")
-    return respcomsemic.split(rekillparen.sub("", f.get("hhtype", "unknown")))
+def hhtypes(bibentry):
+    hhtype_field = bibentry.get('hhtype', 'unknown')
+    hhtype_field = re.sub(r' \([^)]*\)', '', hhtype_field)
+    return re.split(r'[;,]\s?', hhtype_field)
 
 
-oldwcrank = [
+HHTYPE_RANKING_OLD = [
     'grammar',
     'grammar sketch',
     'dictionary',
@@ -124,24 +130,31 @@ oldwcrank = [
     'bibliographically oriented',
     'unknown']
 
-newwcs = {}
-newwcs['handbook/overview'] = 'overview'
-newwcs['some very small amount of data/information on a language'] = 'minimal'
-newwcs['grammar sketch'] = 'grammar_sketch'
-newwcs['new testament'] = 'new_testament'
-newwcs['(typological) study of a specific feature'] = 'specific_feature'
-newwcs['dialectologically oriented'] = 'dialectology'
-newwcs['sociolinguistically oriented'] = 'socling'
-newwcs['comparative-historical study'] = 'comparative'
-newwcs['bibliographically oriented'] = 'bibliographical'
-newwcs['ethnographic work'] = 'ethnographic'
-newwcs['dictionary'] = 'dictionary'
-newwcs['grammar'] = 'grammar'
-newwcs['text'] = 'text'
-newwcs['wordlist'] = 'wordlist'
-newwcs['phonology'] = 'phonology'
-newwcs['endangered language'] = 'endangered language'
-newwcs['unknown'] = 'unknown'
+HHTYPE_NEW_TYPES = {
+    'grammar': 'grammar',
+    'grammar sketch': 'grammar_sketch',
+    'dictionary': 'dictionary',
+    '(typological) study of a specific feature': 'specific_feature',
+    'phonology': 'phonology',
+    'text': 'text',
+    'new testament': 'new_testament',
+    'wordlist': 'wordlist',
+    'comparative-historical study': 'comparative',
+    'some very small amount of data/information on a language': 'minimal',
+    'endangered language': 'endangered language',
+    'sociolinguistically oriented': 'socling',
+    'dialectologically oriented': 'dialectology',
+    'handbook/overview': 'overview',
+    'ethnographic work': 'ethnographic',
+    'bibliographically oriented': 'bibliographical',
+    'unknown': 'unknown',
+}
 
-wcrank = [newwcs[k] for k in oldwcrank]
-hhtype_to_n = {x: len(wcrank) - i for i, x in enumerate(wcrank)}
+HHTYPE_RANKING = [HHTYPE_NEW_TYPES[hhtype] for hhtype in HHTYPE_RANKING_OLD]
+HHTYPE_PRIORITIES = {
+    hhtype: len(HHTYPE_RANKING) - i
+    for i, hhtype in enumerate(HHTYPE_RANKING)}
+
+
+def hhtype_priority(hhtype):
+    return HHTYPE_PRIORITIES.get(hhtype, 0)
