@@ -8,7 +8,7 @@ from termcolor import colored
 from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
-from pygrambank.cldf import bibdata, GlottologGB
+from pygrambank.cldf import BibliographyMatcher, GlottologGB
 from pygrambank.bib import lgcodestr
 
 
@@ -70,13 +70,15 @@ def run_(args, glottolog):  # pragma: no cover
             '\nSource look-up for sheet {}...\n'.format(sheet.path),
             attrs=['bold']))
 
-        unresolved = collections.Counter()
-        sources = list(bibdata(
-            sheet,
-            list(sheet.iter_row_objects(args.repos)),
-            bibliography_entries,
-            bibkeys_by_glottocode,
-            unresolved))
+        bib_matcher = BibliographyMatcher()
+        sources = [
+            source
+            for sheet_row in sheet.iter_row_objects(args.repos)
+            for source in bib_matcher.resolve_citations(
+                sheet.glottocode,
+                sheet_row,
+                bibliography_entries,
+                bibkeys_by_glottocode)]
 
         seen = collections.defaultdict(list)
         print(colored('Resolved sources:', attrs=['bold']))
@@ -84,10 +86,10 @@ def run_(args, glottolog):  # pragma: no cover
             seen[src.id].append(src)
         for srcid, srcs in seen.items():
             print('{}\t{}\t{}'.format(len(srcs), srcid, srcs[0]))
-        if unresolved:
+        if bib_matcher.has_unresolved_citations():
             print()
             print(colored('Unresolved sources:', attrs=['bold']))
-            for spec, v in unresolved.most_common():
+            for spec, v in bib_matcher.pop_unresolved_citations():
                 try:
                     author, year, code = spec
                     print('{}\t{} {}'.format(v, author, year))
@@ -104,5 +106,8 @@ def run_(args, glottolog):  # pragma: no cover
                         colored(bibkey, color='blue'),
                         type_,
                         colored('{} {}'.format(author, year), attrs=['bold'])))
-        print()
-        print(colored('FAIL' if unresolved else 'OK', color='red' if unresolved else 'green'))
+            print()
+            print(colored('FAIL', color='red'))
+        else:
+            print()
+            print(colored('OK', color='green'))

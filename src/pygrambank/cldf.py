@@ -37,26 +37,30 @@ def clean_bibkey(key):
     return key.replace(':', '_').replace("'", "")
 
 
-# XXX this is called by the cldfbench
-def bibdata(sheet, sheet_rows, bibliography_entries, bibkeys_by_glottocode, unresolved):
-    fixrefs = REFS
+class BibliographyMatcher:
 
-    glottocode = sheet.glottocode
-    language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
+    def __init__(self):
+        self._unresolved_citations = collections.Counter()
 
-    # XXX: this entire function could just just be called for a single row
-    # in the datasheet, e.g.
-    # sources = [src
-    #            for sheet in sheets
-    #            for row in sheet.iter_rows()
-    #            for src in bibdata(sheet, row, ...)]
-    for row in sheet_rows:
+    def has_unresolved_citations(self):
+        return bool(self._unresolved_citations)
+
+    def pop_unresolved_citations(self):
+        """Returns a tuple (citation, count)."""
+        sorted_citations = self._unresolved_citations.most_common()
+        self._unresolved_citations.clear()
+        return sorted_citations
+
+    # XXX this is called by the cldfbench
+    def resolve_citations(self, glottocode, sheet_row, bibliography_entries, bibkeys_by_glottocode):
+        fixrefs = REFS
+        language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
+
         if not row.Source:
-            continue
+            return None
 
         # FIXME mutating input data in-place!!!
         row.Source_comment = row.Source
-
         source_string = row.Source
         authoryears = list(iter_authoryearpages(source_string))
 
@@ -184,8 +188,7 @@ def bibdata(sheet, sheet_rows, bibliography_entries, bibkeys_by_glottocode, unre
         if unresolved_sources:
             # FIXME mutating input data in-place
             row.Source_comment += ' (source not confirmed)'
-            # FIXME mutating input data in-place
-            unresolved.update(unresolved_sources)
+            self._unresolved_citations.update(unresolved_sources)
 
         ### XXX: THIS IS THE CODE THAT DUMPS THE PARSED SOURCES FOR THIS ROW TO THE CALLER ###
 
