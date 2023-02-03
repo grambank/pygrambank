@@ -31,29 +31,43 @@ def undiacritic(s):
     return slug(s, lowercase=False, remove_whitespace=False)
 
 
-# XXX this is called by the cldfbench
-def bibdata(sheet, values, bibliography_entries, bibkeys_by_glottocode, unresolved):
-    def clean_key(key):
-        return key.replace(':', '_').replace("'", "")
+def clean_bibkey(key):
+    """Remove colons in bibliography key."""
+    # XXX: why?
+    return key.replace(':', '_').replace("'", "")
 
-    for row in values:
+
+# XXX this is called by the cldfbench
+def bibdata(sheet, sheet_rows, bibliography_entries, bibkeys_by_glottocode, unresolved):
+    fixrefs = REFS
+
+    glottocode = sheet.glottocode
+    language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
+
+    # XXX: this entire function could just just be called for a single row
+    # in the datasheet, e.g.
+    # sources = [src
+    #            for sheet in sheets
+    #            for row in sheet.iter_rows()
+    #            for src in bibdata(sheet, row, ...)]
+    for row in sheet_rows:
         if not row.Source:
             continue
 
         # FIXME mutating input data in-place!!!
         row.Source_comment = row.Source
-        refs, sources = collections.OrderedDict(), []
-        uc = sum(list(unresolved.values()))
 
         source_string = row.Source
-        glottocode = sheet.glottocode
-        fixrefs = REFS
         authoryears = list(iter_authoryearpages(source_string))
 
-        language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
+        ### XXX: THIS IS THE CODE THAT MATCHES SOURCES ###
 
         matched_refs = set()
+        # XXX: what's the difference between unmatched and unresolved refs
+        # A: oh, I guess `unmatched_refs` is just there to make sure that
+        # there's only one PARTIAL FAIL message per author_year_tuple.
         unmatched_refs = set()
+        unresolved_sources = []
 
         for author_year_tuple in authoryears:
             author, year, pages, word_from_title = author_year_tuple
@@ -88,6 +102,7 @@ def bibdata(sheet, values, bibliography_entries, bibkeys_by_glottocode, unresolv
                 bibkeys.append(bibkey)
 
             if bibkeys:
+
                 bibkey_rankings = {}
                 for bibkey in bibkeys:
                     bibentry = bibliography_entries[bibkey][1]
@@ -106,19 +121,33 @@ def bibdata(sheet, values, bibliography_entries, bibkeys_by_glottocode, unresolv
                     # FIXME: only yield at most one match!?
                     matched_refs.add((bibkey, pages))
 
-            if not bibkeys and author_year_tuple not in unmatched_refs:
+            elif author_year_tuple not in unmatched_refs:
+
+                # TODO: just do the printing at the end of the loop...
                 print(colored('PARTIAL FAIL', color='red'))
                 print('WARNING: unmatched reference: {}'.format(author_year_tuple))
                 unmatched_refs.add(author_year_tuple)
 
         matched_refs = sorted(matched_refs, key=lambda r: (r[0], r[1] or ''))
-        src_comment = None
 
+        ### XXX: THIS IS THE CODE THAT HANDLES MATCH FAILURES ###
+        # (I guess this is where the PARTIAL FAIL messages should be printed?)
+
+        src_comment = None
         if not matched_refs:
+            # XXX: those are the fallback options when matching fails:
+            #  * complain about bare page numbers
+            #  * just ignore all the Lehmann-(p.c.)-like citations
+            #  * fill in fallbacks from FIXREFS
+            #    ^ XXX: maybe do the FIXREFS thing first and turn the rest of
+            #    this entire block into 'complain and move on' code?
+            #  * record missing match in `unresolved`
 
             if REGEX_ONLY_PAGES.match(source_string):
-                source_string = "[%s] default source:%s" % (glottocode, source_string)
-                print("PAGEONLY:", source_string, glottocode)
+                print(
+                    'PAGEONLY:',
+                    '[%s] default source:%s' % (glottocode, source_string),
+                    glottocode)
 
             elif not (source_string.find("p.c") == -1
                       and source_string.find("personal communication") == -1
@@ -134,89 +163,48 @@ def bibdata(sheet, values, bibliography_entries, bibkeys_by_glottocode, unresolv
                       and source_string.find("in prep") == -1
                       and source_string.find("in prog") == -1
                       and not source_string.startswith("http")):
+                # FIXME: this variable is never read
+                # I checked the pre-refactoring version.  Apparently
+                # `src_comment` was passed out as a return value of the
+                # `source_to_refs` function and then the caller (`bibdata`) just
+                # threw away the value unused…
+                # No idea what the original intent was -- maybe to add the
+                # comment to row.Source_comment?
                 src_comment = source_string
 
+            elif authoryears:
+                for author, year, pages, word_from_title in authoryears:
+                    if (author, year, glottocode) in fixrefs:
+                        matched_refs.append((fixrefs[(author, year, glottocode)], pages))
+                    else:
+                        unresolved_sources.append((author, year, glottocode))
             else:
-                if authoryears:
-                    for author, year, pages, word_from_title in authoryears:
-                        if (author, year, glottocode) in fixrefs:
-                            matched_refs.append((fixrefs[(author, year, glottocode)], pages))
-                        else:
-                            # FIXME mutating input data in-place
-                            unresolved.update([(author, year, glottocode)])
-                else:
-                    # FIXME mutating input data in-place
-                    unresolved.update([(source_string, glottocode)])
+                unresolved_sources.append((source_string, glottocode))
 
-        res = (
-            [(k, [r[1] for r in rs if r[1]])
-             for k, rs in groupby(matched_refs, lambda r: r[0])],
-            src_comment)
-
-        if sum(list(unresolved.values())) > uc:  # pragma: no cover
+        if unresolved_sources:
             # FIXME mutating input data in-place
             row.Source_comment += ' (source not confirmed)'
-        for key, pages in res[0]:
-            typ, fields = bibliography_entries[key]
-            ref = key = clean_key(key)
-            if ref not in refs:
-                refs[ref] = set()
-            refs[ref] = refs[ref].union(pages or [])
-            sources.append(Source(typ, key, **fields))
+            # FIXME mutating input data in-place
+            unresolved.update(unresolved_sources)
+
+        ### XXX: THIS IS THE CODE THAT DUMPS THE PARSED SOURCES FOR THIS ROW TO THE CALLER ###
+
+        ref_pages = collections.OrderedDict()
+        sources = []
+        for bibkey, key_refs in groupby(matched_refs, lambda ref: ref[0]):
+            typ, fields = bibliography_entries[bibkey]
+            bibkey = clean_bibkey(bibkey)
+            if bibkey not in ref_pages:
+                ref_pages[bibkey] = set()
+            ref_pages[bibkey].update(ref[1] for ref in key_refs if ref[1])
+            sources.append(Source(typ, bibkey, **fields))
 
         # FIXME mutating input data in-place
         row.Source = [
-            '{}{}'.format(r, '[{}]'.format(','.join(sorted(p))) if p else '')
-            for r, p in refs.items()]
+            '{}{}'.format(ref, '[{}]'.format(','.join(sorted(pages))) if pages else '')
+            for ref, pages in ref_pages.items()]
         for src in sources:
             yield src
-
-
-# XXX this is called by the cldfbench
-# (mostly to be fed into `bibdata`)
-class Bibs(dict):
-    def __init__(self, glottolog, api):
-        dict.__init__(self, glottolog.bib('hh'))
-        self.update(api.bib)
-
-    def iter_codes(self):
-        for key, (typ, fields) in self.items():
-            if 'lgcode' in fields:
-                for code in bib.lgcodestr(fields['lgcode']):
-                    yield key, code
-
-
-def languoid_id_map(glottolog, glottocodes):
-    id_map = {}
-
-    for glottocode in glottocodes:
-        languoid = glottolog.api.languoid(glottocode)
-        lang = None
-
-        # Determine the associated language-level languoid:
-        if languoid.level.name == 'dialect':  # pragma: no cover
-            for _, gc, _ in reversed(languoid.lineage):
-                lang = glottolog.api.languoid(gc)
-                if lang.level.name == 'language':
-                    break
-        else:
-            lang = languoid
-
-        potential_ids = [
-            languoid.id, languoid.hid, languoid.iso, lang.id, lang.hid, lang.iso]
-        id_map.update((id_, glottocode) for id_ in potential_ids if id_)
-
-    return id_map
-
-
-def refs(api, glottocode, bibs, bibkeys_by_glottocode, sheet):
-    def source(key):
-        type_, fields = bibs[key]
-        return key, type_, fields.get('author', fields.get('editor', '-')), fields.get('year', '-')
-
-    unresolved = collections.Counter()
-    res = bibdata(sheet, list(sheet.iter_row_objects(api)), bibs, bibkeys_by_glottocode, unresolved)
-    return list(res), unresolved, [source(k) for k in bibkeys_by_glottocode[glottocode]]
 
 
 # XXX this is called by the cldfbench

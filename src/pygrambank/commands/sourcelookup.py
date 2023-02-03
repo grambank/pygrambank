@@ -8,7 +8,8 @@ from termcolor import colored
 from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
-from pygrambank.cldf import refs, GlottologGB, Bibs, languoid_id_map
+from pygrambank.cldf import bibdata, GlottologGB
+from pygrambank.bib import lgcodestr
 
 
 def register(parser):
@@ -41,24 +42,41 @@ def run(args):
 def run_(args, glottolog):  # pragma: no cover
     sheets = [Sheet(sh) for sh in args.sheets]
 
-    print('Reading languoid ids from Glottolog...')
+    print('Reading language data from Glottolog...')
     glottolog = GlottologGB(glottolog)
-    id_to_glottocode = languoid_id_map(glottolog, [s.glottocode for s in sheets])
+    languoids_by_ids = glottolog.languoids_by_ids
+    descendants = glottolog.descendants_map
 
     print('Loading bibliography...')
-    bibs = Bibs(glottolog, args.repos)
+    bibliography_entries = {}
+    bibliography_entries.update(glottolog.bib('hh'))
+    bibliography_entries.update(args.repos.bib)
 
-    keys_by_glottocode = collections.defaultdict(set)
-    for key, code in bibs.iter_codes():
-        if code in id_to_glottocode:
-            keys_by_glottocode[id_to_glottocode[code]].add(key)
+    bibkeys_by_glottocode = collections.defaultdict(set)
+    for key, (typ, fields) in bibliography_entries.items():
+        for lang_id in lgcodestr(fields.get('lgcode') or ''):
+            if lang_id in languoids_by_ids:
+                glottocode = languoids_by_ids[lang_id].id
+                if glottocode in descendants:
+                    for cl in descendants[glottocode]:
+                        bibkeys_by_glottocode[cl].add(key)
+                else:
+                    print('---non-language', lang_id)
 
     for sheet in sheets:
+        glottocode = sheet.glottocode
+
         print(colored(
             '\nSource look-up for sheet {}...\n'.format(sheet.path),
             attrs=['bold']))
-        sources, unresolved, lgks = refs(
-            args.repos, sheet.glottocode, bibs, keys_by_glottocode, sheet)
+
+        unresolved = collections.Counter()
+        sources = list(bibdata(
+            sheet,
+            list(sheet.iter_row_objects(args.repos)),
+            bibliography_entries,
+            bibkeys_by_glottocode,
+            unresolved))
 
         seen = collections.defaultdict(list)
         print(colored('Resolved sources:', attrs=['bold']))
@@ -75,13 +93,16 @@ def run_(args, glottolog):  # pragma: no cover
                     print('{}\t{} {}'.format(v, author, year))
                 except ValueError:
                     print(spec)
-            if lgks:
+            if bibkeys_by_glottocode.get(glottocode):
                 print()
                 print(colored('Available sources:', attrs=['bold']))
-                for (k, t, a, y) in lgks:
+                for bibkey in bibkeys_by_glottocode[glottocode]:
+                    type_, fields = bibliography_entries[bibkey]
+                    author = fields.get('author') or fields.get('editor') or '-'
+                    year = fields.get('year') or '-'
                     print('{}\t{}\t{}'.format(
-                        colored(k, color='blue'),
-                        t,
-                        colored('{} {}'.format(a, y), attrs=['bold'])))
+                        colored(bibkey, color='blue'),
+                        type_,
+                        colored('{} {}'.format(author, year), attrs=['bold'])))
         print()
         print(colored('FAIL' if unresolved else 'OK', color='red' if unresolved else 'green'))

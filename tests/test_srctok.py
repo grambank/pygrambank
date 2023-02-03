@@ -3,7 +3,7 @@ from collections import Counter, defaultdict
 import pytest
 
 from pygrambank import bib
-from pygrambank.srctok import source_to_refs
+#from pygrambank.srctok import source_to_refs
 
 
 # TODO RECREATE ALL OF THESE TESTS
