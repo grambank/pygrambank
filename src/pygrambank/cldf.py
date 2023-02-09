@@ -37,44 +37,89 @@ def clean_bibkey(key):
     return key.replace(':', '_').replace("'", "")
 
 
+def mismatch_is_fatal(source_string):
+    """Filter for source strings."""
+    # This code could be combined into one big boolean expression
+    # but I somehow doubt that will it any more readable...
+    if REGEX_ONLY_PAGES.match(source_string):
+        # TODO: Maybe find a way to warn about this
+        # print(
+        #     'PAGEONLY:',
+        #     '[%s] default source:%s' % (glottocode, source_string),
+        #     glottocode)
+        return False
+    elif (
+        source_string.find('p.c') != -1
+        or source_string.find('personal communication') != -1
+        or source_string.find('pers comm') != -1
+        or source_string.find('pers. comm') != -1
+        or source_string.find('ieldnotes') != -1
+        or source_string.find('ield notes') != -1
+        or source_string.find('forth') != -1
+        or source_string.find('Forth') != -1
+        or source_string.find('ubmitted') != -1
+        or source_string.find('o appear') != -1
+        or source_string.find('in press') != -1
+        or source_string.find('in prep') != -1
+        or source_string.find('in prog') != -1
+        or source_string.startswith('http')
+    ):
+        return False
+    else:
+        return True
+
+
 class BibliographyMatcher:
 
     def __init__(self):
         self._unresolved_citations = collections.Counter()
+        self._sources = collections.OrderedDict()
+
+    def has_sources(self):
+        """Return True iff. there are citations which could be resolved."""
+        return bool(self._sources)
+
+    def get_sources(self):
+        """Return a list of resolved sources."""
+        return list(self._sources.values())
 
     def has_unresolved_citations(self):
+        """Return True iff. there are citations which couldn't be resolved."""
         return bool(self._unresolved_citations)
 
-    def pop_unresolved_citations(self):
-        """Returns a tuple (citation, count)."""
-        sorted_citations = self._unresolved_citations.most_common()
-        self._unresolved_citations.clear()
-        return sorted_citations
+    def get_unresolved_citations(self):
+        """Return a tuple (citation, count)."""
+        return self._unresolved_citations.most_common()
 
     # XXX this is called by the cldfbench
-    def resolve_citations(self, glottocode, sheet_row, bibliography_entries, bibkeys_by_glottocode):
-        fixrefs = REFS
+    def add_resolved_citation_to_row(
+        self, glottocode, sheet_row, bibliography_entries, bibkeys_by_glottocode
+    ):
+        """Destructively add citations to the row of a datasheet.
+
+        The `BibliographyMatcher` keeps track of all matched or unmatched
+        citations it encounters.  Those can be retrieved using the
+        `get_sources` and `get_unresolved_citations` methods.
+        """
+        if not sheet_row.Source:
+            return
+
         language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
 
-        if not row.Source:
-            return None
-
-        # FIXME mutating input data in-place!!!
-        row.Source_comment = row.Source
-        source_string = row.Source
-        authoryears = list(iter_authoryearpages(source_string))
-
-        ### XXX: THIS IS THE CODE THAT MATCHES SOURCES ###
+        source_string = sheet_row.Source
 
         matched_refs = set()
-        # XXX: what's the difference between unmatched and unresolved refs
-        # A: oh, I guess `unmatched_refs` is just there to make sure that
-        # there's only one PARTIAL FAIL message per author_year_tuple.
         unmatched_refs = set()
-        unresolved_sources = []
 
-        for author_year_tuple in authoryears:
-            author, year, pages, word_from_title = author_year_tuple
+        authoryears = list(iter_authoryearpages(source_string))
+        if not authoryears and mismatch_is_fatal(source_string):
+            unmatched_refs.add((source_string, glottocode))
+
+        fixrefs = REFS
+        for author, year, pages, word_from_title in authoryears:
+
+            # XXX: BEGIN CHUNK THAT LOOKS LIKE IT CAN BE PULLED OUT
+
             citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
             citation_firsttoken = None
             for name_part in re.split(r'[\s,.\-]+', citation_lastname):
@@ -106,7 +151,6 @@ class BibliographyMatcher:
                 bibkeys.append(bibkey)
 
             if bibkeys:
-
                 bibkey_rankings = {}
                 for bibkey in bibkeys:
                     bibentry = bibliography_entries[bibkey][1]
@@ -124,90 +168,51 @@ class BibliographyMatcher:
                 for bibkey in prioritised_bibkeys:
                     # FIXME: only yield at most one match!?
                     matched_refs.add((bibkey, pages))
+            elif (author, year, glottocode) in fixrefs:
+                matched_refs.add((fixrefs[(author, year, glottocode)], pages))
+            else:
+                unmatched_refs.add((author, year, glottocode))
 
-            elif author_year_tuple not in unmatched_refs:
+            # XXX: END CHUNK THAT LOOKS LIKE IT CAN BE PULLED OUT
 
-                # TODO: just do the printing at the end of the loop...
-                print(colored('PARTIAL FAIL', color='red'))
-                print('WARNING: unmatched reference: {}'.format(author_year_tuple))
-                unmatched_refs.add(author_year_tuple)
+        # XXX: stupid question:  what is a 'partial' failure...?
+        for author_year_tuple in sorted(
+            r for r in unmatched_refs if r not in self._unresolved_citations
+        ):
+            print(colored('PARTIAL FAIL', color='red'))
+            print('WARNING: unmatched reference: {}'.format(author_year_tuple))
+
+        if unmatched_refs:
+            self._unresolved_citations.update(unmatched_refs)
+
+        ### XXX: THIS IS THE CODE THAT DUMPS THE PARSED SOURCES FOR THIS sheet_ROW TO THE CALLER ###
 
         matched_refs = sorted(matched_refs, key=lambda r: (r[0], r[1] or ''))
+        matched_refs = [
+            (key, clean_bibkey(key), pages) for key, pages in matched_refs]
 
-        ### XXX: THIS IS THE CODE THAT HANDLES MATCH FAILURES ###
-        # (I guess this is where the PARTIAL FAIL messages should be printed?)
+        for old_bibkey, new_bibkey, _ in matched_refs:
+            if new_bibkey not in self._sources:
+                type_, fields = bibliography_entries[old_bibkey]
+                self._sources[new_bibkey] = Source(type_, new_bibkey, **fields)
 
-        src_comment = None
-        if not matched_refs:
-            # XXX: those are the fallback options when matching fails:
-            #  * complain about bare page numbers
-            #  * just ignore all the Lehmann-(p.c.)-like citations
-            #  * fill in fallbacks from FIXREFS
-            #    ^ XXX: maybe do the FIXREFS thing first and turn the rest of
-            #    this entire block into 'complain and move on' code?
-            #  * record missing match in `unresolved`
+        pages_for_bibkey = collections.OrderedDict()
+        for new_bibkey, key_refs in groupby(matched_refs, lambda ref: ref[1]):
+            if new_bibkey not in pages_for_bibkey:
+                pages_for_bibkey[new_bibkey] = set()
+            pages_for_bibkey[new_bibkey].update(
+                pages for _, _, pages in key_refs if pages)
 
-            if REGEX_ONLY_PAGES.match(source_string):
-                print(
-                    'PAGEONLY:',
-                    '[%s] default source:%s' % (glottocode, source_string),
-                    glottocode)
-
-            elif not (source_string.find("p.c") == -1
-                      and source_string.find("personal communication") == -1
-                      and source_string.find("pers comm") == -1
-                      and source_string.find("pers. comm") == -1
-                      and source_string.find("ieldnotes") == -1
-                      and source_string.find("ield notes") == -1
-                      and source_string.find("forth") == -1
-                      and source_string.find("Forth") == -1
-                      and source_string.find("ubmitted") == -1
-                      and source_string.find("o appear") == -1
-                      and source_string.find("in press") == -1
-                      and source_string.find("in prep") == -1
-                      and source_string.find("in prog") == -1
-                      and not source_string.startswith("http")):
-                # FIXME: this variable is never read
-                # I checked the pre-refactoring version.  Apparently
-                # `src_comment` was passed out as a return value of the
-                # `source_to_refs` function and then the caller (`bibdata`) just
-                # threw away the value unused…
-                # No idea what the original intent was -- maybe to add the
-                # comment to row.Source_comment?
-                src_comment = source_string
-
-            elif authoryears:
-                for author, year, pages, word_from_title in authoryears:
-                    if (author, year, glottocode) in fixrefs:
-                        matched_refs.append((fixrefs[(author, year, glottocode)], pages))
-                    else:
-                        unresolved_sources.append((author, year, glottocode))
-            else:
-                unresolved_sources.append((source_string, glottocode))
-
-        if unresolved_sources:
-            # FIXME mutating input data in-place
-            row.Source_comment += ' (source not confirmed)'
-            self._unresolved_citations.update(unresolved_sources)
-
-        ### XXX: THIS IS THE CODE THAT DUMPS THE PARSED SOURCES FOR THIS ROW TO THE CALLER ###
-
-        ref_pages = collections.OrderedDict()
-        sources = []
-        for bibkey, key_refs in groupby(matched_refs, lambda ref: ref[0]):
-            typ, fields = bibliography_entries[bibkey]
-            bibkey = clean_bibkey(bibkey)
-            if bibkey not in ref_pages:
-                ref_pages[bibkey] = set()
-            ref_pages[bibkey].update(ref[1] for ref in key_refs if ref[1])
-            sources.append(Source(typ, bibkey, **fields))
-
-        # FIXME mutating input data in-place
-        row.Source = [
-            '{}{}'.format(ref, '[{}]'.format(','.join(sorted(pages))) if pages else '')
-            for ref, pages in ref_pages.items()]
-        for src in sources:
-            yield src
+        sheet_row.Source = [
+            '{}{}'.format(
+                new_bibkey,
+                '[{}]'.format(','.join(sorted(pages))) if pages else '')
+            for new_bibkey, pages in pages_for_bibkey.items()]
+        if not unmatched_refs:
+            sheet_row.Source_comment = sheet_row.Source
+        else:
+            sheet_row.Source_comment = '{} (source not confirmed)'.format(
+                sheet_row.Source)
 
 
 # XXX this is called by the cldfbench

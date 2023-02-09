@@ -40,6 +40,7 @@ def run(args):
 
 
 def run_(args, glottolog):  # pragma: no cover
+    grambank = args.repos
     sheets = [Sheet(sh) for sh in args.sheets]
 
     print('Reading language data from Glottolog...')
@@ -50,7 +51,7 @@ def run_(args, glottolog):  # pragma: no cover
     print('Loading bibliography...')
     bibliography_entries = {}
     bibliography_entries.update(glottolog.bib('hh'))
-    bibliography_entries.update(args.repos.bib)
+    bibliography_entries.update(grambank.bib)
 
     bibkeys_by_glottocode = collections.defaultdict(set)
     for key, (typ, fields) in bibliography_entries.items():
@@ -71,25 +72,27 @@ def run_(args, glottolog):  # pragma: no cover
             attrs=['bold']))
 
         bib_matcher = BibliographyMatcher()
-        sources = [
-            source
-            for sheet_row in sheet.iter_row_objects(args.repos)
-            for source in bib_matcher.resolve_citations(
+        for sheet_row in sheet.iter_row_objects(args.repos):
+            bib_matcher.add_resolved_citation_to_row(
                 sheet.glottocode,
                 sheet_row,
                 bibliography_entries,
-                bibkeys_by_glottocode)]
+                bibkeys_by_glottocode)
 
+        # XXX: I think this was broken by deduplication
+        # (the bib matcher only makes *one* source obj per bibkey)
+        # but how often something was cited is a useful piece of information
+        # so maybe I should add a counter to keep track of that
         seen = collections.defaultdict(list)
         print(colored('Resolved sources:', attrs=['bold']))
-        for src in sources:
+        for src in bib_matcher.get_sources():
             seen[src.id].append(src)
         for srcid, srcs in seen.items():
             print('{}\t{}\t{}'.format(len(srcs), srcid, srcs[0]))
         if bib_matcher.has_unresolved_citations():
             print()
             print(colored('Unresolved sources:', attrs=['bold']))
-            for spec, v in bib_matcher.pop_unresolved_citations():
+            for spec, v in bib_matcher.get_unresolved_citations():
                 try:
                     author, year, code = spec
                     print('{}\t{} {}'.format(v, author, year))
