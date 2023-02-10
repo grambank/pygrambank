@@ -6,7 +6,7 @@ from termcolor import colored
 import attr
 from csvw import dsv
 
-from pygrambank.srctok import iter_authoryearpages
+from pygrambank.bib import iter_authoryearpages
 
 
 def check_feature_dependencies(rows):

@@ -9,7 +9,6 @@ from clldutils.misc import lazyproperty, slug
 from pycldf.sources import Source
 
 from pygrambank import bib
-from pygrambank.srctok import iter_authoryearpages
 
 
 REGEX_ONLY_PAGES = re.compile(r"[\d+;\s\-etseqpassim.]+$")
@@ -35,38 +34,6 @@ def clean_bibkey(key):
     """Remove colons in bibliography key."""
     # XXX: why?
     return key.replace(':', '_').replace("'", "")
-
-
-def mismatch_is_fatal(source_string):
-    """Filter for source strings."""
-    # This code could be combined into one big boolean expression
-    # but I somehow doubt that will it any more readable...
-    if REGEX_ONLY_PAGES.match(source_string):
-        # TODO: Maybe find a way to warn about this
-        # print(
-        #     'PAGEONLY:',
-        #     '[%s] default source:%s' % (glottocode, source_string),
-        #     glottocode)
-        return False
-    elif (
-        source_string.find('p.c') != -1
-        or source_string.find('personal communication') != -1
-        or source_string.find('pers comm') != -1
-        or source_string.find('pers. comm') != -1
-        or source_string.find('ieldnotes') != -1
-        or source_string.find('ield notes') != -1
-        or source_string.find('forth') != -1
-        or source_string.find('Forth') != -1
-        or source_string.find('ubmitted') != -1
-        or source_string.find('o appear') != -1
-        or source_string.find('in press') != -1
-        or source_string.find('in prep') != -1
-        or source_string.find('in prog') != -1
-        or source_string.startswith('http')
-    ):
-        return False
-    else:
-        return True
 
 
 def _bibkeys_from_citation(
@@ -105,24 +72,6 @@ def _bibkeys_from_citation(
         bibkeys.append(bibkey)
 
     return bibkeys
-
-
-def _prioritised_bibkeys(bibkeys, bibliography_entries):
-    bibkey_rankings = {}
-    for bibkey in bibkeys:
-        bibentry = bibliography_entries[bibkey][1]
-        hhtypes = bib.hhtypes(bibentry)
-        hhtype_ranking = max(map(bib.hhtype_priority, hhtypes))
-        written_in_english = bib.lgcodestr(bibentry.get('inlg', "")) == ['eng']
-        bibkey_rankings[bibkey] = hhtype_ranking, written_in_english
-    highest_rank, _ = max(
-        (ranking, bibkey)
-        for bibkey, ranking in bibkey_rankings.items())
-    prioritised_bibkeys = {
-        bibkey
-        for bibkey, ranking in bibkey_rankings.items()
-        if ranking == highest_rank}
-    return prioritised_bibkeys
 
 
 class BibliographyMatcher:
@@ -164,8 +113,8 @@ class BibliographyMatcher:
         unmatched_refs = set()
 
         source_string = sheet_row.Source
-        authoryears = list(iter_authoryearpages(source_string))
-        if not authoryears and mismatch_is_fatal(source_string):
+        authoryears = list(bib.iter_authoryearpages(source_string))
+        if not authoryears and bib.mismatch_is_fatal(source_string):
             unmatched_refs.add((source_string, glottocode))
 
         for author, year, pages, word_from_title in authoryears:
@@ -176,7 +125,7 @@ class BibliographyMatcher:
                 # FIXME: only yield at most one match!?
                 matched_refs.update(
                     (bibkey, pages)
-                    for bibkey in _prioritised_bibkeys(
+                    for bibkey in bib.prioritised_bibkeys(
                         bibkeys, bibliography_entries))
             elif (author, year, glottocode) in MANUAL_SOURCE_MATCHES:
                 matched_refs.add(

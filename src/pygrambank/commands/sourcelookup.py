@@ -8,11 +8,7 @@ from termcolor import colored
 from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
-from pygrambank.cldf import (
-    assemble_bibliography,
-    BibliographyMatcher,
-    GlottologGB,
-)
+from pygrambank.cldf import BibliographyMatcher, GlottologGB
 from pygrambank.bib import lgcodestr
 
 
@@ -50,8 +46,6 @@ def run_(args, glottolog):  # pragma: no cover
     # FIXME: code duplication with cldfbench
     print('Reading language data from Glottolog...')
     glottolog = GlottologGB(glottolog)
-    bibliography_entries, bibkeys_by_glottocode = assemble_bibliography(
-        grambank, glottolog)
     languoids_by_ids = glottolog.languoids_by_ids
     descendants = glottolog.descendants_map
 
