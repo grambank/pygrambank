@@ -14,7 +14,7 @@ from pygrambank.srctok import iter_authoryearpages
 
 REGEX_ONLY_PAGES = re.compile(r"[\d+;\s\-etseqpassim.]+$")
 
-REFS = {
+MANUAL_SOURCE_MATCHES = {
     ('Strauß', 'n.d.', 'melp1238'): 's:Strauss:Melpa',
     ('Thurston', '1987', 'kuan1248'): 'hvw:Thurston:NBritain',
     ("Z'Graggen", '1969', 'geda1237'): 'hvld:Zgraggen:Madang',
@@ -69,6 +69,62 @@ def mismatch_is_fatal(source_string):
         return True
 
 
+def _bibkeys_from_citation(
+    author, year, pages, word_from_title,
+    bibliography_entries, language_bibkeys
+):
+    citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
+    for name_part in re.split(r'[\s,.\-]+', citation_lastname):
+        if name_part.strip() and name_part[0].isupper() and name_part not in VON_PREFIXES:
+            citation_firsttoken = name_part
+            break
+    else:
+        citation_firsttoken = None
+    word_from_title_norm = word_from_title.replace('_', ' ')
+
+    bibkeys = []
+    for bibkey in language_bibkeys:
+        bibentry = bibliography_entries[bibkey][1]
+        bibtitle = bibentry.get('title', '').lower()
+        bibauthors = bibentry.get('author') or bibentry.get('editor') or ''
+        family_names = {
+            undiacritic(x['lastname'])
+            for x in bib.parse_authors(bibauthors)}
+        family_names.update(bib.bibkey_authors(bibkey))
+
+        if year not in bibentry.get('year', ''):
+            continue
+        if word_from_title_norm and word_from_title_norm not in bibtitle:
+            continue
+        if not any(
+            citation_firsttoken in re.split(r'[\s,.\-]+', lastname)
+            for lastname in family_names
+        ):
+            continue
+
+        bibkeys.append(bibkey)
+
+    return bibkeys
+
+
+def _prioritised_bibkeys(bibkeys, bibliography_entries):
+    bibkey_rankings = {}
+    for bibkey in bibkeys:
+        bibentry = bibliography_entries[bibkey][1]
+        hhtypes = bib.hhtypes(bibentry)
+        hhtype_ranking = max(map(bib.hhtype_priority, hhtypes))
+        written_in_english = bib.lgcodestr(bibentry.get('inlg', "")) == ['eng']
+        bibkey_rankings[bibkey] = hhtype_ranking, written_in_english
+    highest_rank, _ = max(
+        (ranking, bibkey)
+        for bibkey, ranking in bibkey_rankings.items())
+    prioritised_bibkeys = {
+        bibkey
+        for bibkey, ranking in bibkey_rankings.items()
+        if ranking == highest_rank}
+    return prioritised_bibkeys
+
+
 class BibliographyMatcher:
 
     def __init__(self):
@@ -104,88 +160,35 @@ class BibliographyMatcher:
         if not sheet_row.Source:
             return
 
-        language_bibkeys = bibkeys_by_glottocode.get(glottocode, ())
-
-        source_string = sheet_row.Source
-
         matched_refs = set()
         unmatched_refs = set()
 
+        source_string = sheet_row.Source
         authoryears = list(iter_authoryearpages(source_string))
         if not authoryears and mismatch_is_fatal(source_string):
             unmatched_refs.add((source_string, glottocode))
 
-        fixrefs = REFS
         for author, year, pages, word_from_title in authoryears:
-
-            # XXX: BEGIN CHUNK THAT LOOKS LIKE IT CAN BE PULLED OUT
-
-            citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
-            citation_firsttoken = None
-            for name_part in re.split(r'[\s,.\-]+', citation_lastname):
-                if name_part.strip() and name_part[0].isupper() and name_part not in VON_PREFIXES:
-                    citation_firsttoken = name_part
-                    break
-            word_from_title_norm = word_from_title.replace('_', ' ')
-
-            bibkeys = []
-            for bibkey in language_bibkeys:
-                bibentry = bibliography_entries[bibkey][1]
-                bibtitle = bibentry.get('title', '').lower()
-                bibauthors = bibentry.get('author') or bibentry.get('editor') or ''
-                family_names = {
-                    undiacritic(x['lastname'])
-                    for x in bib.parse_authors(bibauthors)}
-                family_names.update(bib.bibkey_authors(bibkey))
-
-                if year not in bibentry.get('year', ''):
-                    continue
-                if word_from_title_norm and word_from_title_norm not in bibtitle:
-                    continue
-                if not any(
-                    citation_firsttoken in re.split(r'[\s,.\-]+', lastname)
-                    for lastname in family_names
-                ):
-                    continue
-
-                bibkeys.append(bibkey)
-
+            bibkeys = _bibkeys_from_citation(
+                author, year, pages, word_from_title,
+                bibliography_entries, bibkeys_by_glottocode.get(glottocode, ()))
             if bibkeys:
-                bibkey_rankings = {}
-                for bibkey in bibkeys:
-                    bibentry = bibliography_entries[bibkey][1]
-                    hhtypes = bib.hhtypes(bibentry)
-                    hhtype_ranking = max(map(bib.hhtype_priority, hhtypes))
-                    written_in_english = bib.lgcodestr(bibentry.get('inlg', "")) == ['eng']
-                    bibkey_rankings[bibkey] = hhtype_ranking, written_in_english
-                highest_rank, _ = max(
-                    (ranking, bibkey)
-                    for bibkey, ranking in bibkey_rankings.items())
-                prioritised_bibkeys = {
-                    bibkey
-                    for bibkey, ranking in bibkey_rankings.items()
-                    if ranking == highest_rank}
-                for bibkey in prioritised_bibkeys:
-                    # FIXME: only yield at most one match!?
-                    matched_refs.add((bibkey, pages))
-            elif (author, year, glottocode) in fixrefs:
-                matched_refs.add((fixrefs[(author, year, glottocode)], pages))
+                # FIXME: only yield at most one match!?
+                matched_refs.update(
+                    (bibkey, pages)
+                    for bibkey in _prioritised_bibkeys(
+                        bibkeys, bibliography_entries))
+            elif (author, year, glottocode) in MANUAL_SOURCE_MATCHES:
+                matched_refs.add(
+                    (MANUAL_SOURCE_MATCHES[(author, year, glottocode)], pages))
             else:
                 unmatched_refs.add((author, year, glottocode))
 
-            # XXX: END CHUNK THAT LOOKS LIKE IT CAN BE PULLED OUT
+        # output: record unsucessful matches
 
-        # XXX: stupid question:  what is a 'partial' failure...?
-        for author_year_tuple in sorted(
-            r for r in unmatched_refs if r not in self._unresolved_citations
-        ):
-            print(colored('PARTIAL FAIL', color='red'))
-            print('WARNING: unmatched reference: {}'.format(author_year_tuple))
+        self._unresolved_citations.update(unmatched_refs)
 
-        if unmatched_refs:
-            self._unresolved_citations.update(unmatched_refs)
-
-        ### XXX: THIS IS THE CODE THAT DUMPS THE PARSED SOURCES FOR THIS sheet_ROW TO THE CALLER ###
+        # output: record successful matches
 
         matched_refs = sorted(matched_refs, key=lambda r: (r[0], r[1] or ''))
         matched_refs = [
@@ -195,6 +198,8 @@ class BibliographyMatcher:
             if new_bibkey not in self._sources:
                 type_, fields = bibliography_entries[old_bibkey]
                 self._sources[new_bibkey] = Source(type_, new_bibkey, **fields)
+
+        # output: update sheet row
 
         pages_for_bibkey = collections.OrderedDict()
         for new_bibkey, key_refs in groupby(matched_refs, lambda ref: ref[1]):

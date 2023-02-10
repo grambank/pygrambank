@@ -92,12 +92,16 @@ def run_(args, glottolog):  # pragma: no cover
         if bib_matcher.has_unresolved_citations():
             print()
             print(colored('Unresolved sources:', attrs=['bold']))
-            for spec, v in bib_matcher.get_unresolved_citations():
-                try:
-                    author, year, code = spec
-                    print('{}\t{} {}'.format(v, author, year))
-                except ValueError:
-                    print(spec)
+            for spec, occurrences in bib_matcher.get_unresolved_citations():
+                if len(spec) == 3:
+                    author, year, _ = spec
+                    print('{}\t{} ({})'.format(occurrences, author, year))
+                elif len(spec) == 2:
+                    source_string, _ = spec
+                    print('{}\t{}'.format(occurrences, source_string))
+                else:  # pragma: nocover
+                    # theoretically unreachable
+                    print('{}\t{}'.format(occurrences, spec))
             if bibkeys_by_glottocode.get(glottocode):
                 print()
                 print(colored('Available sources:', attrs=['bold']))
