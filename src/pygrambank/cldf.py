@@ -11,8 +11,6 @@ from pycldf.sources import Source
 from pygrambank import bib
 
 
-REGEX_ONLY_PAGES = re.compile(r"[\d+;\s\-etseqpassim.]+$")
-
 MANUAL_SOURCE_MATCHES = {
     ('Strauß', 'n.d.', 'melp1238'): 's:Strauss:Melpa',
     ('Thurston', '1987', 'kuan1248'): 'hvw:Thurston:NBritain',

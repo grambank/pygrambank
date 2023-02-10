@@ -19,6 +19,8 @@ AUTHOR_PATTERNS = [
     ]
 ]
 
+REGEX_ONLY_PAGES = re.compile(r"[\d+;\s\-etseqpassim.]+$")
+
 PARTIAL_REGEX_PAGES = r"(?:\:\s*(?P<p>[\d\,\s\-]+))?"
 PARTIAL_REGEX_YEAR = r"(?:\d\d\d\d|no date|n.d.|[Nn][Dd])"
 
