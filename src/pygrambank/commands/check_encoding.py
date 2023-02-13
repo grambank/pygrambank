@@ -63,7 +63,7 @@ def suggest_encodings(raw_line):
     for enc in SUGGESTED_ENCS:
         try:
             suggestions[enc] = raw_line.decode(enc)
-        except:  # pragma: nocover
+        except UnicodeError:  # pragma: nocover
             suggestions[enc] = '<could not decode from {}>'.format(enc)
     return suggestions
 

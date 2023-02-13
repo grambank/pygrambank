@@ -65,9 +65,9 @@ def decode_line(raw_line, enc):
 def run(args):
     for p in args.path:
         with open(p, 'rb') as f:
-            raw_lines = [l.rstrip(b'\r\n') for l in f]
+            raw_lines = [line.rstrip(b'\r\n') for line in f]
 
-        unicode_lines = [decode_line(l, args.encoding) for l in raw_lines]
+        unicode_lines = [decode_line(line, args.encoding) for line in raw_lines]
         found_invalid = False
         for index, (line, raw_line) in enumerate(zip(unicode_lines, raw_lines)):
             if line is None:

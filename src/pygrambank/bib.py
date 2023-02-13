@@ -1,7 +1,5 @@
 import re
 
-from clldutils.misc import nfilter
-
 AUTHOR_PATTERNS = [
     re.compile(p) for p in [
         r"(?P<lastname>[^,]+),\s((?P<jr>[JS]r\.|[I]+),\s)?(?P<firstname>[^,]+)$",
@@ -147,7 +145,6 @@ def bibkey_authors(bibkey):
     Generator yielding author names as encountered in a citation key.
     """
     # A citation key as used in hh.bib!
-    # FIXME that's a bold assumption..
     if ':' in bibkey:
         bibkey = bibkey.split(':')[1]
 
@@ -196,8 +193,8 @@ def prioritised_bibkeys(bibkeys, bibliography_entries):
 
 def mismatch_is_fatal(source_string):
     """Filter for source strings."""
-    # This code could be combined into one big boolean expression
-    # but I somehow doubt that will it any more readable...
+    # Note: In theory this code could be combined into one big boolean
+    # expression but I doubt that will it any more readable...
     if REGEX_ONLY_PAGES.match(source_string):
         # TODO: Maybe find a way to warn about this
         # print(
@@ -206,19 +203,19 @@ def mismatch_is_fatal(source_string):
         #     glottocode)
         return False
     elif (
-        source_string.find('p.c') != -1
-        or source_string.find('personal communication') != -1
-        or source_string.find('pers comm') != -1
-        or source_string.find('pers. comm') != -1
-        or source_string.find('ieldnotes') != -1
-        or source_string.find('ield notes') != -1
-        or source_string.find('forth') != -1
-        or source_string.find('Forth') != -1
-        or source_string.find('ubmitted') != -1
-        or source_string.find('o appear') != -1
-        or source_string.find('in press') != -1
-        or source_string.find('in prep') != -1
-        or source_string.find('in prog') != -1
+        'p.c' in source_string
+        or 'personal communication' in source_string
+        or 'pers comm' in source_string
+        or 'pers. comm' in source_string
+        or 'ieldnotes' in source_string
+        or 'ield notes' in source_string
+        or 'forth' in source_string
+        or 'Forth' in source_string
+        or 'ubmitted' in source_string
+        or 'o appear' in source_string
+        or 'in press' in source_string
+        or 'in prep' in source_string
+        or 'in prog' in source_string
         or source_string.startswith('http')
     ):
         return False

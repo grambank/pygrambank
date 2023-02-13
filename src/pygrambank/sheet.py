@@ -246,15 +246,15 @@ class Sheet(object):
                 log('source given, but no value', lineno=lineno, level='WARNING', row_=row)
             res = False
         if row['Comment']:
-            if re.search('check', row['Comment'].lower()) and \
-            not re.search('HG', row['Comment']) and \
-            not re.search('checked by coder', row['Comment'].lower()) and\
-            not re.search('check by coder', row['Comment'].lower()) and\
-            not re.search('wrong import', row['Comment'].lower()) and\
-            not re.search('checked by GB coder', row['Comment'].lower()):
-#            if re.search('check', row['Comment'].lower()):
-                if log:  # pragma: no cover
-                    log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
+            if (log is not None
+                and 'check' in row['Comment'].lower()
+                and 'HG' not in row['Comment']
+                and 'checked by coder' not in row['Comment'].lower()
+                and 'check by coder' not in row['Comment'].lower()
+                and 'wrong import' not in row['Comment'].lower()
+                and 'checked by GB coder' not in row['Comment'].lower()
+            ):
+                log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
             if not row['Value']:
                 if log:
                     log('comment given, but no value', lineno=lineno, level='WARNING', row_=row)
@@ -274,7 +274,7 @@ class Sheet(object):
                 "{}".format(lineno if lineno != -1 else '?'),
                 row_['Feature_ID'] if row_ else '',
                 msg]
-            print(colored('\t'.join(msg), color = 'red'))
+            print(colored('\t'.join(msg), color='red'))
             if report is not None:
                 report.append(msg)
 

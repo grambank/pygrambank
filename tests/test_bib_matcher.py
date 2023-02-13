@@ -1,11 +1,5 @@
-from collections import Counter, defaultdict
-
-import pytest
-import unittest
-
 from pycldf.sources import Source
 from pygrambank.cldf import BibliographyMatcher
-from pygrambank import bib
 from pygrambank.sheet import Row
 
 

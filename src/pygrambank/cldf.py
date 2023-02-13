@@ -2,8 +2,6 @@ import collections
 from itertools import groupby
 import re
 
-from termcolor import colored
-
 import pyglottolog
 from clldutils.misc import lazyproperty, slug
 from pycldf.sources import Source
@@ -21,7 +19,9 @@ MANUAL_SOURCE_MATCHES = {
     ('Lee', '2005b', 'mada1285'): 'Lee2005b',
 }
 
-VON_PREFIXES = ["De", "Da", "Van", "Von", "Van den", "Van der", "Von der", "El", "De la", "De", "d'"]
+VON_PREFIXES = [
+    'De', 'Da', 'Van', 'Von', 'Van den', 'Van der', 'Von der', 'El', 'De la',
+    'De', "d'"]
 
 
 def undiacritic(s):
@@ -30,7 +30,6 @@ def undiacritic(s):
 
 def clean_bibkey(key):
     """Remove colons in bibliography key."""
-    # XXX: why?
     return key.replace(':', '_').replace("'", "")
 
 
@@ -94,7 +93,6 @@ class BibliographyMatcher:
         """Return a tuple (citation, count)."""
         return self._unresolved_citations.most_common()
 
-    # XXX this is called by the cldfbench
     def add_resolved_citation_to_row(
         self, glottocode, sheet_row, bibliography_entries, bibkeys_by_glottocode
     ):
@@ -167,7 +165,6 @@ class BibliographyMatcher:
                 sheet_row.Source)
 
 
-# XXX this is called by the cldfbench
 class GlottologGB(object):
     """
     A custom facade to the Glottolog API.
