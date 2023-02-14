@@ -39,7 +39,6 @@ REGEX_ALTERNATIVE_STYLE_SOURCE = re.compile(
     r"^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
 REGEX_NAME_PARTS = re.compile(r"\s+|(d\')(?=[A-Z])")
-REGEX_CAPITALISED = re.compile(r"\[?[A-Z]")
 
 REGEX_BRACKETED_CODES = re.compile(r"\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
 REGEX_LGCODE_SEPARATOR = re.compile(r"[,/]\s?")
@@ -100,11 +99,17 @@ def hhtype_priority(hhtype):
     return HHTYPE_PRIORITIES.get(hhtype, 0)
 
 
-def lowerupper(s):
+def name_part_is_capitalised(name_part):
+    """Return True iff. the name part starts with a capital letter."""
+    match = re.match(r'\[?(\w)', name_part)
+    return match is not None and match.group(1)[0].isupper()
+
+
+def split_off_lowercase_nameparts(s):
     parts = [x for x in REGEX_NAME_PARTS.split(s) if x]
     lower, upper = [], []
     for i, x in enumerate(parts):
-        if not REGEX_CAPITALISED.match(x):
+        if not name_part_is_capitalised(x):
             lower.append(x)  # pragma: no cover
         else:
             upper = parts[i:]
@@ -112,11 +117,11 @@ def lowerupper(s):
     return lower, upper
 
 
-def lastvon(author):
+def move_von_part_to_last_name(author):
     if 'firstname' not in author:
         return author
     r = {}
-    (lower, upper) = lowerupper(author['firstname'])
+    (lower, upper) = split_off_lowercase_nameparts(author['firstname'])
     r['lastname'] = (' '.join(lower).strip() + ' ' + author['lastname']).strip()
     r['firstname'] = ' '.join(upper)
     if author.get('jr'):
@@ -128,7 +133,7 @@ def parse_single_author(n):
     for p in AUTHOR_PATTERNS:
         match = p.match(n)
         if match:
-            return lastvon(match.groupdict())
+            return move_von_part_to_last_name(match.groupdict())
     return None
 
 
