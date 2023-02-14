@@ -102,12 +102,12 @@ def test_report_unresolved_sources():
     assert not bib_matcher.has_sources()
     assert bib_matcher.has_unresolved_citations()
     unresolved = bib_matcher.get_unresolved_citations()
-    expected = [(('Santa Clause', '1982', ENGLISH), 1)]
-    assert unresolved == expected
+    expected_errors = [(('Santa Clause', '1982', ENGLISH), 1)]
+    assert unresolved == expected_errors
     assert 'source not confirmed' in row.Source_comment
 
 
-def test_rerport_things_that_arent_even_citations():
+def test_report_things_that_arent_even_citations():
     bib_matcher = BibliographyMatcher()
     row = Row(None, None, r'¯\_(ツ)_/¯')
     bib_matcher.add_resolved_citation_to_row(
@@ -115,8 +115,8 @@ def test_rerport_things_that_arent_even_citations():
     assert bib_matcher.has_unresolved_citations()
     assert not bib_matcher.has_sources()
     unresolved = bib_matcher.get_unresolved_citations()
-    expected = [((r'¯\_(ツ)_/¯', ENGLISH), 1)]
-    assert unresolved == expected
+    expected_errors = [((r'¯\_(ツ)_/¯', ENGLISH), 1)]
+    assert unresolved == expected_errors
 
 
 def test_report_resolved_source():
@@ -127,12 +127,12 @@ def test_report_resolved_source():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'book', 'Fictionman2000',
         author='Bob Fictionman',
         year='2000',
         title='Grammar of Martian')
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['Fictionman2000']
 
 
@@ -144,12 +144,12 @@ def test_last_name_before_first_name_in_bibliography():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'book', 'Fictionman2001',
         author='Fictionman, Bob',
         year='2001',
         title='There are days when my last name comes first')
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['Fictionman2001']
 
 
@@ -161,12 +161,12 @@ def test_desambiguate_based_on_title():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'book', 'Writealot2012_Another',
         author='Steve Writealot',
         year='2012',
         title='Another thing I wrote this week')
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['Writealot2012_Another']
 
 
@@ -178,12 +178,12 @@ def test_deal_with_people_who_have_spaces_in_their_last_name():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'book', 'Writealot2012_Another',
         author='Space Man, Yuriy',
         year='1961',
         title='Reflections of a man with a space in his name')
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['SpaceMan1961']
 
 
@@ -195,12 +195,12 @@ def test_alternate_citation_style():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'book', 'HinzKunz2023',
         author='Karl Hinz and Karsten Kunz',
         year='2023',
         title="Being cited the 'alternative' way")
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['HinzKunz2023[113]']
 
 
@@ -212,7 +212,7 @@ def test_hardcoded_fallback():
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
-    expected = Source(
+    expected_source = Source(
         'misc', 's_Strauss_Melpa',
         author='Strauß, Hermann',
         title='Grammatik der Melpa Sprache',
@@ -224,7 +224,7 @@ def test_hardcoded_fallback():
         inlg='German [deu]',
         lgcode='Melpa [med]',
         macro_area='Papua')
-    assert first_source == expected
+    assert first_source == (expected_source, 1)
     assert row.Source == ['s_Strauss_Melpa']
 
 
@@ -236,5 +236,5 @@ def test_nothing_but_von_parts():
     assert bib_matcher.has_unresolved_citations()
     assert not bib_matcher.has_sources()
     unresolved = bib_matcher.get_unresolved_citations()
-    expected = [(('Van der von van', '2012', ENGLISH), 1)]
-    assert unresolved == expected
+    expected_errors = [(('Van der von van', '2012', ENGLISH), 1)]
+    assert unresolved == expected_errors

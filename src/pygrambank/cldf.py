@@ -95,21 +95,24 @@ class BibliographyMatcher:
     def __init__(self):
         self._unresolved_citations = collections.Counter()
         self._sources = collections.OrderedDict()
+        self._source_occurrences = collections.Counter()
 
     def has_sources(self):
         """Return True iff. there are citations which could be resolved."""
         return bool(self._sources)
 
     def get_sources(self):
-        """Return a list of resolved sources."""
-        return list(self._sources.values())
+        """Return a list of tuples (source, occurrence_count)."""
+        return [
+            (source, self._source_occurrences[bibkey])
+            for bibkey, source in self._sources.items()]
 
     def has_unresolved_citations(self):
         """Return True iff. there are citations which couldn't be resolved."""
         return bool(self._unresolved_citations)
 
     def get_unresolved_citations(self):
-        """Return a tuple (citation, count)."""
+        """Return a list of tuples (citation, occurrence_count)."""
         return self._unresolved_citations.most_common()
 
     def add_resolved_citation_to_row(
@@ -162,6 +165,7 @@ class BibliographyMatcher:
             if new_bibkey not in self._sources:
                 type_, fields = bibliography_entries[old_bibkey]
                 self._sources[new_bibkey] = Source(type_, new_bibkey, **fields)
+            self._source_occurrences[new_bibkey] += 1
 
         # output: update sheet row
 

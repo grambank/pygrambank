@@ -80,16 +80,10 @@ def run_(args, glottolog):  # pragma: no cover
                 bibliography_entries,
                 bibkeys_by_glottocode)
 
-        # XXX: I think this was broken by deduplication
-        # (the bib matcher only makes *one* source obj per bibkey)
-        # but how often something was cited is a useful piece of information
-        # so maybe I should add a counter to keep track of that
-        seen = collections.defaultdict(list)
         print(colored('Resolved sources:', attrs=['bold']))
-        for src in bib_matcher.get_sources():
-            seen[src.id].append(src)
-        for srcid, srcs in seen.items():
-            print('{}\t{}\t{}'.format(len(srcs), srcid, srcs[0]))
+        for source, occurrence_count in bib_matcher.get_sources():
+            print('{}\t{}\t{}'.format(occurrence_count, source.id, source))
+
         if bib_matcher.has_unresolved_citations():
             print()
             print(colored('Unresolved sources:', attrs=['bold']))
