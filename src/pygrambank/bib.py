@@ -90,12 +90,17 @@ HHTYPE_PRIORITIES = {
 
 
 def get_hhtypes(bibentry):
+    """Return publication types of a bibliography entry.
+
+    Based on the classification in the `hh` bibliography in glottolog.
+    """
     hhtype_field = bibentry.get('hhtype', 'unknown')
     hhtype_field = re.sub(r' \([^)]*\)', '', hhtype_field)
     return re.split(r'[;,]\s?', hhtype_field)
 
 
 def hhtype_priority(hhtype):
+    """Return priority of a publication type."""
     return HHTYPE_PRIORITIES.get(hhtype, 0)
 
 
@@ -106,6 +111,7 @@ def name_part_is_capitalised(name_part):
 
 
 def split_off_lowercase_nameparts(s):
+    """Split off lower-case name prefixes (de, von, van, etc.)."""
     parts = [x for x in REGEX_NAME_PARTS.split(s) if x]
     lower, upper = [], []
     for i, x in enumerate(parts):
@@ -118,6 +124,10 @@ def split_off_lowercase_nameparts(s):
 
 
 def move_von_part_to_last_name(author):
+    """Sometimes the 'von' parts of a name end up in the 'firstname' field.
+
+    This fixes that.
+    """
     if 'firstname' not in author:
         return author
     r = {}
@@ -129,26 +139,29 @@ def move_von_part_to_last_name(author):
     return r
 
 
-def parse_single_author(n):
+def parse_single_author(author_string):
+    """Parse a single author from a BibTeX string.
+
+    Return a dictionary {'firstname': XXX, 'lastname': YYY, 'jr': ZZZ}.
+    """
     for p in AUTHOR_PATTERNS:
-        match = p.match(n)
+        match = p.match(author_string)
         if match:
             return move_von_part_to_last_name(match.groupdict())
     return None
 
 
-def parse_authors(author_string):
-    author_string = author_string.replace(' & ', ' and ')
-    authors = author_string.split(' and ')
+def parse_authors(authors_string):
+    """Parse the 'authors' field of a BibTeX entry."""
+    authors_string = authors_string.replace(' & ', ' and ')
+    authors = authors_string.split(' and ')
     authors = [parse_single_author(a.strip()) for a in authors]
     authors = [a for a in authors if a]
     return authors
 
 
 def bibkey_authors(bibkey):
-    """
-    Generator yielding author names as encountered in a citation key.
-    """
+    """Generator yielding author names as encountered in a citation key."""
     # A citation key as used in hh.bib!
     if ':' in bibkey:
         bibkey = bibkey.split(':')[1]
@@ -169,6 +182,11 @@ def bibkey_authors(bibkey):
 
 
 def lgcodestr(lgcstr):
+    """Parse language codes in the `lgcode` field of a BibTeX entry.
+
+    example:
+        lgcode = {Scots [scot1243], English [eng]}
+    """
     lgs = REGEX_BRACKETED_CODES.findall(lgcstr)
     if lgs:
         return lgs
@@ -179,6 +197,10 @@ def lgcodestr(lgcstr):
 
 
 def prioritised_bibkeys(bibkeys, bibliography_entries):
+    """Return the bibkeys with the highest priority.
+
+    e.g. prefer full grammars over grammar sketches.
+    """
     bibkey_rankings = {}
     for bibkey in bibkeys:
         bibentry = bibliography_entries[bibkey][1]
@@ -197,7 +219,10 @@ def prioritised_bibkeys(bibkeys, bibliography_entries):
 
 
 def mismatch_is_fatal(source_string):
-    """Filter for source strings."""
+    """Return True iff. an unmatched source string constitutes an error.
+
+    i.e., ignore stuff like Smith (personal communication).
+    """
     # Note: In theory this code could be combined into one big boolean
     # expression but I doubt that will it any more readable...
     if REGEX_ONLY_PAGES.match(source_string):
@@ -229,17 +254,28 @@ def mismatch_is_fatal(source_string):
 
 
 def iter_authoryearpages(source_string):
+    """Parse the `Source` field of a data sheet.
+
+    Returns an iterator of tuples with the following components:
+     * Author name
+     * Year of publication
+     * Page number
+     * Word from title
+    """
     for citation_string in source_string.replace("), ", "); ").split(";"):
         if "p.c." in citation_string:
             continue
         condensed = False
         citation_string = citation_string.strip()
+
         m = REGEX_FULL_SOURCE.search(citation_string)
         if not m:
             m = REGEX_SOURCE.search(citation_string)
+
         if not m:
             condensed = True
             m = REGEX_ALTERNATIVE_STYLE_SOURCE.search(citation_string)
+
         if m:
             author, year, pages = m.groups()
             if condensed:

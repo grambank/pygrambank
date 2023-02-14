@@ -37,6 +37,8 @@ def _bibkeys_from_citation(
     author, year, pages, word_from_title,
     bibliography_entries, language_bibkeys
 ):
+    """Return bibliography keys corresponding to a citation."""
+
     citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
     for name_part in re.split(r'[\s,.\-]+', citation_lastname):
         if name_part.strip() and name_part[0].isupper() and name_part not in VON_PREFIXES:
@@ -72,6 +74,23 @@ def _bibkeys_from_citation(
 
 
 class BibliographyMatcher:
+    """Object for resolving citations in a datasheet.
+
+    How to use it:
+
+     1. Loop over the rows of a `Sheet` object.
+     2. Call `add_resolved_citation_to_row` on each row.  This part is very
+        side-effect-heavy:
+        1. The method replaces the Source string in the row with the key of
+           the bibliography entry and adds the original citation to the
+           `Source_comment` field.  The row is mutated in-place.
+        2. The object keeps an record of any matched sources.
+        3. The object also keeps a record for all citations that failed to
+           match.
+     3. Get matched sources via the `get_sources()` method.
+     4. For error handling, get all failed matches via the
+        `get_unresolved_citations()` method.
+    """
 
     def __init__(self):
         self._unresolved_citations = collections.Counter()
