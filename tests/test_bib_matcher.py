@@ -151,6 +151,7 @@ def test_last_name_before_first_name_in_bibliography():
         title='There are days when my last name comes first')
     assert first_source == (expected_source, 1)
     assert row.Source == ['Fictionman2001']
+    assert row.Source_comment == 'Fictionman (2001)'
 
 
 def test_desambiguate_based_on_title():

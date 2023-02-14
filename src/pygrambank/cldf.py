@@ -182,10 +182,10 @@ class BibliographyMatcher:
                 '[{}]'.format(','.join(sorted(pages))) if pages else '')
             for new_bibkey, pages in pages_for_bibkey.items()]
         if not unmatched_refs:
-            sheet_row.Source_comment = sheet_row.Source
+            sheet_row.Source_comment = source_string
         else:
             sheet_row.Source_comment = '{} (source not confirmed)'.format(
-                sheet_row.Source)
+                source_string)
 
 
 class GlottologGB(object):
