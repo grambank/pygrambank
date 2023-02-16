@@ -6,7 +6,7 @@ from termcolor import colored
 import attr
 from csvw import dsv
 
-from pygrambank.bib import iter_authoryearpages
+from pygrambank.bib import iter_authoryearpages, mismatch_is_fatal
 
 
 def check_feature_dependencies(rows):
@@ -135,6 +135,14 @@ class Row:
     @property
     def sources(self):
         return [Source(*ayp) for ayp in iter_authoryearpages(self.Source)]
+
+    def has_valid_source(self):
+        """Return True if row has at least one matched source."""
+        sources = self.Source
+        source_string = self.Source_comment
+        return (
+            isinstance(sources, list)
+            and (bool(sources) or not mismatch_is_fatal(source_string)))
 
 
 class Sheet(object):

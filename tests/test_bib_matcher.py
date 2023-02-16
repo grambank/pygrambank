@@ -83,6 +83,7 @@ def test_ignore_personal_comm():
         ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     assert not bib_matcher.has_sources()
     assert not bib_matcher.has_unresolved_citations()
+    assert row.has_valid_source()
 
 
 def test_ignore_empty_source():
@@ -105,6 +106,7 @@ def test_report_unresolved_sources():
     expected_errors = [(('Santa Clause', '1982', ENGLISH), 1)]
     assert unresolved == expected_errors
     assert 'source not confirmed' in row.Source_comment
+    assert not row.has_valid_source()
 
 
 def test_report_things_that_arent_even_citations():
@@ -134,6 +136,29 @@ def test_report_resolved_source():
         title='Grammar of Martian')
     assert first_source == (expected_source, 1)
     assert row.Source == ['Fictionman2000']
+    assert row.has_valid_source()
+
+
+def test_resolve_and_unresolved_source():
+    bib_matcher = BibliographyMatcher()
+    row = Row(None, None, 'Fictionman (2000); Santa Clause (1982)')
+    bib_matcher.add_resolved_citation_to_row(
+        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+
+    assert bib_matcher.has_sources()
+    first_source = bib_matcher.get_sources()[0]
+    expected_source = Source(
+        'book', 'Fictionman2000',
+        author='Bob Fictionman',
+        year='2000',
+        title='Grammar of Martian')
+    assert first_source == (expected_source, 1)
+
+    assert bib_matcher.has_unresolved_citations()
+    unresolved = bib_matcher.get_unresolved_citations()
+    expected_errors = [(('Santa Clause', '1982', ENGLISH), 1)]
+    assert unresolved == expected_errors
+    assert row.has_valid_source()
 
 
 def test_last_name_before_first_name_in_bibliography():
