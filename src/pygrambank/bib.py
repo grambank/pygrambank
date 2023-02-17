@@ -247,7 +247,7 @@ def mismatch_is_fatal(source_string):
 
 
 def iter_authoryearpages(source_string):
-    """Parse the `Source` field
+    """Parse the `Source` field of a data sheet.
 
     Returns an iterator of tuples with the following components:
      * Author name

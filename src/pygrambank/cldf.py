@@ -4,7 +4,7 @@ import re
 import unicodedata
 
 import pyglottolog
-from clldutils.misc import lazyproperty, slug
+from clldutils.misc import lazyproperty
 from pycldf.sources import Source
 
 from pygrambank import bib
