@@ -82,6 +82,7 @@ def test_ignore_personal_comm():
     assert not bib_matcher.has_sources()
     assert not bib_matcher.has_unresolved_citations()
     assert row.has_valid_source()
+    assert 'source not confirmed' not in row.Source_comment
 
 
 def test_ignore_empty_source():
@@ -152,6 +153,7 @@ def test_resolve_and_unresolved_source():
     expected_errors = [(('Santa Clause', '1982', ENGLISH), 1)]
     assert unresolved == expected_errors
     assert row.has_valid_source()
+    assert 'source not confirmed' not in row.Source_comment
 
 
 def test_last_name_before_first_name_in_bibliography():
