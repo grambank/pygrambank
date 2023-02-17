@@ -39,6 +39,8 @@ REGEX_ALTERNATIVE_STYLE_SOURCE = re.compile(
     r"^(?P<a>[A-Z][a-zA-Z&]+)(?P<y>[0-9]{4}),\s+p\.\s*(?P<p>[\d,\s\-]+(?:ff?\.)?)$")
 
 REGEX_NAME_PARTS = re.compile(r"\s+|(d\')(?=[A-Z])")
+REGEX_CAPITALISED_NAME_PART = re.compile(
+    r'\[?[{}]'.format(PARTIAL_REGEX_CAPITALS))
 
 REGEX_BRACKETED_CODES = re.compile(r"\[([a-z0-9]{4}[0-9]{4}|[a-z]{3}|NOCODE_[A-Z][^\s\]]+)\]")
 REGEX_LGCODE_SEPARATOR = re.compile(r"[,/]\s?")
@@ -104,23 +106,14 @@ def hhtype_priority(hhtype):
     return HHTYPE_PRIORITIES.get(hhtype, 0)
 
 
-def name_part_is_capitalised(name_part):
-    """Return True iff. the name part starts with a capital letter."""
-    match = re.match(r'\[?(\w)', name_part)
-    return match is not None and match.group(1)[0].isupper()
-
-
-def split_off_lowercase_nameparts(s):
+def split_off_lowercase_nameparts(first_name):
     """Split off lower-case name prefixes (de, von, van, etc.)."""
-    parts = [x for x in REGEX_NAME_PARTS.split(s) if x]
-    lower, upper = [], []
-    for i, x in enumerate(parts):
-        if not name_part_is_capitalised(x):
-            lower.append(x)  # pragma: no cover
-        else:
-            upper = parts[i:]
-            break
-    return lower, upper
+    parts = [s for s in REGEX_NAME_PARTS.split(first_name) if s]
+    for i, name_part in enumerate(parts):
+        if REGEX_CAPITALISED_NAME_PART.match(name_part):
+            return (parts[:i], parts[i:])
+    else:  # pragma: nocover
+        return (), ()
 
 
 def move_von_part_to_last_name(author):
@@ -156,7 +149,7 @@ def parse_authors(authors_string):
     authors_string = authors_string.replace(' & ', ' and ')
     authors = authors_string.split(' and ')
     authors = [parse_single_author(a.strip()) for a in authors]
-    authors = [a for a in authors if a]
+    authors = list(filter(None, authors))
     return authors
 
 
@@ -254,7 +247,7 @@ def mismatch_is_fatal(source_string):
 
 
 def iter_authoryearpages(source_string):
-    """Parse the `Source` field of a data sheet.
+    """Parse the `Source` field
 
     Returns an iterator of tuples with the following components:
      * Author name

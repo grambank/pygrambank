@@ -72,13 +72,11 @@ def run_(args, glottolog):  # pragma: no cover
             '\nSource look-up for sheet {}...\n'.format(sheet.path),
             attrs=['bold']))
 
-        bib_matcher = BibliographyMatcher()
+        bib_matcher = BibliographyMatcher(
+            bibliography_entries, bibkeys_by_glottocode)
         for sheet_row in sheet.iter_row_objects(args.repos):
             bib_matcher.add_resolved_citation_to_row(
-                sheet.glottocode,
-                sheet_row,
-                bibliography_entries,
-                bibkeys_by_glottocode)
+                sheet.glottocode, sheet_row)
 
         print(colored('Resolved sources:', attrs=['bold']))
         for source, occurrence_count in bib_matcher.get_sources():

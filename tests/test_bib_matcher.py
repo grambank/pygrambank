@@ -68,38 +68,34 @@ BIBKEYS_BY_GLOTTOCODE = {
 
 
 def test_ignore_bare_page_numbers():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, '1234')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_sources()
     assert not bib_matcher.has_unresolved_citations()
 
 
 def test_ignore_personal_comm():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Müller (p.c.)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_sources()
     assert not bib_matcher.has_unresolved_citations()
     assert row.has_valid_source()
 
 
 def test_ignore_empty_source():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, '')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_sources()
     assert not bib_matcher.has_unresolved_citations()
 
 
 def test_report_unresolved_sources():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Santa Clause (1982)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_sources()
     assert bib_matcher.has_unresolved_citations()
     unresolved = bib_matcher.get_unresolved_citations()
@@ -110,10 +106,9 @@ def test_report_unresolved_sources():
 
 
 def test_report_things_that_arent_even_citations():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, r'¯\_(ツ)_/¯')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert bib_matcher.has_unresolved_citations()
     assert not bib_matcher.has_sources()
     unresolved = bib_matcher.get_unresolved_citations()
@@ -122,10 +117,9 @@ def test_report_things_that_arent_even_citations():
 
 
 def test_report_resolved_source():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Fictionman (2000)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -140,10 +134,9 @@ def test_report_resolved_source():
 
 
 def test_resolve_and_unresolved_source():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Fictionman (2000); Santa Clause (1982)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
 
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -162,10 +155,9 @@ def test_resolve_and_unresolved_source():
 
 
 def test_last_name_before_first_name_in_bibliography():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Fictionman (2001)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -180,10 +172,9 @@ def test_last_name_before_first_name_in_bibliography():
 
 
 def test_desambiguate_based_on_title():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Writealot_another (2012)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -197,10 +188,9 @@ def test_desambiguate_based_on_title():
 
 
 def test_deal_with_people_who_have_spaces_in_their_last_name():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Space Man (1961)')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -214,10 +204,9 @@ def test_deal_with_people_who_have_spaces_in_their_last_name():
 
 
 def test_alternate_citation_style():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Hinz&Kunz2023, p.113')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -231,10 +220,9 @@ def test_alternate_citation_style():
 
 
 def test_hardcoded_fallback():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Strauß (n.d.)')
-    bib_matcher.add_resolved_citation_to_row(
-        'melp1238', row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row('melp1238', row)
     assert not bib_matcher.has_unresolved_citations()
     assert bib_matcher.has_sources()
     first_source = bib_matcher.get_sources()[0]
@@ -255,10 +243,9 @@ def test_hardcoded_fallback():
 
 
 def test_nothing_but_von_parts():
-    bib_matcher = BibliographyMatcher()
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, 'Van der von van 2012')
-    bib_matcher.add_resolved_citation_to_row(
-        ENGLISH, row, BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
     assert bib_matcher.has_unresolved_citations()
     assert not bib_matcher.has_sources()
     unresolved = bib_matcher.get_unresolved_citations()

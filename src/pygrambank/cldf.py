@@ -1,6 +1,7 @@
 import collections
 from itertools import groupby
 import re
+import unicodedata
 
 import pyglottolog
 from clldutils.misc import lazyproperty, slug
@@ -25,52 +26,15 @@ VON_PREFIXES = [
 
 
 def undiacritic(s):
-    return slug(s, lowercase=False, remove_whitespace=False)
+    return ''.join(
+        ' ' if c.isspace() else c
+        for c in unicodedata.normalize('NFD', s)
+        if c.isascii() and (c.isalnum() or c.isspace()))
 
 
 def clean_bibkey(key):
     """Remove colons in bibliography key."""
     return key.replace(':', '_').replace("'", "")
-
-
-def _bibkeys_from_citation(
-    author, year, pages, word_from_title,
-    bibliography_entries, language_bibkeys
-):
-    """Return bibliography keys corresponding to a citation."""
-
-    citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
-    for name_part in re.split(r'[\s,.\-]+', citation_lastname):
-        if name_part.strip() and name_part[0].isupper() and name_part not in VON_PREFIXES:
-            citation_firsttoken = name_part
-            break
-    else:
-        citation_firsttoken = None
-    word_from_title_norm = word_from_title.replace('_', ' ')
-
-    bibkeys = []
-    for bibkey in language_bibkeys:
-        bibentry = bibliography_entries[bibkey][1]
-        bibtitle = bibentry.get('title', '').lower()
-        bibauthors = bibentry.get('author') or bibentry.get('editor') or ''
-        family_names = {
-            undiacritic(x['lastname'])
-            for x in bib.parse_authors(bibauthors)}
-        family_names.update(bib.bibkey_authors(bibkey))
-
-        if year not in bibentry.get('year', ''):
-            continue
-        if word_from_title_norm and word_from_title_norm not in bibtitle:
-            continue
-        if not any(
-            citation_firsttoken in re.split(r'[\s,.\-]+', lastname)
-            for lastname in family_names
-        ):
-            continue
-
-        bibkeys.append(bibkey)
-
-    return bibkeys
 
 
 class BibliographyMatcher:
@@ -92,10 +56,16 @@ class BibliographyMatcher:
         `get_unresolved_citations()` method.
     """
 
-    def __init__(self):
+    def __init__(self, bibliography_entries, bibkeys_by_glottocode):
         self._unresolved_citations = collections.Counter()
         self._sources = collections.OrderedDict()
         self._source_occurrences = collections.Counter()
+        self._bibliography_entries = bibliography_entries
+        self._bibkeys_by_glottocode = bibkeys_by_glottocode
+
+        # Note: Caching the family names of the authors because parsing them
+        # turned out to be quite expensive.
+        self._parsed_author_cache = {}
 
     def has_sources(self):
         """Return True iff. there are citations which could be resolved."""
@@ -115,9 +85,55 @@ class BibliographyMatcher:
         """Return a list of tuples (citation, occurrence_count)."""
         return self._unresolved_citations.most_common()
 
-    def add_resolved_citation_to_row(
-        self, glottocode, sheet_row, bibliography_entries, bibkeys_by_glottocode
+    def _parse_authors(self, bibkey):
+        """Return set of family names of authors for a bibkey (cached)."""
+        if bibkey in self._parsed_author_cache:
+            return self._parsed_author_cache[bibkey]
+        else:
+            bibentry = self._bibliography_entries[bibkey][1]
+            bibauthors = bibentry.get('author') or bibentry.get('editor') or ''
+            family_names = {
+                undiacritic(x['lastname'])
+                for x in bib.parse_authors(bibauthors)}
+            family_names.update(bib.bibkey_authors(bibkey))
+            self._parsed_author_cache[bibkey] = family_names
+            return family_names
+
+    def _bibkeys_from_citation(
+        self, author, year, pages, word_from_title, glottocode
     ):
+        """Return bibliography keys corresponding to a citation."""
+
+        citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
+        for name_part in re.split(r'[\s,.\-]+', citation_lastname):
+            if name_part.strip() and name_part[0].isupper() and name_part not in VON_PREFIXES:
+                citation_firsttoken = name_part
+                break
+        else:
+            citation_firsttoken = None
+        word_from_title_norm = word_from_title.replace('_', ' ')
+
+        bibkeys = []
+        for bibkey in self._bibkeys_by_glottocode[glottocode]:
+            bibentry = self._bibliography_entries[bibkey][1]
+            bibtitle = bibentry.get('title', '').lower()
+            family_names = self._parse_authors(bibkey)
+
+            if year not in bibentry.get('year', ''):
+                continue
+            if word_from_title_norm and word_from_title_norm not in bibtitle:
+                continue
+            if not any(
+                citation_firsttoken in re.split(r'[\s,.\-]+', lastname)
+                for lastname in family_names
+            ):
+                continue
+
+            bibkeys.append(bibkey)
+
+        return bibkeys
+
+    def add_resolved_citation_to_row(self, glottocode, sheet_row):
         """Destructively add citations to the row of a datasheet.
 
         The `BibliographyMatcher` keeps track of all matched or unmatched
@@ -136,15 +152,14 @@ class BibliographyMatcher:
             unmatched_refs.add((source_string, glottocode))
 
         for author, year, pages, word_from_title in authoryears:
-            bibkeys = _bibkeys_from_citation(
-                author, year, pages, word_from_title,
-                bibliography_entries, bibkeys_by_glottocode.get(glottocode, ()))
+            bibkeys = self._bibkeys_from_citation(
+                author, year, pages, word_from_title, glottocode)
             if bibkeys:
                 # FIXME: only yield at most one match!?
                 matched_refs.update(
                     (bibkey, pages)
                     for bibkey in bib.prioritised_bibkeys(
-                        bibkeys, bibliography_entries))
+                        bibkeys, self._bibliography_entries))
             elif (author, year, glottocode) in MANUAL_SOURCE_MATCHES:
                 matched_refs.add(
                     (MANUAL_SOURCE_MATCHES[(author, year, glottocode)], pages))
@@ -163,7 +178,7 @@ class BibliographyMatcher:
 
         for old_bibkey, new_bibkey, _ in matched_refs:
             if new_bibkey not in self._sources:
-                type_, fields = bibliography_entries[old_bibkey]
+                type_, fields = self._bibliography_entries[old_bibkey]
                 self._sources[new_bibkey] = Source(type_, new_bibkey, **fields)
             self._source_occurrences[new_bibkey] += 1
 
