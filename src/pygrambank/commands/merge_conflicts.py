@@ -6,6 +6,7 @@ import subprocess
 import collections
 
 from csvw.dsv import reader, UnicodeWriter
+from clldutils.clilib import PathType
 from clldutils.misc import nfilter
 
 from .check_conflicts import check
@@ -20,7 +21,12 @@ CODERS = collections.OrderedDict([
     ('Jill', 'JSA'),
     ('vickygruner', 'VG'),
     ('Hedvig', 'HS'),
+    ('Hoju', 'HC'),
 ])
+
+
+def register(parser):
+    parser.add_argument('sheets', type=PathType(type='file'), nargs='+')
 
 
 def get_coder(p):
@@ -103,8 +109,11 @@ def write(p, rows, features):
 
 def run(args):
     active = list(args.repos.features)
+    sheets = args.sheets or sorted(
+        args.repos.path('conflicts').glob('*.tsv'),
+        key=lambda p: p.name)
 
-    for sheet in sorted(args.repos.path('conflicts').glob('*.tsv'), key=lambda p: p.name):
+    for sheet in sheets:
         print('\n#', sheet.stem)
         ok, nc = check(sheet)
         if not ok or not nc:
