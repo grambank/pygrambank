@@ -8,7 +8,8 @@ from termcolor import colored
 from cldfcatalog import Catalog
 
 from pygrambank.sheet import Sheet
-from pygrambank.cldf import refs, GlottologGB, Bibs, languoid_id_map
+from pygrambank.cldf import BibliographyMatcher, GlottologGB
+from pygrambank.bib import lgcodestr
 
 
 def register(parser):
@@ -39,49 +40,74 @@ def run(args):
 
 
 def run_(args, glottolog):  # pragma: no cover
+    grambank = args.repos
     sheets = [Sheet(sh) for sh in args.sheets]
 
-    print('Reading languoid ids from Glottolog...')
+    # FIXME: code duplication with cldfbench
+    print('Reading language data from Glottolog...')
     glottolog = GlottologGB(glottolog)
-    id_to_glottocode = languoid_id_map(glottolog, [s.glottocode for s in sheets])
+    languoids_by_ids = glottolog.languoids_by_ids
+    descendants = glottolog.descendants_map
 
     print('Loading bibliography...')
-    bibs = Bibs(glottolog, args.repos)
+    bibliography_entries = {}
+    bibliography_entries.update(glottolog.bib('hh'))
+    bibliography_entries.update(grambank.bib)
 
-    keys_by_glottocode = collections.defaultdict(set)
-    for key, code in bibs.iter_codes():
-        if code in id_to_glottocode:
-            keys_by_glottocode[id_to_glottocode[code]].add(key)
+    bibkeys_by_glottocode = collections.defaultdict(set)
+    for key, (typ, fields) in bibliography_entries.items():
+        for lang_id in lgcodestr(fields.get('lgcode') or ''):
+            if lang_id in languoids_by_ids:
+                glottocode = languoids_by_ids[lang_id].id
+                if glottocode in descendants:
+                    for cl in descendants[glottocode]:
+                        bibkeys_by_glottocode[cl].add(key)
+                else:
+                    print('---non-language', lang_id)
 
     for sheet in sheets:
+        glottocode = sheet.glottocode
+
         print(colored(
             '\nSource look-up for sheet {}...\n'.format(sheet.path),
             attrs=['bold']))
-        sources, unresolved, lgks = refs(
-            args.repos, sheet.glottocode, bibs, keys_by_glottocode, sheet)
 
-        seen = collections.defaultdict(list)
+        bib_matcher = BibliographyMatcher(
+            bibliography_entries, bibkeys_by_glottocode)
+        for sheet_row in sheet.iter_row_objects(args.repos):
+            bib_matcher.add_resolved_citation_to_row(
+                sheet.glottocode, sheet_row)
+
         print(colored('Resolved sources:', attrs=['bold']))
-        for src in sources:
-            seen[src.id].append(src)
-        for srcid, srcs in seen.items():
-            print('{}\t{}\t{}'.format(len(srcs), srcid, srcs[0]))
-        if unresolved:
+        for source, occurrence_count in bib_matcher.get_sources():
+            print('{}\t{}\t{}'.format(occurrence_count, source.id, source))
+
+        if bib_matcher.has_unresolved_citations():
             print()
             print(colored('Unresolved sources:', attrs=['bold']))
-            for spec, v in unresolved.most_common():
-                try:
-                    author, year, code = spec
-                    print('{}\t{} {}'.format(v, author, year))
-                except ValueError:
-                    print(spec)
-            if lgks:
+            for spec, occurrences in bib_matcher.get_unresolved_citations():
+                if len(spec) == 3:
+                    author, year, _ = spec
+                    print('{}\t{} ({})'.format(occurrences, author, year))
+                elif len(spec) == 2:
+                    source_string, _ = spec
+                    print('{}\t{}'.format(occurrences, source_string))
+                else:  # pragma: nocover
+                    # theoretically unreachable
+                    print('{}\t{}'.format(occurrences, spec))
+            if bibkeys_by_glottocode.get(glottocode):
                 print()
                 print(colored('Available sources:', attrs=['bold']))
-                for (k, t, a, y) in lgks:
+                for bibkey in bibkeys_by_glottocode[glottocode]:
+                    type_, fields = bibliography_entries[bibkey]
+                    author = fields.get('author') or fields.get('editor') or '-'
+                    year = fields.get('year') or '-'
                     print('{}\t{}\t{}'.format(
-                        colored(k, color='blue'),
-                        t,
-                        colored('{} {}'.format(a, y), attrs=['bold'])))
-        print()
-        print(colored('FAIL' if unresolved else 'OK', color='red' if unresolved else 'green'))
+                        colored(bibkey, color='blue'),
+                        type_,
+                        colored('{} {}'.format(author, year), attrs=['bold'])))
+            print()
+            print(colored('FAIL', color='red'))
+        else:
+            print()
+            print(colored('OK', color='green'))

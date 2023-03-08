@@ -52,18 +52,11 @@ def run(args):
             if len(ex.split('\n')) != 3:
                 print(feature.id)
                 break
-                #print(ex)
-                #print('---')
-    #for k, v in sections.most_common():
-    #    print(k, v)
 
-    c, r, prev = 0, 0, ''
+    c, prev = 0, ''
     for ref in sorted(refs):
-        if fuzz.token_set_ratio(prev, ref) >= 100:
-            pass
-        else:
+        if fuzz.token_set_ratio(prev, ref) < 100:
             print(ref)
             print('')
             c += 1
         prev = ref
-    #print(c)
