@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pygrambank',
-    version='2.0.1.dev0',
+    version='2.1',
     author='Robert Forkel',
     author_email='robert_:forkel@eva.mpg.de',
     description='A python library to curate Grambank data',
