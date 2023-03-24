@@ -38,7 +38,10 @@ class Contributor(object):
     id = attr.ib()
     last_name = attr.ib()
     first_name = attr.ib()
-    contribution = attr.ib(converter=parse_roles, validator=valid_roles)
+    contribution = attr.ib(
+        converter=parse_roles,
+        validator=valid_roles,
+        default='Coder')
     node = attr.ib(default='')
     status = attr.ib(default='')
     language_competence = attr.ib(default='')
@@ -64,10 +67,11 @@ def norm_header(s):
 class Contributors(list):
     @classmethod
     def from_md(cls, fname):
+        fields = {f.name for f in attr.fields(Contributor)}
         header, rows = next(iter_markdown_tables(fname.read_text(encoding='utf8')))
         header = [norm_header(c) for c in header]
         rows = [
-            Contributor(**dict(zip(header, row)))
+            Contributor(**{k: v for k, v in zip(header, row) if k in fields})
             for row in rows]
         byid = collections.Counter(r.id for r in rows)
         if byid.most_common(1)[0][1] > 1:  # pragma: no cover
