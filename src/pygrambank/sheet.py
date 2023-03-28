@@ -95,6 +95,11 @@ def check_feature_dependencies(rows):
         _require_comment('GB155', reason)
         _require_comment('GB113', reason)
 
+    if _value('GB022') == _value('GB023') == '1':
+        reason = 'GB022 and GB023 are both 1'
+        _require_comment('GB022', reason)
+        _require_comment('GB023', reason)
+
     return errors
 
 
