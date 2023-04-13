@@ -234,19 +234,14 @@ def mismatch_is_fatal(source_string):
 
     i.e., ignore stuff like Smith (personal communication).
     """
-    # Note: In theory this code could be combined into one big boolean
-    # expression but I doubt that will it any more readable...
-    if REGEX_ONLY_PAGES.match(source_string):
-        # TODO: Maybe find a way to warn about this
-        # print(
-        #     'PAGEONLY:',
-        #     '[%s] default source:%s' % (glottocode, source_string),
-        #     glottocode)
-        return False
-    elif is_unpublished(source_string):
-        return False
-    else:
-        return True
+    # TODO: Maybe find a way to warn about page numbers
+    # print(
+    #     'PAGEONLY:',
+    #     '[%s] default source:%s' % (glottocode, source_string),
+    #     glottocode)
+    return not (
+        REGEX_ONLY_PAGES.match(source_string)
+        or is_unpublished(source_string))
 
 
 def iter_authoryearpages(source_string):
