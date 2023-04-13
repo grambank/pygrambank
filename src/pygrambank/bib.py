@@ -211,6 +211,24 @@ def prioritised_bibkeys(bibkeys, bibliography_entries):
     return prioritised_bibkeys
 
 
+def is_unpublished(source_string):
+    return (
+        'p.c' in source_string
+        or 'personal communication' in source_string
+        or 'pers comm' in source_string
+        or 'pers. comm' in source_string
+        or 'ieldnotes' in source_string
+        or 'ield notes' in source_string
+        or 'forth' in source_string
+        or 'Forth' in source_string
+        or 'ubmitted' in source_string
+        or 'o appear' in source_string
+        or 'in press' in source_string
+        or 'in prep' in source_string
+        or 'in prog' in source_string
+        or source_string.startswith('http'))
+
+
 def mismatch_is_fatal(source_string):
     """Return True iff. an unmatched source string constitutes an error.
 
@@ -225,22 +243,7 @@ def mismatch_is_fatal(source_string):
         #     '[%s] default source:%s' % (glottocode, source_string),
         #     glottocode)
         return False
-    elif (
-        'p.c' in source_string
-        or 'personal communication' in source_string
-        or 'pers comm' in source_string
-        or 'pers. comm' in source_string
-        or 'ieldnotes' in source_string
-        or 'ield notes' in source_string
-        or 'forth' in source_string
-        or 'Forth' in source_string
-        or 'ubmitted' in source_string
-        or 'o appear' in source_string
-        or 'in press' in source_string
-        or 'in prep' in source_string
-        or 'in prog' in source_string
-        or source_string.startswith('http')
-    ):
+    elif is_unpublished(source_string):
         return False
     else:
         return True
@@ -256,7 +259,7 @@ def iter_authoryearpages(source_string):
      * Word from title
     """
     for citation_string in source_string.replace("), ", "); ").split(";"):
-        if "p.c." in citation_string:
+        if is_unpublished(citation_string):
             continue
         condensed = False
         citation_string = citation_string.strip()
