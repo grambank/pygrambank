@@ -85,6 +85,26 @@ def test_ignore_personal_comm():
     assert 'source not confirmed' not in row.Source_comment
 
 
+def test_ignore_field_notes_without_year():
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    row = Row(None, None, 'Beenthere (field notes)')
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
+    assert not bib_matcher.has_sources()
+    assert not bib_matcher.has_unresolved_citations()
+    assert row.has_valid_source()
+    assert 'source not confirmed' not in row.Source_comment
+
+
+def test_ignore_field_notes_with_year():
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    row = Row(None, None, 'Beenthere (field notes 2006)')
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
+    assert not bib_matcher.has_sources()
+    assert not bib_matcher.has_unresolved_citations()
+    assert row.has_valid_source()
+    assert 'source not confirmed' not in row.Source_comment
+
+
 def test_ignore_empty_source():
     bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
     row = Row(None, None, '')

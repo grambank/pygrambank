@@ -211,21 +211,8 @@ def prioritised_bibkeys(bibkeys, bibliography_entries):
     return prioritised_bibkeys
 
 
-def mismatch_is_fatal(source_string):
-    """Return True iff. an unmatched source string constitutes an error.
-
-    i.e., ignore stuff like Smith (personal communication).
-    """
-    # Note: In theory this code could be combined into one big boolean
-    # expression but I doubt that will it any more readable...
-    if REGEX_ONLY_PAGES.match(source_string):
-        # TODO: Maybe find a way to warn about this
-        # print(
-        #     'PAGEONLY:',
-        #     '[%s] default source:%s' % (glottocode, source_string),
-        #     glottocode)
-        return False
-    elif (
+def is_unpublished(source_string):
+    return (
         'p.c' in source_string
         or 'personal communication' in source_string
         or 'pers comm' in source_string
@@ -239,11 +226,22 @@ def mismatch_is_fatal(source_string):
         or 'in press' in source_string
         or 'in prep' in source_string
         or 'in prog' in source_string
-        or source_string.startswith('http')
-    ):
-        return False
-    else:
-        return True
+        or source_string.startswith('http'))
+
+
+def mismatch_is_fatal(source_string):
+    """Return True iff. an unmatched source string constitutes an error.
+
+    i.e., ignore stuff like Smith (personal communication).
+    """
+    # TODO: Maybe find a way to warn about page numbers
+    # print(
+    #     'PAGEONLY:',
+    #     '[%s] default source:%s' % (glottocode, source_string),
+    #     glottocode)
+    return not (
+        REGEX_ONLY_PAGES.match(source_string)
+        or is_unpublished(source_string))
 
 
 def iter_authoryearpages(source_string):
@@ -256,7 +254,7 @@ def iter_authoryearpages(source_string):
      * Word from title
     """
     for citation_string in source_string.replace("), ", "); ").split(";"):
-        if "p.c." in citation_string:
+        if is_unpublished(citation_string):
             continue
         condensed = False
         citation_string = citation_string.strip()
