@@ -50,8 +50,8 @@ def check_feature_dependencies(rows):
         == '0'
         and _value('GB309') == '1'
     ):
-        errors.append(
-            "GB309 can't be 1 if GB083, GB084, GB121 and GB521 are all 0")  # pragma: nocover
+        reason = 'it is 1 and GB083, GB084, GB121 and GB521 are all 0'
+        _require_comment('GB309', reason)
 
     if (_value('GB333')
         == _value('GB334')
