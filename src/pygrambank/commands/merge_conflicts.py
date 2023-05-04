@@ -130,7 +130,11 @@ def run(args):
         coder = get_coder(sheet)
         if sheet.stem == 'sout2989':
             coder = 'JE-HS'
-        assert coder, str(sheet)
+        if not coder:
+            print(
+                'Skipping {}:'.format(sheet.stem),
+                "Couldn't determine coder")
+            continue
 
         merged_sheet_name = args.repos.path(
             'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
