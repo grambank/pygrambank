@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pygrambank',
-    version='2.0.1.dev0',
+    version='2.1.1.dev0',
     author='Robert Forkel',
     author_email='robert_:forkel@eva.mpg.de',
     description='A python library to curate Grambank data',
@@ -22,7 +22,7 @@ setup(
         ],
     },
     platforms='any',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=[
         'clldutils>=3.6',
         'cldfcatalog',
@@ -52,11 +52,11 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],

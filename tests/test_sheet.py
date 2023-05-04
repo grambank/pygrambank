@@ -64,7 +64,7 @@ def test_Sheet(api, capsys, sheet_factory):
 GB020\t0\tMeier 2007\t\tHJH\n""")
     assert str(s).endswith('tsv')
     rows = list(s.iter_row_objects(api))
-    assert rows[0].sources[0].key == ('Meier', '2007', None)
+    assert rows[0].sources[0].key == ('Meier', '2007', '')
     assert len(rows) == 1
     md = s.metadata(GlottologGB(pathlib.Path(__file__).parent / 'glottolog'))
     out, _ = capsys.readouterr()

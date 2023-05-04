@@ -1,6 +1,5 @@
 import re
 import collections
-from itertools import zip_longest
 
 import attr
 from clldutils.markup import iter_markdown_tables
@@ -39,15 +38,18 @@ class Contributor(object):
     id = attr.ib()
     last_name = attr.ib()
     first_name = attr.ib()
-    contribution = attr.ib(converter=parse_roles, validator=valid_roles)
-    node = attr.ib()
-    status = attr.ib()
-    language_competence = attr.ib()
-    github_username = attr.ib()
-    email = attr.ib()
-    photo = attr.ib(converter=parse_photo)
-    bio = attr.ib()
-    should_be_included_despite_no_coding = attr.ib()
+    contribution = attr.ib(
+        converter=parse_roles,
+        validator=valid_roles,
+        default='Coder')
+    node = attr.ib(default='')
+    status = attr.ib(default='')
+    language_competence = attr.ib(default='')
+    github_username = attr.ib(default='')
+    email = attr.ib(default='')
+    photo = attr.ib(converter=parse_photo, default='')
+    bio = attr.ib(default='')
+    should_be_included_despite_no_coding = attr.ib(default=False)
 
     @property
     def name(self):
@@ -65,12 +67,13 @@ def norm_header(s):
 class Contributors(list):
     @classmethod
     def from_md(cls, fname):
+        fields = {f.name for f in attr.fields(Contributor)}
         header, rows = next(iter_markdown_tables(fname.read_text(encoding='utf8')))
         header = [norm_header(c) for c in header]
         rows = [
-            Contributor(**dict(zip_longest(header, row, fillvalue='')))
+            Contributor(**{k: v for k, v in zip(header, row) if k in fields})
             for row in rows]
-        byid = collections.Counter([r.id for r in rows])
+        byid = collections.Counter(r.id for r in rows)
         if byid.most_common(1)[0][1] > 1:  # pragma: no cover
             raise ValueError(
                 'duplicate ids: {0}'.format([k for k, v in byid.most_common() if v > 1]))
