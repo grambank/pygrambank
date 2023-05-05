@@ -1,13 +1,15 @@
 """
 
 """
+import collections
+from datetime import datetime
 import itertools
 import subprocess
-import collections
 
 from csvw.dsv import reader, UnicodeWriter
 from clldutils.clilib import PathType
 from clldutils.misc import nfilter
+import git
 
 from .check_conflicts import check
 from pygrambank.sheet import Sheet
@@ -91,6 +93,23 @@ def rows_and_sourcesheets(sheet, active):
     return allrows, set(sourcesheets)
 
 
+def git_modification_time(git_repo, path):
+    """Return last modification date of `path` as a unix timestamp.
+
+    Uses git log to determine the time.
+    """
+    most_recent_log_entry = git_repo.git.log(
+        '-n1', '--format=format:%at|%ct', '--', path)
+    if most_recent_log_entry:
+        author_time, committer_time = most_recent_log_entry.split('|')
+        return int(author_time or committer_time)
+    else:
+        raise ValueError(
+            '{}: cannot determine last-modified date '
+            '-- git log does not know what this file is, apparently...'.format(
+                path))
+
+
 def write(p, rows, features):
     rows = collections.OrderedDict([(r['Feature_ID'], r) for r in rows])
     cols = 'Feature_ID Value Source Contributed_Datapoint Comment'.split()
@@ -142,6 +161,27 @@ def run(args):
             args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
             for src in sources
             if src.split('_')[0] != coder]
+
+        try:
+            git_repo = git.Repo(args.repos.repos)
+            conflict_mod_time = git_modification_time(git_repo, sheet)
+            sheet_mod_times = (
+                git_modification_time(git_repo, path)
+                for path in source_sheets)
+            newer_sheets = [
+                (sheet_path, mod_time)
+                for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
+                if mod_time > conflict_mod_time]
+            # TODO: force flag
+            if newer_sheets:
+                print('data sheet changed more recently than the conflict sheet!')
+                print('{}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
+                for sheet_path, mod_time in newer_sheets:
+                    print('{}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+                continue
+        except ValueError as e:
+            print(e)
+            continue
 
         print('{{{}}} -> {}'.format(
             '; '.join(str(p) for p in sorted(source_sheets)),
