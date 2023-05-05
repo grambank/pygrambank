@@ -174,10 +174,12 @@ def run(args):
                 if mod_time > conflict_mod_time]
             # TODO: force flag
             if newer_sheets:
-                print('data sheet changed more recently than the conflict sheet!')
-                print('{}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
+                print(
+                    'Skipping {}:'.format(sheet.stem),
+                    'Data sheet changed more recently than the conflict sheet!')
+                print(' * {}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
                 for sheet_path, mod_time in newer_sheets:
-                    print('{}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+                    print(' * {}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
                 continue
         except ValueError as e:
             print(e)
