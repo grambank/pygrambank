@@ -111,33 +111,3 @@ class GB20(object):
         with self.path.open('w', encoding='utf8') as fp:
             fp.write('# -*- coding: utf-8 -*-\n')
             fp.write(self.CHUNK_SEP.join(f.as_chunk() for f in features))
-
-    def listallwiki(self, wiki):
-        fn = wiki / "List-of-all-features.md"
-        currentlist = []
-        for m in re.finditer(
-            r"\*\s*(?P<gbid>(GB)?\d\d\d)\s+\[(?P<feature>[^]]+)]\((?P<link>[^)]+)\)",
-            fn.read_text(encoding='utf-8')
-        ):
-            res = m.groupdict()
-            if not res['gbid'].startswith('GB'):
-                res['gbid'] = 'GB' + res['gbid']
-            currentlist.append(res)
-
-        active = set(f.id for f in self.iterfeatures(wiki))
-
-        print(len(active), "active")
-        print(len(currentlist) - len(active), "inactive")
-
-        with fn.open('w', encoding='utf8') as fp:
-            fp.write("Active in the GramBank feature set:\n\n")
-            for spec in currentlist:
-                if spec['gbid'] in active:
-                    fp.write("* %(gbid)s [%(feature)s](%(link)s)\n" % spec)
-
-            fp.write(
-                "\n\nNo longer active in the GramBank feature set (for historical interest only):"
-                "\n\n")
-            for spec in currentlist:
-                if spec['gbid'] not in active:
-                    fp.write("* %(gbid)s [%(feature)s](%(link)s)\n" % spec)

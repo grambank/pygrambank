@@ -1,12 +1,6 @@
 from pygrambank import features
 
 
-def test_gb20(api, wiki, capsys):
-    gb20 = features.GB20(api.repos / 'gb20.txt')
-    api.repos.joinpath('For_coders').mkdir()
-    gb20.listallwiki(wiki)
-
-
 def test_gb20_update(api):
     def visit(f, api):
         f['xyz'] = 'abcdefg'

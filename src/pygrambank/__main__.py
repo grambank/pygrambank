@@ -7,16 +7,6 @@ from clldutils.loglib import Logging
 from pygrambank.api import Grambank
 
 
-def propagate_gb20(args):  # pragma: no cover
-    """
-    grambank --repos=PATH/TO/Grambank --wiki_repos=PATH/TO/Grambank.wiki  propagate_gb20
-
-    Propagate changes in gb20.txt to all derived files (in Grambank repos and wiki).
-    """
-    api = Grambank(args.repos)
-    api.gb20.listallwiki(args.wiki_repos)
-
-
 def main(args=None, catch_all=False, parsed_args=None):
     import pygrambank.commands
 
