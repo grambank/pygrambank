@@ -20,10 +20,19 @@ def register(parser):
 
 
 def normalised_summary(f):
-    summary = f.wiki['Summary']
+    summary = f.wiki_or_gb20('Summary', 'Clarifying Comments')
     summary = summary.replace('\n', ' ')
     summary = summary.replace('\t', ' ')
     return summary
+
+
+def assemble_row(row_spec, feature):
+    try:
+        return [format_func(feature) for format_func in row_spec.values()]
+    except Exception as e:
+        # add some more information to the error, so I can find the faulty wiki
+        # page.
+        raise ValueError('{}: {}'.format(feature.id, e))
 
 
 def run(args):
@@ -32,9 +41,9 @@ def run(args):
     else:
         name = pathlib.Path(args.out)
 
-    rows = collections.OrderedDict([
+    row_spec = collections.OrderedDict([
         ('Feature_ID', lambda f: f.id),
-        ('Feature', lambda f: f.wiki['title']),
+        ('Feature', lambda f: f.wiki_or_gb20('title', 'Feature')),
         ('Possible Values', lambda f: f['Possible Values']),
         ('Language_ID', lambda f: ''),
         ('Value', lambda f: ''),
@@ -45,10 +54,11 @@ def run(args):
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),
-        ('Patron', lambda f: f.wiki['Patron']),
+        ('Patron', lambda f: f.wiki_or_gb20('Patron', 'Feature Patron')),
     ])
 
     with UnicodeWriter(name, delimiter='\t') as w:
-        w.writerow(rows.keys())
-        for feature in args.repos.features.values():
-            w.writerow([v(feature) for v in rows.values()])
+        w.writerow(row_spec)
+        w.writerows(
+            assemble_row(row_spec, feature)
+            for feature in args.repos.features.values())

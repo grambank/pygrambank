@@ -20,5 +20,5 @@ def run(args):
             t.append([
                 i,
                 f.id,
-                textwrap.shorten(f.wiki['title'], 50),
+                textwrap.shorten(f.wiki_or_gb20('title', 'Feature'), 50),
                 ' '.join([contribs[abbr] for abbr in f.patrons])])

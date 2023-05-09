@@ -34,13 +34,13 @@ def update(args, sheet):
     # Get rows as in "most updated sheet":
     rows = collections.OrderedDict([
         ('Feature_ID', lambda f: f.id),
-        ('Feature', lambda f: f.wiki['title']),
+        ('Feature', lambda f: f.wiki_or_gb20('title', 'Feature')),
         ('Possible Values', lambda f: f['Possible Values']),
-        ('Clarifying comments', lambda f: f.wiki['Summary'].replace('\n', ' ')),
+        ('Clarifying comments', lambda f: f.wiki_or_gb20('Summary', 'Clarifying Comments').replace('\n', ' ')),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),
-        ('Patron', lambda f: f.wiki['Patron']),
+        ('Patron', lambda f: f.wiki_or_gb20('Patron', 'Feature Patron')),
     ])
     active = {}
     for feature in args.repos.features.values():

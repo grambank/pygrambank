@@ -79,6 +79,24 @@ bound_morphology: 0
 
 
 
+Grambank ID: GB024a
+Clarifying Comments: Consider cardinal numerals only (i.e., not ordinal numerals). It does not matter what kind of construction is required (e.g., attributive 'two books' or relative 'books that are two') or what word class the root or modifying form of that the cardinal numerals belong to, i.e., 'two-ing books' (verb) or 'two-some books' (noun) apply to this question. If some numerals go before the noun and some go after, code 3 (both orders). If there is a free choice where to place the numeral, code 3 (both orders) as well. If the order depends on some other grammatical category which is neutral with respect to pragmaticality (e.g. definiteness), code 3. If the order depends on the noun consider the order(s) that applies to an open class of nouns.
+Feature: What is the order of numeral and noun in the NP?
+Feature patron: Harald
+Feature question in French: Quel est l'ordre du numéral et du nom dans le NP?
+Form: word order
+Formal means: word order
+Function: quantification, attribution
+Possible Values: 1: present, 0: absent
+Relevant unit(s): none
+Grambank_ID_desc: xy
+bound_morphology: 0
+Multistate_parent: GB024
+Multistate_to_binarised_mapping: GB024:1 = GB024a:1, GB024:2 = GB024a:0, GB024:3 = GB024a:1
+
+
+
+
 Grambank ID: GB025
 Clarifying Comments: Like all questions concerning order of elements, only the pragmatically unmarked orders are targeted.
 Feature: What is the order of adnominal demonstrative and noun?

@@ -1,5 +1,5 @@
 import re
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 from clldutils.misc import lazyproperty
 
@@ -34,14 +34,20 @@ class Feature(OrderedDict):
             int(val)
             self.domain[val] = desc
 
+    def wiki_or_gb20(self, wiki_key, gb20_key):
+        return self.wiki.get(wiki_key) or self.get(gb20_key) or ''
+
     @classmethod
     def from_chunk(cls, chunk, wiki):
-        items = []
-        for line in chunk.split('\n'):
-            if ':' in line and not line.startswith('#'):
-                items.append(re.split(r'\s*:\s*', line.strip(), 1))
+        items = [
+            re.fullmatch(r'([^:]*?)\s*:\s*(.*)', line).groups()
+            for line in chunk.split('\n')
+            if ':' in line and not line.startswith('#')]
         # Make sure there are no duplicate keys:
-        assert len(set(i[0] for i in items)) == len(items)
+        keys = Counter(i[0] for i in items)
+        if len(keys) != len(items):
+            raise ValueError('Duplicate keys: {}'.format(
+                ';'.join(key for key, count in keys.items() if count > 1)))
         res = cls(items, wiki)
         for k, v in res.wiki.items():
             if k in res:
@@ -93,7 +99,9 @@ class Feature(OrderedDict):
     def patrons(self):
         return [
             patrons[k] for k in
-            re.split(r'\s+(?:&|and)\s+', self.wiki['Patron'].strip())]
+            re.split(
+                r'\s+(?:&|and)\s+',
+                self.wiki_or_gb20('Patron', 'Feature Patron').strip())]
 
 
 class GB20(object):

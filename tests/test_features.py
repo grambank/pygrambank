@@ -1,6 +1,3 @@
-from pygrambank import features
-
-
 def test_gb20_update(api):
     def visit(f, api):
         f['xyz'] = 'abcdefg'
