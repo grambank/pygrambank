@@ -18,11 +18,12 @@ GB_COLS = collections.OrderedDict([
 
 
 def normalized_feature_id(s):
-    if s.isdigit():
-        s = "GB" + str(s).zfill(3)
-    elif s.startswith("GB") and len(s) != 5:
-        s = "GB" + str(s[2:]).zfill(3)
-    return s
+    match = re.fullmatch(r'(?:GB)?(\d+)([a-z])?', s)
+    if match:
+        number, suffix = match.groups()
+        return 'GB{:0>3}{}'.format(number, suffix)
+    else:
+        return s
 
 
 def normalize_comment(s):
