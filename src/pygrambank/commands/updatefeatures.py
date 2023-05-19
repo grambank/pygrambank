@@ -36,11 +36,11 @@ def update(args, sheet):
         ('Feature_ID', lambda f: f.id),
         ('Feature', lambda f: f.wiki_or_gb20('title', 'Feature')),
         ('Possible Values', lambda f: f['Possible Values']),
-        ('Clarifying comments', lambda f: f.wiki_or_gb20('Summary', 'Clarifying Comments').replace('\n', ' ')),
+        ('Clarifying comments', lambda f: f.wiki.get('Summary', '').replace('\n', ' ')),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
         ('Function', lambda f: f['Function']),
         ('Form', lambda f: f['Form']),
-        ('Patron', lambda f: f.wiki_or_gb20('Patron', 'Feature Patron')),
+        ('Patron', lambda f: f.wiki.get('Patron', '')),
     ])
     active = {}
     for feature in args.repos.features.values():
