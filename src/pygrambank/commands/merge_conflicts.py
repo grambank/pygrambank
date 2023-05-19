@@ -16,15 +16,19 @@ from pygrambank.sheet import Sheet
 
 # flake8: noqa
 
-CODERS = collections.OrderedDict([
-    ('SydneyRey', 'SR'),
-    ('Michael90EVAMPI', 'MM'),
-    ('Michael', 'MM'),
-    ('Jill', 'JSA'),
-    ('vickygruner', 'VG'),
-    ('Hedvig', 'HS'),
-    ('Hoju', 'HC'),
-])
+CODERS = {
+    'SydneyRey': 'SR',
+    'Hoju': 'HC',
+    'Michael90EVAMPI': 'MM',
+    'Michael': 'MM',
+    'Jill': 'JSA'),
+    'vickygruner': 'VG',
+    'Victoria': 'VG',
+    'Hedvig': 'HS',
+    'lschlabbach': 'LS',
+    'Farah07': 'FE',
+    'tobiaskweber': 'TWE',
+}
 
 
 def register(parser):
@@ -33,13 +37,11 @@ def register(parser):
 
 def get_coder(p):
     log = subprocess.check_output(['git', 'log', str(p)]).decode('utf8')
-    committers = []
-    for line in log.split('\n'):
+    for line in log.splitlines():
         if line.startswith('Author:'):
-            committers.append(line.replace('Author:', '').strip().split()[0])
-    for name, initials in CODERS.items():
-        if name in committers:
-            return initials
+            first_name = line.replace('Author:', '').strip().split()[0]
+            if first_name in CODERS:
+                return CODERS[first_name]
 
 
 def merged_rows(rows, active):
