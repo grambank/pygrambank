@@ -9,19 +9,16 @@ import subprocess
 from csvw.dsv import reader, UnicodeWriter
 from clldutils.clilib import PathType
 from clldutils.misc import nfilter
-import git
 
 from .check_conflicts import check
 from pygrambank.sheet import Sheet
-
-# flake8: noqa
 
 CODERS = {
     'SydneyRey': 'SR',
     'Hoju': 'HC',
     'Michael90EVAMPI': 'MM',
     'Michael': 'MM',
-    'Jill': 'JSA'),
+    'Jill': 'JSA',
     'vickygruner': 'VG',
     'Victoria': 'VG',
     'Hedvig': 'HS',
@@ -36,12 +33,12 @@ def register(parser):
 
 
 def get_coder(p):
-    log = subprocess.check_output(['git', 'log', str(p)]).decode('utf8')
+    log = subprocess.check_output(
+        ['git', 'log', '--format=format:%an', '--', str(p)]).decode('utf8')
     for line in log.splitlines():
-        if line.startswith('Author:'):
-            first_name = line.replace('Author:', '').strip().split()[0]
-            if first_name in CODERS:
-                return CODERS[first_name]
+        first_name = line.strip().split()[0]
+        if first_name in CODERS:
+            return CODERS[first_name]
 
 
 def merged_rows(rows, active):
@@ -95,13 +92,13 @@ def rows_and_sourcesheets(sheet, active):
     return allrows, set(sourcesheets)
 
 
-def git_modification_time(git_repo, path):
+def git_modification_time(path):
     """Return last modification date of `path` as a unix timestamp.
 
     Uses git log to determine the time.
     """
-    most_recent_log_entry = git_repo.git.log(
-        '-n1', '--format=format:%at|%ct', '--', path)
+    most_recent_log_entry = subprocess.check_output(
+        ['-n1', '--format=format:%at|%ct', '--', path]).decode('utf-8')
     if most_recent_log_entry:
         author_time, committer_time = most_recent_log_entry.split('|')
         return int(author_time or committer_time)
@@ -165,11 +162,8 @@ def run(args):
             if src.split('_')[0] != coder]
 
         try:
-            git_repo = git.Repo(args.repos.repos)
-            conflict_mod_time = git_modification_time(git_repo, sheet)
-            sheet_mod_times = (
-                git_modification_time(git_repo, path)
-                for path in source_sheets)
+            conflict_mod_time = git_modification_time(sheet)
+            sheet_mod_times = map(git_modification_time, source_sheets)
             newer_sheets = [
                 (sheet_path, mod_time)
                 for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)

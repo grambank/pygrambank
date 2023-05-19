@@ -35,7 +35,6 @@ setup(
         'beautifulsoup4>=4.9.1',
         'ftfy',
         'html5lib',
-        'gitpython',
     ],
     extras_require={
         'dev': ['flake8', 'wheel', 'twine'],
