@@ -98,7 +98,7 @@ def git_modification_time(path):
     Uses git log to determine the time.
     """
     most_recent_log_entry = subprocess.check_output(
-        ['-n1', '--format=format:%at|%ct', '--', path]).decode('utf-8')
+        ['git', 'log', '-n1', '--format=format:%at|%ct', '--', path]).decode('utf-8')
     if most_recent_log_entry:
         author_time, committer_time = most_recent_log_entry.split('|')
         return int(author_time or committer_time)
