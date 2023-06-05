@@ -30,6 +30,7 @@ CODERS = {
 
 def register(parser):
     parser.add_argument('sheets', type=PathType(type='file'), nargs='+')
+    parser.add_argument('-f', '--force', action='store_true')
 
 
 def get_coder(p):
@@ -169,7 +170,7 @@ def run(args):
                 for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
                 if mod_time > conflict_mod_time]
             # TODO: force flag
-            if newer_sheets:
+            if not args.force and newer_sheets:
                 print(
                     'Skipping {}:'.format(sheet.stem),
                     'Data sheet changed more recently than the conflict sheet!')
