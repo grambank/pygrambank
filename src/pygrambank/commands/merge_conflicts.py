@@ -14,17 +14,17 @@ from .check_conflicts import check
 from pygrambank.sheet import Sheet
 
 CODERS = {
-    'SydneyRey': 'SR',
+    'Farah07': 'FE',
+    'Hedvig': 'HS',
     'Hoju': 'HC',
-    'Michael90EVAMPI': 'MM',
-    'Michael': 'MM',
     'Jill': 'JSA',
+    'lschlabbach': 'LS',
+    'Michael': 'MM',
+    'Michael90EVAMPI': 'MM',
+    'SydneyRey': 'SR',
+    'tobiaskweber': 'TWE',
     'vickygruner': 'VG',
     'Victoria': 'VG',
-    'Hedvig': 'HS',
-    'lschlabbach': 'LS',
-    'Farah07': 'FE',
-    'tobiaskweber': 'TWE',
 }
 
 
