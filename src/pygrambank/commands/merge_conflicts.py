@@ -13,6 +13,8 @@ from clldutils.misc import nfilter
 from .check_conflicts import check
 from pygrambank.sheet import Sheet
 
+# flake8: noqa
+
 CODERS = {
     'Farah07': 'FE',
     'Hedvig': 'HS',
@@ -162,25 +164,25 @@ def run(args):
             for src in sources
             if src.split('_')[0] != coder]
 
-        try:
-            conflict_mod_time = git_modification_time(sheet)
-            sheet_mod_times = map(git_modification_time, source_sheets)
-            newer_sheets = [
-                (sheet_path, mod_time)
-                for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
-                if mod_time > conflict_mod_time]
-            # TODO: force flag
-            if not args.force and newer_sheets:
-                print(
-                    'Skipping {}:'.format(sheet.stem),
-                    'Data sheet changed more recently than the conflict sheet!')
-                print(' * {}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
-                for sheet_path, mod_time in newer_sheets:
-                    print(' * {}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+        if not args.force:
+            try:
+                conflict_mod_time = git_modification_time(sheet)
+                sheet_mod_times = map(git_modification_time, source_sheets)
+                newer_sheets = [
+                    (sheet_path, mod_time)
+                    for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
+                    if mod_time > conflict_mod_time]
+                if newer_sheets:
+                    print(
+                        'Skipping {}:'.format(sheet.stem),
+                        'Data sheet changed more recently than the conflict sheet!')
+                    print(' * {}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
+                    for sheet_path, mod_time in newer_sheets:
+                        print(' * {}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+                    continue
+            except ValueError as e:
+                print(e)
                 continue
-        except ValueError as e:
-            print(e)
-            continue
 
         print('{{{}}} -> {}'.format(
             '; '.join(str(p) for p in sorted(source_sheets)),
