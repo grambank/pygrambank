@@ -197,9 +197,17 @@ def run(args):
 
         archive_dest = args.repos.path('conflicts_resolved', sheet.name)
         if archive_dest.exists():
-            print(
-                "ERROR: won't move", sheet, 'to', archive_dest,
-                '-- destination already exists.')
+            # just append the conflict sheet to the previous resolved conflict;
+            # very hacky:
+            # XXX: this assumes that we don't change the column layout
+            # XXX: also: introducing multi-line colnames would break this
+            print('cat', sheet, '>>', archive_dest)
+            with open(sheet, encoding='utf-8') as fin:
+                # drop header
+                _ = next(fin)
+                with open(archive_dest, 'a') as fout:
+                    fout.write(''.join(fin))
+            sheet.unlink()
         else:
             print(sheet, '->', archive_dest)
             sheet.rename(archive_dest)
