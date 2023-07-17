@@ -5,7 +5,7 @@ def test_api_contributors(api):
 
 
 def test_features(api, wiki):
-    assert len(api.features) == 9
+    assert len(api.features) == 10
     assert len(api.features['GB021'].domain) == 2
     f = api.features['GB021']
     assert f.description

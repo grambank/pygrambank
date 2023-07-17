@@ -232,7 +232,7 @@ class Sheet(object):
         if not fid:
             return False
         res = True
-        if not re.match('GB[0-9]{3}|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
+        if not re.match('GB[0-9]{3}[a-z]?|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
             if row.get('Value'):
                 if log:
                     log('invalid Feature_ID: {0}'.format(fid),
