@@ -1,36 +1,47 @@
 """
 
 """
+import collections
+from datetime import datetime
 import itertools
 import subprocess
-import collections
 
 from csvw.dsv import reader, UnicodeWriter
+from clldutils.clilib import PathType
 from clldutils.misc import nfilter
 
 from .check_conflicts import check
+from pygrambank.sheet import Sheet
 
 # flake8: noqa
 
-CODERS = collections.OrderedDict([
-    ('SydneyRey', 'SR'),
-    ('Michael90EVAMPI', 'MM'),
-    ('Michael', 'MM'),
-    ('Jill', 'JSA'),
-    ('vickygruner', 'VG'),
-    ('Hedvig', 'HS'),
-])
+CODERS = {
+    'Farah07': 'FE',
+    'Hedvig': 'HS',
+    'Hoju': 'HC',
+    'Jill': 'JSA',
+    'lschlabbach': 'LS',
+    'Michael': 'MM',
+    'Michael90EVAMPI': 'MM',
+    'SydneyRey': 'SR',
+    'tobiaskweber': 'TWE',
+    'vickygruner': 'VG',
+    'Victoria': 'VG',
+}
+
+
+def register(parser):
+    parser.add_argument('sheets', type=PathType(type='file'), nargs='+')
+    parser.add_argument('-f', '--force', action='store_true')
 
 
 def get_coder(p):
-    log = subprocess.check_output(['git', 'log', str(p)]).decode('utf8')
-    committers = []
-    for line in log.split('\n'):
-        if line.startswith('Author:'):
-            committers.append(line.replace('Author:', '').strip().split()[0])
-    for name, initials in CODERS.items():
-        if name in committers:
-            return initials
+    log = subprocess.check_output(
+        ['git', 'log', '--format=format:%an', '--', str(p)]).decode('utf8')
+    for line in log.splitlines():
+        first_name = line.strip().split()[0]
+        if first_name in CODERS:
+            return CODERS[first_name]
 
 
 def merged_rows(rows, active):
@@ -84,6 +95,23 @@ def rows_and_sourcesheets(sheet, active):
     return allrows, set(sourcesheets)
 
 
+def git_modification_time(path):
+    """Return last modification date of `path` as a unix timestamp.
+
+    Uses git log to determine the time.
+    """
+    most_recent_log_entry = subprocess.check_output(
+        ['git', 'log', '-n1', '--format=format:%at|%ct', '--', path]).decode('utf-8')
+    if most_recent_log_entry:
+        author_time, committer_time = most_recent_log_entry.split('|')
+        return int(author_time or committer_time)
+    else:
+        raise ValueError(
+            '{}: cannot determine last-modified date '
+            '-- git log does not know what this file is, apparently...'.format(
+                path))
+
+
 def write(p, rows, features):
     rows = collections.OrderedDict([(r['Feature_ID'], r) for r in rows])
     cols = 'Feature_ID Value Source Contributed_Datapoint Comment'.split()
@@ -102,23 +130,87 @@ def write(p, rows, features):
 
 def run(args):
     active = list(args.repos.features)
+    sheets = args.sheets or sorted(
+        args.repos.path('conflicts').glob('*.tsv'),
+        key=lambda p: p.name)
 
-    for sheet in sorted(args.repos.path('conflicts').glob('*.tsv'), key=lambda p: p.name):
-        #if sheet.stem != 'brah1256':
-        #    continue
+    for sheet in sheets:
+        print('\n#', sheet.stem)
         ok, nc = check(sheet)
-        if ok and nc:
-            print(sheet.stem)
+        if not ok or not nc:
+            print(
+                'Skipping {}:'.format(sheet.stem),
+                '`grambank check_conflicts` found errors.')
+            continue
+
+        try:
             rows, sources = rows_and_sourcesheets(sheet, active)
-            coder = get_coder(sheet)
-            if sheet.stem == 'sout2989':
-                coder = 'JE-HS'
-            assert coder, str(sheet)
-            write(args.repos.path('original_sheets', '{}_{}.tsv'.format(coder, sheet.stem)), rows, args.repos.features)
-            for src in sources:
-                if src.split('_')[0] != coder:
-                    p = args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
-                    if p.exists():
-                        p.unlink()
-                    else:
-                        args.log.warning('Unknown source sheet: {}'.format(p))
+        except ValueError as e:
+            print('Skipping {}: Failed to merge rows: {}'.format(sheet.stem, e))
+            continue
+        coder = get_coder(sheet)
+        if sheet.stem == 'sout2989':
+            coder = 'JE-HS'
+        if not coder:
+            print(
+                'Skipping {}:'.format(sheet.stem),
+                "Couldn't determine coder")
+            continue
+
+        merged_sheet_name = args.repos.path(
+            'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
+        source_sheets = [
+            args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
+            for src in sources
+            if src.split('_')[0] != coder]
+
+        if not args.force:
+            try:
+                conflict_mod_time = git_modification_time(sheet)
+                sheet_mod_times = map(git_modification_time, source_sheets)
+                newer_sheets = [
+                    (sheet_path, mod_time)
+                    for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
+                    if mod_time > conflict_mod_time]
+                if newer_sheets:
+                    print(
+                        'Skipping {}:'.format(sheet.stem),
+                        'Data sheet changed more recently than the conflict sheet!')
+                    print(' * {}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
+                    for sheet_path, mod_time in newer_sheets:
+                        print(' * {}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+                    continue
+            except ValueError as e:
+                print(e)
+                continue
+
+        print('{{{}}} -> {}'.format(
+            '; '.join(str(p) for p in sorted(source_sheets)),
+            merged_sheet_name))
+        write(merged_sheet_name, rows, args.repos.features)
+        for p in source_sheets:
+            if p.exists():
+                p.unlink()
+            else:
+                print('{}: file not found'.format(p))
+
+        print('checks for {}:'.format(merged_sheet_name))
+        merged_sheet = Sheet(merged_sheet_name)
+        merged_sheet.check(args.repos)
+
+        archive_dest = args.repos.path('conflicts_resolved', sheet.name)
+        if archive_dest.exists():
+            # just append the conflict sheet to the previous resolved conflict;
+            # very hacky:
+            # XXX: this assumes that we don't change the column layout
+            # XXX: also: introducing multi-line colnames would break this
+            print('cat', sheet, '>>', archive_dest)
+            with open(sheet, encoding='utf-8') as fin:
+                # drop header
+                _ = next(fin)
+                with open(archive_dest, 'a') as fout:
+                    fout.write(''.join(fin))
+            sheet.unlink()
+        else:
+            print(sheet, '->', archive_dest)
+            sheet.rename(archive_dest)
