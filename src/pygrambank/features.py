@@ -85,7 +85,8 @@ class Feature(OrderedDict):
     def description(self):
         if self._wiki.joinpath('{0}.md'.format(self.id)).exists():
             return self._wiki.joinpath('{0}.md'.format(self.id)).read_text(encoding='utf-8-sig')
-        return self['Clarifying Comments']  # pragma: no cover
+        else:  # pragma: no cover
+            return self.wiki_or_gb20('Summary', 'Clarifying comments')
 
     @lazyproperty
     def id(self):
@@ -110,10 +111,25 @@ class GB20(object):
     def __init__(self, path):
         self.path = path
 
-    def iterfeatures(self, wiki):
+    def _iterfeatures(self, wiki):
         for chunk in self.path.read_text(encoding='utf-8').split(self.CHUNK_SEP):
             if chunk.strip():
                 yield Feature.from_chunk(chunk, wiki)
+
+    def read_features(self, wiki):
+        features = {
+            f['Grambank ID']: f
+            for f in self._iterfeatures(wiki)}
+        # binarised features inherit info from non-binarised parents.
+        for feature in features.values():
+            parent_id = feature.get('Multistate_parent')
+            if not parent_id or parent_id not in features:
+                continue
+            parent_wiki = features[parent_id].wiki
+            for key in ['Patron', 'Summary']:
+                if not feature.wiki.get(key) and parent_wiki.get(key):
+                    feature.wiki[key] = parent_wiki[key]
+        return features
 
     def save(self, features):
         with self.path.open('w', encoding='utf8') as fp:

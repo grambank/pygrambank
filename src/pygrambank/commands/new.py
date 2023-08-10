@@ -20,18 +20,10 @@ def register(parser):
 
 
 def normalised_summary(feature_dict, feature):
-    summary = parent_wiki_get(feature_dict, feature, 'Summary') or ''
+    summary = feature.wiki.get('Summary') or ''
     summary = summary.replace('\n', ' ')
     summary = summary.replace('\t', ' ')
     return summary
-
-
-def parent_wiki_get(feature_dict, feature, key):
-    parent = feature.get('Multistate_parent')
-    if parent and parent in feature_dict:
-        return feature_dict[parent].wiki.get(key) or feature.wiki.get(key)
-    else:
-        return feature.wiki.get(key)
 
 
 def assemble_row(row_spec, feature):
@@ -64,7 +56,7 @@ def run(args):
         ('Contributed_Datapoints', lambda f: ''),
         ('Clarifying comments', lambda f: normalised_summary(features, f)),
         ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
-        ('Patron', lambda f: parent_wiki_get(features, f, 'Patron')),
+        ('Patron', lambda f: f.wiki_or_gb20('Patron', 'Feature Patron')),
     ])
 
     with UnicodeWriter(name, delimiter='\t') as w:

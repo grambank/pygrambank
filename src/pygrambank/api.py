@@ -43,11 +43,11 @@ class Grambank(API):
 
     @lazyproperty
     def ordered_features(self):
-        return list(self.gb20.iterfeatures(self.wiki))
+        return list(self.features.values())
 
     @lazyproperty
     def features(self):
-        return collections.OrderedDict([(f['Grambank ID'], f) for f in self.ordered_features])
+        return self.gb20.read_features(self.wiki)
 
     @lazyproperty
     def issues_path(self):
