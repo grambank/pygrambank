@@ -43,7 +43,8 @@ def run(args):
 
     features = collections.OrderedDict(
         (f.id, f)
-        for f in args.repos.features.values())
+        for f in args.repos.features.values()
+        if f.get('Binary_Multistate') != 'multi')
 
     row_spec = collections.OrderedDict([
         ('Feature_ID', lambda f: f.id),
