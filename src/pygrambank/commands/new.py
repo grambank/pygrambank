@@ -2,7 +2,6 @@
 Create a new, empty sheet
 """
 import pathlib
-import collections
 
 from csvw.dsv import UnicodeWriter
 
@@ -41,23 +40,24 @@ def run(args):
     else:
         name = pathlib.Path(args.out)
 
-    features = collections.OrderedDict(
-        (f.id, f)
-        for f in args.repos.features.values())
+    features = {
+        f.id: f
+        for f in args.repos.features.values()
+        if f.get('Binary_Multistate') != 'multi'}
 
-    row_spec = collections.OrderedDict([
-        ('Feature_ID', lambda f: f.id),
-        ('Feature', lambda f: f.wiki_or_gb20('title', 'Feature')),
-        ('Possible Values', lambda f: f['Possible Values']),
-        ('Language_ID', lambda f: ''),
-        ('Value', lambda f: ''),
-        ('Source', lambda f: ''),
-        ('Comment', lambda f: ''),
-        ('Contributed_Datapoints', lambda f: ''),
-        ('Clarifying comments', lambda f: normalised_summary(features, f)),
-        ('Relevant unit(s)', lambda f: f['Relevant unit(s)']),
-        ('Patron', lambda f: f.wiki_or_gb20('Patron', 'Feature Patron')),
-    ])
+    row_spec = {
+        'Feature_ID': lambda f: f.id,
+        'Feature': lambda f: f.wiki_or_gb20('title', 'Feature'),
+        'Possible Values': lambda f: f['Possible Values'],
+        'Language_ID': lambda f: '',
+        'Value': lambda f: '',
+        'Source': lambda f: '',
+        'Comment': lambda f: '',
+        'Contributed_Datapoints': lambda f: '',
+        'Clarifying comments': lambda f: normalised_summary(features, f),
+        'Relevant unit(s)': lambda f: f['Relevant unit(s)'],
+        'Patron': lambda f: f.wiki_or_gb20('Patron', 'Feature Patron'),
+    }
 
     with UnicodeWriter(name, delimiter='\t') as w:
         w.writerow(row_spec)
