@@ -221,6 +221,108 @@ class FeatureDependencies(unittest.TestCase):
         self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 2)
         self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
 
+    def test_three_state_features(self):
+        features = [
+            ('GB024', 'GB024a', 'GB024b'),
+            ('GB025', 'GB025a', 'GB025b'),
+            ('GB065', 'GB065a', 'GB065b'),
+            ('GB130', 'GB130a', 'GB130b'),
+            ('GB193', 'GB193a', 'GB193b')]
+        good_vals = [
+            ('1', '?', '0'),
+            ('1', '1', '?'),
+            ('1', '1', '0'),
+            ('2', '?', '1'),
+            ('2', '0', '?'),
+            ('2', '0', '1'),
+            ('3', '?', '1'),
+            ('3', '1', '?'),
+            ('3', '1', '1')]
+        bad_vals = [
+            ('0', '0', '0'),
+            ('1', '0', '0'),
+            ('1', '1', '1'),
+            ('2', '1', '1'),
+            ('2', '0', '0'),
+            ('3', '0', '1'),
+            ('3', '1', '0')]
+        for parent, binary_a, binary_b in features:
+            for val_parent, val_a, val_b in good_vals:
+                good_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertEqual(
+                    len(sheet.check_feature_dependencies(good_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+            for val_parent, val_a, val_b in bad_vals:
+                bad_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertGreater(
+                    len(sheet.check_feature_dependencies(bad_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+
+    def test_four_state_features(self):
+        features = [
+            ('GB203', 'GB203a', 'GB203b')]
+        good_vals = [
+            ('0', '?', '0'),
+            ('0', '0', '?'),
+            ('0', '0', '0'),
+            ('1', '?', '0'),
+            ('1', '1', '?'),
+            ('1', '1', '0'),
+            ('2', '?', '1'),
+            ('2', '0', '?'),
+            ('2', '0', '1'),
+            ('3', '?', '1'),
+            ('3', '1', '?'),
+            ('3', '1', '1')]
+        bad_vals = [
+            ('0', '1', '0'),
+            ('0', '0', '1'),
+            ('1', '0', '0'),
+            ('1', '1', '1'),
+            ('2', '1', '1'),
+            ('2', '0', '0'),
+            ('3', '0', '1'),
+            ('3', '1', '0')]
+        for parent, binary_a, binary_b in features:
+            for val_parent, val_a, val_b in good_vals:
+                good_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertEqual(
+                    len(sheet.check_feature_dependencies(good_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+            for val_parent, val_a, val_b in bad_vals:
+                bad_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertGreater(
+                    len(sheet.check_feature_dependencies(bad_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+
 
 @pytest.mark.filterwarnings("ignore:Duplicate")
 @pytest.mark.parametrize(
