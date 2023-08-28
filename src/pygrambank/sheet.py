@@ -73,7 +73,7 @@ def check_feature_dependencies(rows):
     if (_value('GB265')
         == _value('GB266')
         == _value('GB273')
-        == 0
+        == '0'
     ):
         reason = 'GB265, GB266, and GB273 are all 0'
         _require_comment('GB265', reason)
@@ -84,13 +84,13 @@ def check_feature_dependencies(rows):
         == _value('GB073')
         == _value('GB074')
         == _value('GB075')
-        == 0
+        == '0'
     ):
         reason = 'GB072, GB073, GB074, and GB075 are all 0'
         _require_comment('GB074', reason)
         _require_comment('GB075', reason)
 
-    if _value('GB155') == 1 and _value('GB113') == 0:
+    if _value('GB155') == '1' and _value('GB113') == '0':
         reason = 'GB155 is 1 and GB113 is 0'
         _require_comment('GB155', reason)
         _require_comment('GB113', reason)
