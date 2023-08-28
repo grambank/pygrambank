@@ -130,7 +130,7 @@ def check_feature_dependencies(rows):
                 and _value(binary_b) == bad_b
             ):
                 errors.append(
-                    "{} cant't be {} if {} is {} and {} is {}".format(
+                    "{} can't be {} if {} is {} and {} is {}".format(
                         parent, bad_parent,
                         binary_a, bad_a,
                         binary_b, bad_b))
