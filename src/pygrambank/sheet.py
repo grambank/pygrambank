@@ -19,7 +19,7 @@ def check_feature_dependencies(rows):
         row = values.get(feat)
         return row.Value if row else None
 
-    def _comment(feat):   # pragma: nocover
+    def _comment(feat):
         row = values.get(feat)
         return row.Comment if row else None
 
@@ -34,14 +34,14 @@ def check_feature_dependencies(rows):
         == _value('GB410')
         == '0'
     ):
-        errors.append("GB408, GB409, and GB410 can't all be 0")  # pragma: nocover
+        errors.append("GB408, GB409, and GB410 can't all be 0")
 
     if (_value('GB131')
         == _value('GB132')
         == _value('GB133')
         == '0'
     ):
-        errors.append("GB131, GB132, and GB133 can't all be 0")  # pragma: nocover
+        errors.append("GB131, GB132, and GB133 can't all be 0")
 
     if (_value('GB083')
         == _value('GB084')
@@ -60,7 +60,7 @@ def check_feature_dependencies(rows):
         == '0'
     ):
         reason = 'GB333, GB334, GB335, and GB336 are all 0'
-        for feat in ('GB333', 'GB334', 'GB335', 'GB336'):  # pragma: nocover
+        for feat in ('GB333', 'GB334', 'GB335', 'GB336'):
             _require_comment(feat, reason)
 
     for feat in (
@@ -68,12 +68,12 @@ def check_feature_dependencies(rows):
         'GB260', 'GB165', 'GB319'
     ):
         if _value(feat) == '1':
-            _require_comment(feat, reason='it is coded 1')  # pragma: nocover
+            _require_comment(feat, reason='it is coded 1')
 
     if (_value('GB265')
         == _value('GB266')
         == _value('GB273')
-        == 0
+        == '0'
     ):
         reason = 'GB265, GB266, and GB273 are all 0'
         _require_comment('GB265', reason)
@@ -84,13 +84,13 @@ def check_feature_dependencies(rows):
         == _value('GB073')
         == _value('GB074')
         == _value('GB075')
-        == 0
+        == '0'
     ):
         reason = 'GB072, GB073, GB074, and GB075 are all 0'
         _require_comment('GB074', reason)
         _require_comment('GB075', reason)
 
-    if _value('GB155') == 1 and _value('GB113') == 0:
+    if _value('GB155') == '1' and _value('GB113') == '0':
         reason = 'GB155 is 1 and GB113 is 0'
         _require_comment('GB155', reason)
         _require_comment('GB113', reason)
@@ -99,6 +99,47 @@ def check_feature_dependencies(rows):
         reason = 'GB022 and GB023 are both 1'
         _require_comment('GB022', reason)
         _require_comment('GB023', reason)
+
+    multistate_features = [
+        # three states
+        ('GB024', 'GB024a', 'GB024b', 3),
+        ('GB025', 'GB025a', 'GB025b', 3),
+        ('GB065', 'GB065a', 'GB065b', 3),
+        ('GB130', 'GB130a', 'GB130b', 3),
+        # four states
+        ('GB193', 'GB193a', 'GB193b', 4),
+        ('GB203', 'GB203a', 'GB203b', 4)]
+    bad_vals_ternary = [
+        ('1', '0', '0'),
+        ('1', '1', '1'),
+        ('2', '1', '1'),
+        ('2', '0', '0'),
+        ('3', '0', '1'),
+        ('3', '1', '0')]
+    bad_vals_quarternary = [
+        ('0', '1', '0'),
+        ('0', '0', '1')]
+    for parent, binary_a, binary_b, n_states in multistate_features:
+        if n_states < 4:
+            vals = bad_vals_ternary
+        else:
+            vals = itertools.chain(bad_vals_ternary, bad_vals_quarternary)
+        for bad_parent, bad_a, bad_b in vals:
+            if (_value(parent) == bad_parent
+                and _value(binary_a) == bad_a
+                and _value(binary_b) == bad_b
+            ):
+                errors.append(
+                    "{} can't be {} if {} is {} and {} is {}".format(
+                        parent, bad_parent,
+                        binary_a, bad_a,
+                        binary_b, bad_b))
+
+        if (n_states < 4
+            and _value(binary_a) == '0'
+            and _value(binary_b) == '0'
+        ):
+            errors.append(f"{binary_a} and {binary_b} can't both be 0")
 
     return errors
 

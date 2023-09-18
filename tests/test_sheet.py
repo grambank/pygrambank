@@ -1,4 +1,5 @@
 import pathlib
+import unittest
 
 import pytest
 
@@ -36,6 +37,291 @@ def test_visitor(sheet_abbr):
 def test_check(api, sheet_abbr, sheet_factory, capsys):
     assert sheet_abbr.check(api) >\
            sheet.Sheet(api.sheets_dir / 'NOVALS_abcd1234.tsv').check(api)
+
+
+class FeatureDependencies(unittest.TestCase):
+
+    def row(self, feature_id, value, comment=None):
+        return sheet.Row(
+            Feature_ID=feature_id,
+            Value=value,
+            Source='',
+            Comment=comment or '')
+
+    def test_gb408_to_410(self):
+        good_rows = [
+            self.row('GB408', '0'),
+            self.row('GB409', '0'),
+            self.row('GB410', '1')]
+        bad_rows = [
+            self.row('GB408', '0'),
+            self.row('GB409', '0'),
+            self.row('GB410', '0')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 1)
+
+    def test_gb131_to_133(self):
+        good_rows = [
+            self.row('GB131', '0'),
+            self.row('GB132', '0'),
+            self.row('GB133', '1')]
+        bad_rows = [
+            self.row('GB131', '0'),
+            self.row('GB132', '0'),
+            self.row('GB133', '0')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 1)
+
+    def test_gb309(self):
+        good_rows = [
+            self.row('GB083', '0'),
+            self.row('GB084', '0'),
+            self.row('GB121', '0'),
+            self.row('GB521', '1'),
+            self.row('GB309', '1')]
+        bad_rows = [
+            self.row('GB083', '0'),
+            self.row('GB084', '0'),
+            self.row('GB121', '0'),
+            self.row('GB521', '0'),
+            self.row('GB309', '1')]
+        fixed_rows = [
+            self.row('GB083', '0'),
+            self.row('GB084', '0'),
+            self.row('GB121', '0'),
+            self.row('GB521', '0'),
+            self.row('GB309', '1', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 1)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_gb333_to_336(self):
+        good_rows = [
+            self.row('GB333', '1'),
+            self.row('GB334', '0'),
+            self.row('GB335', '0'),
+            self.row('GB336', '0')]
+        bad_rows = [
+            self.row('GB333', '0'),
+            self.row('GB334', '0'),
+            self.row('GB335', '0'),
+            self.row('GB336', '0')]
+        fixed_rows = [
+            self.row('GB333', '0', 'comment'),
+            self.row('GB334', '0', 'comment'),
+            self.row('GB335', '0', 'comment'),
+            self.row('GB336', '0', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 4)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_comments_in_various_features(self):
+        good_rows = [
+            self.row('GB026', '0'),
+            self.row('GB129', '0'),
+            self.row('GB165', '0'),
+            self.row('GB166', '0'),
+            self.row('GB197', '0'),
+            self.row('GB260', '0'),
+            self.row('GB285', '0'),
+            self.row('GB303', '0'),
+            self.row('GB319', '0'),
+            self.row('GB320', '0'),
+            self.row('GB336', '0')]
+        bad_rows = [
+            self.row('GB026', '1'),
+            self.row('GB129', '1'),
+            self.row('GB165', '1'),
+            self.row('GB166', '1'),
+            self.row('GB197', '1'),
+            self.row('GB260', '1'),
+            self.row('GB285', '1'),
+            self.row('GB303', '1'),
+            self.row('GB319', '1'),
+            self.row('GB320', '1'),
+            self.row('GB336', '1')]
+        fixed_rows = [
+            self.row('GB026', '1', 'comment'),
+            self.row('GB129', '1', 'comment'),
+            self.row('GB165', '1', 'comment'),
+            self.row('GB166', '1', 'comment'),
+            self.row('GB197', '1', 'comment'),
+            self.row('GB260', '1', 'comment'),
+            self.row('GB285', '1', 'comment'),
+            self.row('GB303', '1', 'comment'),
+            self.row('GB319', '1', 'comment'),
+            self.row('GB320', '1', 'comment'),
+            self.row('GB336', '1', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 11)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_gb265_266_274(self):
+        good_rows = [
+            self.row('GB265', '1'),
+            self.row('GB266', '0'),
+            self.row('GB273', '0')]
+        bad_rows = [
+            self.row('GB265', '0'),
+            self.row('GB266', '0'),
+            self.row('GB273', '0')]
+        fixed_rows = [
+            self.row('GB265', '0', 'comment'),
+            self.row('GB266', '0', 'comment'),
+            self.row('GB273', '0', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 3)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_gb072_to_075(self):
+        good_rows = [
+            self.row('GB072', '1'),
+            self.row('GB073', '0'),
+            self.row('GB074', '0'),
+            self.row('GB075', '0')]
+        bad_rows = [
+            self.row('GB072', '0'),
+            self.row('GB073', '0'),
+            self.row('GB074', '0'),
+            self.row('GB075', '0')]
+        fixed_rows = [
+            self.row('GB072', '0'),
+            self.row('GB073', '0'),
+            self.row('GB074', '0', 'comment'),
+            self.row('GB075', '0', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 2)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_gb155_and_133(self):
+        good_rows = [
+            self.row('GB113', '0'),
+            self.row('GB155', '0')]
+        bad_rows = [
+            self.row('GB113', '0'),
+            self.row('GB155', '1')]
+        fixed_rows = [
+            self.row('GB113', '0', 'comment'),
+            self.row('GB155', '1', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 2)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_gb022_and_023(self):
+        good_rows = [
+            self.row('GB022', '0'),
+            self.row('GB023', '1')]
+        bad_rows = [
+            self.row('GB022', '1'),
+            self.row('GB023', '1')]
+        fixed_rows = [
+            self.row('GB022', '1', 'comment'),
+            self.row('GB023', '1', 'comment')]
+        self.assertEqual(len(sheet.check_feature_dependencies(good_rows)), 0)
+        self.assertEqual(len(sheet.check_feature_dependencies(bad_rows)), 2)
+        self.assertEqual(len(sheet.check_feature_dependencies(fixed_rows)), 0)
+
+    def test_three_state_features(self):
+        features = [
+            ('GB024', 'GB024a', 'GB024b'),
+            ('GB025', 'GB025a', 'GB025b'),
+            ('GB065', 'GB065a', 'GB065b'),
+            ('GB130', 'GB130a', 'GB130b')]
+        good_vals = [
+            ('1', '?', '0'),
+            ('1', '1', '?'),
+            ('1', '1', '0'),
+            ('2', '?', '1'),
+            ('2', '0', '?'),
+            ('2', '0', '1'),
+            ('3', '?', '1'),
+            ('3', '1', '?'),
+            ('3', '1', '1')]
+        bad_vals = [
+            ('0', '0', '0'),
+            ('1', '0', '0'),
+            ('1', '1', '1'),
+            ('2', '1', '1'),
+            ('2', '0', '0'),
+            ('3', '0', '1'),
+            ('3', '1', '0')]
+        for parent, binary_a, binary_b in features:
+            for val_parent, val_a, val_b in good_vals:
+                good_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertEqual(
+                    len(sheet.check_feature_dependencies(good_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+            for val_parent, val_a, val_b in bad_vals:
+                bad_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertGreater(
+                    len(sheet.check_feature_dependencies(bad_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+
+    def test_four_state_features(self):
+        features = [
+            ('GB193', 'GB193a', 'GB193b'),
+            ('GB203', 'GB203a', 'GB203b')]
+        good_vals = [
+            ('0', '?', '0'),
+            ('0', '0', '?'),
+            ('0', '0', '0'),
+            ('1', '?', '0'),
+            ('1', '1', '?'),
+            ('1', '1', '0'),
+            ('2', '?', '1'),
+            ('2', '0', '?'),
+            ('2', '0', '1'),
+            ('3', '?', '1'),
+            ('3', '1', '?'),
+            ('3', '1', '1')]
+        bad_vals = [
+            ('0', '1', '0'),
+            ('0', '0', '1'),
+            ('1', '0', '0'),
+            ('1', '1', '1'),
+            ('2', '1', '1'),
+            ('2', '0', '0'),
+            ('3', '0', '1'),
+            ('3', '1', '0')]
+        for parent, binary_a, binary_b in features:
+            for val_parent, val_a, val_b in good_vals:
+                good_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertEqual(
+                    len(sheet.check_feature_dependencies(good_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
+            for val_parent, val_a, val_b in bad_vals:
+                bad_rows = [
+                    self.row(parent, val_parent),
+                    self.row(binary_a, val_a),
+                    self.row(binary_b, val_b)]
+                self.assertGreater(
+                    len(sheet.check_feature_dependencies(bad_rows)),
+                    0,
+                    '{}={}; {}={}; {}={}'.format(
+                        parent, val_parent,
+                        binary_a, val_a,
+                        binary_b, val_b))
 
 
 @pytest.mark.filterwarnings("ignore:Duplicate")
