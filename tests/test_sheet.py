@@ -226,8 +226,7 @@ class FeatureDependencies(unittest.TestCase):
             ('GB024', 'GB024a', 'GB024b'),
             ('GB025', 'GB025a', 'GB025b'),
             ('GB065', 'GB065a', 'GB065b'),
-            ('GB130', 'GB130a', 'GB130b'),
-            ('GB193', 'GB193a', 'GB193b')]
+            ('GB130', 'GB130a', 'GB130b')]
         good_vals = [
             ('1', '?', '0'),
             ('1', '1', '?'),
@@ -274,6 +273,7 @@ class FeatureDependencies(unittest.TestCase):
 
     def test_four_state_features(self):
         features = [
+            ('GB193', 'GB193a', 'GB193b'),
             ('GB203', 'GB203a', 'GB203b')]
         good_vals = [
             ('0', '?', '0'),

@@ -106,8 +106,8 @@ def check_feature_dependencies(rows):
         ('GB025', 'GB025a', 'GB025b', 3),
         ('GB065', 'GB065a', 'GB065b', 3),
         ('GB130', 'GB130a', 'GB130b', 3),
-        ('GB193', 'GB193a', 'GB193b', 3),
         # four states
+        ('GB193', 'GB193a', 'GB193b', 4),
         ('GB203', 'GB203a', 'GB203b', 4)]
     bad_vals_ternary = [
         ('1', '0', '0'),
