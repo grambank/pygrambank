@@ -293,11 +293,11 @@ class Sheet(object):
 
         if row['Value'] and not row['Source']:
             if log:
-                log('value without source', lineno=lineno, level='WARNING', row_=row)
+                log('value without source', lineno=lineno, level='ERROR', row_=row)
             res = False
         if row['Source'] and not row['Value']:
             if log:
-                log('source given, but no value', lineno=lineno, level='WARNING', row_=row)
+                log('source given, but no value', lineno=lineno, level='ERROR', row_=row)
             res = False
         if row['Comment']:
             if (log is not None
@@ -311,7 +311,7 @@ class Sheet(object):
                 log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
             if not row['Value']:
                 if log:
-                    log('comment given, but no value', lineno=lineno, level='WARNING', row_=row)
+                    log('comment given, but no value', lineno=lineno, level='ERROR', row_=row)
                 res = False
         if row['Feature_ID'] in (features or set()):
             if log:
