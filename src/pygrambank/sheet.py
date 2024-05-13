@@ -300,15 +300,16 @@ class Sheet(object):
                 log('source given, but no value', lineno=lineno, level='ERROR', row_=row)
             res = False
         if row['Comment']:
-            if (log is not None
-                and 'check' in row['Comment'].lower()
+            if ('check' in row['Comment'].lower()
                 and 'HG' not in row['Comment']
                 and 'checked by coder' not in row['Comment'].lower()
                 and 'check by coder' not in row['Comment'].lower()
                 and 'wrong import' not in row['Comment'].lower()
-                and 'checked by GB coder' not in row['Comment'].lower()
+                and 'checked by gb coder' not in row['Comment'].lower()
             ):
-                log('comment contains string "check"', lineno=lineno, level='WARNING', row_=row)
+                if log:
+                    log('comment contains string "check"', lineno=lineno, level='ERROR', row_=row)
+                res = False
             if not row['Value']:
                 if log:
                     log('comment given, but no value', lineno=lineno, level='ERROR', row_=row)
