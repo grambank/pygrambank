@@ -20,6 +20,7 @@ CODERS = {
     'Hedvig': 'HS',
     'Hoju': 'HC',
     'Jill': 'JSA',
+    'JanisReimringer': 'JR',
     'lschlabbach': 'LS',
     'Michael': 'MM',
     'Michael90EVAMPI': 'MM',
@@ -136,8 +137,8 @@ def run(args):
 
     for sheet in sheets:
         print('\n#', sheet.stem)
-        ok, nc = check(sheet)
-        if not ok or not nc:
+        ok, _ = check(sheet)
+        if not ok:
             print(
                 'Skipping {}:'.format(sheet.stem),
                 '`grambank check_conflicts` found errors.')
