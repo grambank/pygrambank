@@ -17,6 +17,7 @@ from pygrambank.sheet import Sheet
 
 CODERS = {
     'Farah07': 'FE',
+    'Grace-ph': 'GE',
     'Hedvig': 'HS',
     'Hoju': 'HC',
     'Jill': 'JSA',
