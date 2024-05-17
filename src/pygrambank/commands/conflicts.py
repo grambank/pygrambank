@@ -160,8 +160,21 @@ def run(args):
         args.outdir.mkdir()
 
     sheets_by_glottocode = defaultdict(list)
-    for sheet in api.iter_sheets():
+    for sheet in api.iter_sheets(quarantined=True):
         sheets_by_glottocode[sheet.glottocode].append(sheet)
 
     for gc, sheets in sheets_by_glottocode.items():
         make_conflict_sheet(args.outdir / f'{gc}.tsv', sheets, api)
+
+    # Move conflicting sheets into the quarantine folder
+    for sheets in sheets_by_glottocode.values():
+        if len(sheets) < 2:
+            continue
+        for sheet in sheets:
+            if sheet.path.parent == api.sheets_dir:
+                new_path = api.quarantine_dir / sheet.path.name
+                if new_path.exists():
+                    raise IOError(f'{new_path}: already exists')
+                sheet.path.rename(new_path)
+            else:
+                assert sheet.path.parent == api.quarantine_dir, f'{sheet.path}: not in original_sheets or quarantine'

@@ -1,4 +1,5 @@
 import collections
+from itertools import chain
 
 from csvw.dsv import reader
 from clldutils.apilib import API
@@ -22,8 +23,18 @@ class Grambank(API):
     def sheets_dir(self):
         return self.repos / 'original_sheets'
 
-    def iter_sheets(self):
-        for p in sorted(self.sheets_dir.iterdir(), key=lambda i: i.stem):
+    @property
+    def quarantine_dir(self):
+        return self.repos / 'quarantine'
+
+    def iter_sheets(self, quarantined=True):
+        if quarantined and self.quarantine_dir.exists():
+            sheet_files = chain(
+                self.sheets_dir.iterdir(),
+                self.quarantine_dir.iterdir())
+        else:
+            sheet_files = self.sheets_dir.iterdir()
+        for p in sorted(sheet_files, key=lambda i: i.stem):
             if p.is_file() and p.name not in ['.gitattributes', '.DS_Store']:
                 yield Sheet(p)
 

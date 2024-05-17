@@ -132,37 +132,43 @@ def write(p, rows, features):
 
 def run(args):
     active = list(args.repos.features)
-    sheets = args.sheets or sorted(
+    conflict_sheets = args.sheets or sorted(
         args.repos.path('conflicts').glob('*.tsv'),
         key=lambda p: p.name)
 
-    for sheet in sheets:
+    original_sheets = args.repos.path('original_sheets')
+    quarantine = args.repos.path('quarantine')
+
+    for sheet in conflict_sheets:
         print('\n#', sheet.stem)
+
+        new_conflicts = list(original_sheets.glob(f'*{sheet.stem}.tsv'))
+        if new_conflicts:
+            print(f'Skipping {sheet.stem}: more conflicting sheets detected:')
+            for new_conflict in new_conflicts:
+                print(' *', new_conflict)
+            continue
+
         ok, _ = check(sheet)
         if not ok:
-            print(
-                'Skipping {}:'.format(sheet.stem),
-                '`grambank check_conflicts` found errors.')
+            print(f'Skipping {sheet.stem}: `grambank check_conflicts` found errors.')
             continue
 
         try:
             rows, sources = rows_and_sourcesheets(sheet, active)
         except ValueError as e:
-            print('Skipping {}: Failed to merge rows: {}'.format(sheet.stem, e))
+            print(f'Skipping {sheet.stem}: Failed to merge rows: {e}')
             continue
         coder = get_coder(sheet)
         if sheet.stem == 'sout2989':
             coder = 'JE-HS'
         if not coder:
-            print(
-                'Skipping {}:'.format(sheet.stem),
-                "Couldn't determine coder")
+            print(f"Skipping {sheet.stem}: Couldn't determine coder")
             continue
 
-        merged_sheet_name = args.repos.path(
-            'original_sheets', '{}_{}.tsv'.format(coder, sheet.stem))
+        merged_sheet_name = original_sheets / f'{coder}_{sheet.stem}.tsv'
         source_sheets = [
-            args.repos.path('original_sheets', src.split('.')[0] + '.tsv')
+            quarantine / '{}.tsv'.format(src.split('.')[0])
             for src in sources
             if src.split('_')[0] != coder]
 
@@ -175,12 +181,10 @@ def run(args):
                     for sheet_path, mod_time in zip(source_sheets, sheet_mod_times)
                     if mod_time > conflict_mod_time]
                 if newer_sheets:
-                    print(
-                        'Skipping {}:'.format(sheet.stem),
-                        'Data sheet changed more recently than the conflict sheet!')
-                    print(' * {}: {}'.format(sheet, datetime.fromtimestamp(conflict_mod_time)))
+                    print(f'Skipping {sheet.stem}: Data sheet changed more recently than the conflict sheet!')
+                    print(f' * {sheet}: {datetime.fromtimestamp(conflict_mod_time)}')
                     for sheet_path, mod_time in newer_sheets:
-                        print(' * {}: {}'.format(sheet_path, datetime.fromtimestamp(mod_time)))
+                        print(f' * {sheet_path}: {datetime.fromtimestamp(mod_time)}')
                     continue
             except ValueError as e:
                 print(e)
@@ -194,9 +198,9 @@ def run(args):
             if p.exists():
                 p.unlink()
             else:
-                print('{}: file not found'.format(p))
+                print(f'{p}: file not found')
 
-        print('checks for {}:'.format(merged_sheet_name))
+        print(f'checks for {merged_sheet_name}:')
         merged_sheet = Sheet(merged_sheet_name)
         merged_sheet.check(args.repos)
 
