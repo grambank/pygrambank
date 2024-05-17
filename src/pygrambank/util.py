@@ -2,10 +2,13 @@ import re
 import warnings
 import itertools
 import collections
+import pathlib
 
 from csvw import dsv
 import openpyxl
 import xlrd
+
+from pygrambank.sheet import Sheet
 
 GB_COLS = collections.OrderedDict([
     ("Language_ID", ["iso-639-3", "Language", "Glottocode", "glottocode"]),
@@ -202,6 +205,80 @@ def write_tsv(in_, out_, glottocode):
             row['Language_ID'] = glottocode
             w.writerow(list(row.values()))
     return i
+
+
+# TODO: test and document
+# TODO: also, can this whole thing be merged with the actual merge code
+def is_mergeable(conflict_row):
+    return (
+        conflict_row.get('Conflict', '').lower() == 'false'
+        or conflict_row.get('Select', '').lower() == 'true')
+
+
+# TODO: test and document
+def mergeable_conflicts(conflict_rows):
+    conflicts = collections.defaultdict(list)
+    for row in conflict_rows:
+        if is_mergeable(row):
+            conflicts[row['Feature_ID']].append(row)
+    return [
+        rows[0]
+        for rows in conflicts.values()
+        if len(rows) == 1
+        or all(r['Conflict'].lower() == 'false' for r in rows)]
+
+
+# TODO: test and document
+def adhoc_merge(grambank_api, glottocode, conflict_rows):
+    conflict_rows = mergeable_conflicts(conflict_rows)
+    if not conflict_rows:
+        return None
+
+    quarantine = grambank_api.path('quarantine')
+    sheet_names = {
+        name
+        for row in conflict_rows
+        if (name := row.get('Sheet'))
+        and (quarantine / f'{name}.tsv').exists()}
+    sheet_objs = {
+        name: Sheet(quarantine / f'{name}.tsv')
+        for name in sheet_names}
+
+    sheet_values = {
+        (row.Feature_ID, name): row
+        for name in sheet_names
+        for row in sheet_objs[name].iter_row_objects(grambank_api)}
+    # add sheet coder to the 'contributed data points' column
+    for (_, sheet_name), row in sheet_values.items():
+        row.contributed_datapoint = sorted(set(itertools.chain(
+            row.contributed_datapoint,
+            sheet_objs[sheet_name].coders)))
+
+    value_provenance = set()
+
+    def record_value_source(selected, sheet_name):
+        value_provenance.add(sheet_name)
+        return selected
+
+    values = [
+        record_value_source(selected, row['Sheet'])
+        for row in conflict_rows
+        if (selected := sheet_values.get((row['Feature_ID'], row['Sheet'])))]
+    if values:
+        if len(value_provenance) > 1:
+            provenance = 'merged from: {}'.format(
+                '; '.join(sorted(value_provenance)))
+        else:
+            provenance = list(value_provenance)[0]
+        # :D
+        sheet = Sheet(pathlib.Path('ABC_abcd1234.tsv'))
+        sheet.path = pathlib.Path(provenance)
+        sheet.coders = []
+        sheet.glottocode = glottocode
+        sheet._rows = values
+        return sheet, values
+    else:
+        return None
 
 
 def iterunique(insheets, verbose=False):
