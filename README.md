@@ -55,6 +55,18 @@ optional arguments:
   --columns   List columns of the sheet (default: False)
 ```
 
+For ´describe` and ´sourcelookup` at ELDP-glottobank, it is necessary that you run the commands from the dir `ELDP-glottobank`, otherwise the filepaths to gb20.txt, gb.bib, contributors etc will not work. 
+
+e.g.
+```
+[2024-05-20 10:45:36] skirgard@lingn06 /Users/skirgard/Git/glottobank/ELDP-glottobank
+> grambank describe grambank/original_sheets/FCE_apal1257.tsv
+```
+
+```
+[2024-05-20 10:45:36] skirgard@lingn06 /Users/skirgard/Git/glottobank/ELDP-glottobank
+> grambank sourcelookup ../../glottolog/glottolog grambank/original_sheets/FCE_apal1257.tsv
+```
 
 ## API
 
