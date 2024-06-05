@@ -15,6 +15,11 @@ FICTIONMAN2001 = dict(
     year='2001',
     title='There are days when my last name comes first')
 
+FICTIONMEN2002 = dict(
+    author='Fictionman, Bob and Madeupman, Rob',
+    year='2002',
+    title="Bob and Rob's Big Adventure")
+
 SPACEMAN1961 = dict(
     author='Space Man, Yuriy',
     year='1961',
@@ -50,6 +55,7 @@ HINZKUNZ2023 = dict(
 BIBLIOGRAPHY = {
     'Fictionman2000': ('book', FICTIONMAN2000),
     'Fictionman2001': ('book', FICTIONMAN2001),
+    'Fictionmen2002': ('book', FICTIONMEN2002),
     'Writealot2012_First': ('book', WRITEALOT2012_FIRST),
     'Writealot2012_Another': ('book', WRITEALOT2012_ANOTHER),
     'SpaceMan1961': ('book', SPACEMAN1961),
@@ -60,7 +66,7 @@ BIBLIOGRAPHY = {
 ENGLISH = 'stan1293'
 BIBKEYS_BY_GLOTTOCODE = {
     ENGLISH: {
-        'Fictionman2000', 'Fictionman2001', 'HinzKunz2023',
+        'Fictionman2000', 'Fictionman2001', 'Fictionmen2002', 'HinzKunz2023',
         'SpaceMan1961', 'Writealot2012_First', 'Writealot2012_Another',
     },
     'melp1238': {'s:Strauss:Melpa'},
@@ -191,6 +197,57 @@ def test_last_name_before_first_name_in_bibliography():
     assert first_source == (expected_source, 1)
     assert row.Source == ['Fictionman2001']
     assert row.Source_comment == 'Fictionman (2001)'
+
+
+def test_report_resolve_if_only_first_author():
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    row = Row(None, None, 'Fictionman (2002)')
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
+    assert not bib_matcher.has_unresolved_citations()
+    assert bib_matcher.has_sources()
+    first_source = bib_matcher.get_sources()[0]
+    expected_source = Source(
+        'book', 'Fictionmen2002',
+        author='Fictionman, Bob and Madeupman, Rob',
+        year='2002',
+        title="Bob and Rob's Big Adventure")
+    assert first_source == (expected_source, 1)
+    assert row.Source == ['Fictionmen2002']
+    assert row.has_valid_source()
+
+
+def test_report_resolve_if_only_second_author():
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    row = Row(None, None, 'Madeupman (2002)')
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
+    assert not bib_matcher.has_unresolved_citations()
+    assert bib_matcher.has_sources()
+    first_source = bib_matcher.get_sources()[0]
+    expected_source = Source(
+        'book', 'Fictionmen2002',
+        author='Fictionman, Bob and Madeupman, Rob',
+        year='2002',
+        title="Bob and Rob's Big Adventure")
+    assert first_source == (expected_source, 1)
+    assert row.Source == ['Fictionmen2002']
+    assert row.has_valid_source()
+
+
+def test_report_resolve_if_both_authors():
+    bib_matcher = BibliographyMatcher(BIBLIOGRAPHY, BIBKEYS_BY_GLOTTOCODE)
+    row = Row(None, None, 'Fictionman & Madeupman (2002)')
+    bib_matcher.add_resolved_citation_to_row(ENGLISH, row)
+    assert not bib_matcher.has_unresolved_citations()
+    assert bib_matcher.has_sources()
+    first_source = bib_matcher.get_sources()[0]
+    expected_source = Source(
+        'book', 'Fictionmen2002',
+        author='Fictionman, Bob and Madeupman, Rob',
+        year='2002',
+        title="Bob and Rob's Big Adventure")
+    assert first_source == (expected_source, 1)
+    assert row.Source == ['Fictionmen2002']
+    assert row.has_valid_source()
 
 
 def test_desambiguate_based_on_title():
