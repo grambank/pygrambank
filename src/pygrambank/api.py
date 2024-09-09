@@ -1,4 +1,3 @@
-import collections
 from itertools import chain
 
 from csvw.dsv import reader

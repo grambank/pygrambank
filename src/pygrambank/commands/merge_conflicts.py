@@ -10,8 +10,8 @@ from csvw.dsv import reader, UnicodeWriter
 from clldutils.clilib import PathType
 from clldutils.misc import nfilter
 
-from .check_conflicts import check
 from pygrambank.sheet import Sheet
+from pygrambank.conflicts import check_conflicts
 
 # flake8: noqa
 
@@ -149,8 +149,10 @@ def run(args):
                 print(' *', new_conflict)
             continue
 
-        ok, _ = check(sheet)
-        if not ok:
+        # FIXME: I can probably reuse the loaded sheets down at the merge part
+        sheet_rows = list(reader(sheet, dicts=True, delimiter='\t'))
+        _, errors = check_conflicts(sheet_rows)
+        if errors:
             print(f'Skipping {sheet.stem}: `grambank check_conflicts` found errors.')
             continue
 
