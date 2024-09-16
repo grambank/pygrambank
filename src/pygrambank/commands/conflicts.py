@@ -13,11 +13,15 @@ from pygrambank.conflicts import (
 
 
 def register(parser):
-    # TODO: add argument to specify specific glottocodes
     parser.add_argument(
         '--outdir',
         default=pathlib.Path('conflicts'),
         type=PathType(type='dir', must_exist=False))
+    parser.add_argument(
+        'glottocodes',
+        metavar='GLOTTOCODES',
+        nargs='*',
+        help='Glottocodes suspected to have conflicts [default: check all sheets]')
 
 
 CONFLICT_SHEET_COLUMNS = [
@@ -41,7 +45,8 @@ def run(args):
 
     sheets_by_glottocode = defaultdict(list)
     for sheet in api.iter_sheets(quarantined=True):
-        sheets_by_glottocode[sheet.glottocode].append(sheet)
+        if not args.glottocodes or sheet.glottocode in args.glottocodes:
+            sheets_by_glottocode[sheet.glottocode].append(sheet)
 
     sheets_by_glottocode = {
         gc: sheets
