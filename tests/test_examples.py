@@ -4,6 +4,7 @@ from pygrambank import examples as gbex
 
 
 class AlignmentCorrection(unittest.TestCase):
+
     def test_rule_not_applicable(self):
         example = {
             'ID': 'ex1',
@@ -33,6 +34,19 @@ class AlignmentCorrection(unittest.TestCase):
         rule = gbex.GlossRule(
             lambda e: e['ID'] == 'ex1', ['not m1', 'not m2'], ['x1', 'x2'])
         gbex.fix_glosses(example, [rule])
+        # no mutation
+        self.assertEqual(example['ID'], 'ex1')
+        self.assertEqual(example['Analyzed_Word'], ['m1', 'm2', 'm3'])
+
+    def test_rule_lacks_lhs(self):
+        example = {
+            'ID': 'ex1',
+            'Analyzed_Word': ['m1', 'm2', 'm3'],
+        }
+        rule = gbex.GlossRule(
+            lambda e: e['ID'] == 'ex1', [], ['one million euros in my bank account'])
+        with self.assertRaises(gbex.MalformedRule):
+            gbex.fix_glosses(example, [rule])
         # no mutation
         self.assertEqual(example['ID'], 'ex1')
         self.assertEqual(example['Analyzed_Word'], ['m1', 'm2', 'm3'])

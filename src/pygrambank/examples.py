@@ -1,13 +1,21 @@
 from collections import namedtuple
 
 
-# Rule system for fixing misaligned glosses
+# Transformation rules to fix misaligned glosses
+#
+# These rules apply after an example has been successfully parsed.  They can
+# add, remove, or change items in the Analyzed_Word or Gloss of an example.
+#
+# Beware that transformation rule change the example *in place*.
 
 GlossRule = namedtuple('GlossRule', 'pred lhs rhs')
 
 
+class MalformedRule(Exception):
+    pass
+
+
 def apply_rule_iter(items, rule):
-    assert len(rule.lhs) > 0, 'cowardly refusing to materialize items out of thin air'
     index = 0
     while index < len(items):
         rule_index = 0
@@ -26,6 +34,8 @@ def apply_rule_iter(items, rule):
 
 
 def apply_rule(items, rule):
+    if not rule.lhs:
+        raise MalformedRule('Left-hand-side of a transformation rule must not be empty')
     return list(apply_rule_iter(items, rule))
 
 
