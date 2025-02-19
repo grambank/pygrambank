@@ -147,3 +147,167 @@ class AlignmentCorrection(unittest.TestCase):
         self.assertEqual(example['Analyzed_Word'], ['x1', 'x2', 'm3'])
         # no mutation
         self.assertEqual(example['ID'], 'ex1')
+
+
+class AlignmentFilter(unittest.TestCase):
+
+    def test_all_aligned(self):
+        examples = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m2.1', 'm2.2', 'm2.3'],
+             'Gloss': ['g2.1', 'g2.2', 'g2.3']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        expected = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m2.1', 'm2.2', 'm2.3'],
+             'Gloss': ['g2.1', 'g2.2', 'g2.3']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        result, errors = gbex.drop_misaligned(examples)
+        self.assertEqual(result, expected)
+        self.assertEqual(errors, [])
+
+    def test_too_many_glosses(self):
+        examples = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m2.1', 'm2.2', 'm2.3'],
+             'Gloss': ['g2.1', 'g2.2', 'g2.3', 'g2.???']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        expected = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        result, errors = gbex.drop_misaligned(examples)
+        self.assertEqual(result, expected)
+        self.assertEqual(len(errors), 1)
+
+    def test_not_enough_glosses(self):
+        examples = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m2.1', 'm2.2', 'm2.3', 'm2.???'],
+             'Gloss': ['g2.1', 'g2.2', 'g2.3']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        expected = [
+            {'Analyzed_Word': ['m1.1', 'm1.2', 'm1.3'],
+             'Gloss': ['g1.1', 'g1.2', 'g1.3']},
+            {'Analyzed_Word': ['m3.1', 'm3.2', 'm3.3'],
+             'Gloss': ['g3.1', 'g3.2', 'g3.3']}]
+        result, errors = gbex.drop_misaligned(examples)
+        self.assertEqual(result, expected)
+        self.assertEqual(len(errors), 1)
+
+
+class ExampleDeduplication(unittest.TestCase):
+
+    def test_no_duplicates(self):
+        examples = [
+            {'ID': 'ex1',
+             'Primary_Text': 'an example'},
+            {'ID': 'ex2',
+             'Primary_Text': 'a second example'}]
+        # nothing happened
+        expected = [
+            {'ID': 'ex1',
+             'Primary_Text': 'an example'},
+            {'ID': 'ex2',
+             'Primary_Text': 'a second example'}]
+        result, errors = gbex.unique_examples(examples)
+        self.assertEqual(errors, [])
+        self.assertEqual(result, expected)
+
+    def test_exact_duplicates(self):
+        examples = [
+            {'ID': 'ex1',
+             'Primary_Text': 'the same example'},
+            {'ID': 'ex2',
+             'Primary_Text': 'the same example'}]
+        expected = [
+            {'ID': 'ex1',
+             'Primary_Text': 'the same example'}]
+        result, errors = gbex.unique_examples(examples)
+        self.assertEqual(errors, [])
+        self.assertEqual(result, expected)
+
+    def test_language_matters(self):
+        examples = [
+            {'ID': 'ex1',
+             'Language_ID': 'czec1258',
+             'Primary_Text': 'dobré pivo'},
+            {'ID': 'ex2',
+             'Language_ID': 'slov1269',
+             'Primary_Text': 'dobré pivo'}]
+        expected = [
+            {'ID': 'ex1',
+             'Language_ID': 'czec1258',
+             'Primary_Text': 'dobré pivo'},
+            {'ID': 'ex2',
+             'Language_ID': 'slov1269',
+             'Primary_Text': 'dobré pivo'}]
+        result, errors = gbex.unique_examples(examples)
+        self.assertEqual(errors, [])
+        self.assertEqual(result, expected)
+
+    def test_fuzzy_duplicates(self):
+        examples = [
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'FAST dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'das-selbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost(!!!) the same'}]
+        expected = [
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'FAST dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'das-selbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost the same'},
+            {'ID': 'ex1',
+             'Primary_Text': 'Fast dasselbe',
+             'Analyzed_Word': ['fast', 'dasselbe'],
+             'Gloss': ['almost', 'the.same'],
+             'Translated_Text': 'Almost(!!!) the same'}]
+        result, errors = gbex.unique_examples(examples)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(result, expected)
