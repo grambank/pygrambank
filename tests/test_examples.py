@@ -3,6 +3,106 @@ import unittest
 from pygrambank import examples as gbex
 
 
+class CustomLineArranger(gbex.DefaultArranger):
+    """Just an example for a line arranger to run tests against."""
+
+    @classmethod
+    def is_applicable(cls, feature_id, language_id):
+        return feature_id == 'feat1' and language_id == 'lang1'
+
+    def error(self):
+        if len(self.igt) < 3:
+            return 'IGT needs at least 3 lines'
+        else:
+            return None
+
+    def fix_igt(self, igt):
+        if len(igt) > 3:
+            # idk just merge excess lines into one
+            return [igt[0], igt[1], ' '.join(igt[2:])]
+        else:
+            return igt
+
+    def primary_text(self):
+        return ' '.join(self.igt[0].split())
+
+    def analyzed_word(self):
+        return self.igt[1].split()
+
+    def gloss(self):
+        return self.igt[2].split()
+
+
+class LineArrangement(unittest.TestCase):
+    # Note, these tests don't really run against the 'api barrier' of line
+    # arrangement but rather against the internal function called deep inside
+    # the example parser.
+    # Also, I kinda hate the way this works myself (with those subclasses that
+    # get defined in the clfdbench and instantiated in pygrambank) but it is
+    # what it is.
+
+    def test_two_lines(self):
+        igt = ['m1', 'x1']
+        arranger, err = gbex.arrange_example_lines([], 'lang1', 'feat1', 1, igt)
+        self.assertEqual(err, None)
+        self.assertEqual(arranger.primary_text(), 'm1')
+        self.assertEqual(arranger.analyzed_word(), ['m1'])
+        self.assertEqual(arranger.gloss(), ['x1'])
+
+    def test_split_glosses(self):
+        igt = ['   m1   m2    ', '  x1  x2    ']
+        arranger, err = gbex.arrange_example_lines([], 'lang1', 'feat1', 1, igt)
+        self.assertEqual(err, None)
+        self.assertEqual(arranger.primary_text(), 'm1 m2')
+        self.assertEqual(arranger.analyzed_word(), ['m1', 'm2'])
+        self.assertEqual(arranger.gloss(), ['x1', 'x2'])
+
+    def test_not_enough_lines(self):
+        igt = ['m1']
+        arranger, err = gbex.arrange_example_lines([], 'lang1', 'feat1', 1, igt)
+        self.assertTrue(isinstance(err, gbex.ParseError))
+        self.assertEqual(arranger, None)
+
+    def test_too_many_lines(self):
+        igt = ['t1', 'm1', 'x1']
+        arranger, err = gbex.arrange_example_lines([], 'lang1', 'feat1', 1, igt)
+        self.assertEqual(bool(err), True)
+        self.assertEqual(arranger, None)
+
+    def test_apply_custom_arranger(self):
+        igt1 = ['m1', 'x1']
+        igt2 = ['t1', 'm1', 'x1']
+        arrangers = [CustomLineArranger]
+        arranger, err = gbex.arrange_example_lines(arrangers, 'not lang1', 'not feat1', 1, igt1)
+        self.assertEqual(err, None)
+        self.assertEqual(type(arranger), gbex.DefaultArranger)
+        self.assertEqual(arranger.primary_text(), 'm1')
+        self.assertEqual(arranger.analyzed_word(), ['m1'])
+        self.assertEqual(arranger.gloss(), ['x1'])
+        arranger, err = gbex.arrange_example_lines(arrangers, 'lang1', 'feat1', 1, igt2)
+        self.assertEqual(err, None)
+        self.assertEqual(type(arranger), CustomLineArranger)
+        self.assertEqual(arranger.primary_text(), 't1')
+        self.assertEqual(arranger.analyzed_word(), ['m1'])
+        self.assertEqual(arranger.gloss(), ['x1'])
+
+    def test_custom_error(self):
+        igt = ['m1', 'x1']
+        arrangers = [CustomLineArranger]
+        arranger, err = gbex.arrange_example_lines(arrangers, 'lang1', 'feat1', 1, igt)
+        self.assertTrue(isinstance(err, gbex.ParseError))
+        self.assertEqual(arranger, None)
+
+    def test_custom_fix(self):
+        igt = ['t1', 'm1 m2 m3', 'x1', 'x2', 'x3']
+        arrangers = [CustomLineArranger]
+        arranger, err = gbex.arrange_example_lines(arrangers, 'lang1', 'feat1', 1, igt)
+        self.assertEqual(err, None)
+        self.assertEqual(arranger.primary_text(), 't1')
+        self.assertEqual(arranger.analyzed_word(), ['m1', 'm2', 'm3'])
+        self.assertEqual(arranger.gloss(), ['x1', 'x2', 'x3'])
+
+
 class AlignmentCorrection(unittest.TestCase):
 
     def test_rule_not_applicable(self):
