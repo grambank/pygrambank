@@ -1,3 +1,4 @@
+import re
 import unicodedata
 from collections import defaultdict, namedtuple
 from itertools import zip_longest
@@ -94,6 +95,233 @@ def arrange_example_lines(
         return None, ParseError(f'{feature_id}:{example_lineno}:{language_id}: {msg}')
     else:
         return arranger, None
+
+
+RE_CODING_DESC = re.compile(
+    r'\b(?:coded? (?:as )?|gets a )([0-3?])', re.I)
+
+
+class ExampleParser:
+    def __init__(self, line_arrangers):
+        self.line_arrangers = line_arrangers
+        self.lines = None
+        self.cursor = 0
+
+    def peek(self):
+        try:
+            return self.lines[self.cursor]
+        except IndexError:
+            return None
+
+    def consume_line(self):
+        line = self.peek()
+        self.cursor += 1
+        return line
+
+    def skip_to(self, pred, msg):
+        while (line := self.peek()) is not None:
+            if pred(line):
+                return line, None
+            else:
+                self.consume_line()
+        return None, ParseError(msg)
+
+    def parse_description(self, feature_id, description):
+        self.lines = description.strip().splitlines()
+        self.cursor = 0
+        line = None
+        _, err = self.skip_to(
+            lambda ln: ln == '## Examples',
+            f'{feature_id}: no example section')
+        if err:
+            return [], [err]
+        examples, errors = self.parse_example_section(feature_id)
+        while (line := self.consume_line()) is not None:
+            if line == '## Examples':
+                errors.append(ParseError(f'{feature_id}:{self.cursor+1}: multiple example sections'))
+        return examples, errors
+
+    def parse_example_section(self, feature_id):
+        line = self.consume_line()
+        assert line == '## Examples', line
+        examples = []
+        all_errors = []
+        while True:
+            line, err = self.skip_to(
+                lambda ln: ln.startswith('## ') or ln.startswith('**'),
+                'eof')
+            if err or line is None or line.startswith('## '):
+                return examples, all_errors
+            elif line.startswith('**'):
+                new_examples, errors = self.parse_language(feature_id)
+                examples.extend(new_examples)
+                all_errors.extend(errors)
+            else:
+                assert False, 'UNREACHABLE'  # pragma: nocover
+
+    def parse_language(self, feature_id):
+        line = self.consume_line()
+        assert line
+        m = re.fullmatch(
+            r'\*\*[^*]+\*\*\s*[\([](?:ISO(?:[ -]6\d\d-3)?:\s*\S\S\S,)?\s*Glotto(?:log|code):\s*([a-z]{4}\d{4})\s*\]?\)?\.?',
+            line.strip())
+        if not m:
+            return [], [ParseError(f'{feature_id}:{self.cursor+1}: no glottocode: {line}')]
+        language_id = m.group(1)
+
+        line, err = self.skip_to(
+            lambda ln: not ln or ln.isspace() or ln.startswith('```'),
+            f'{feature_id}:{language_id}: EOF after language name')
+        if err:
+            return [], [err]
+
+        examples = []
+        all_errors = []
+        while True:
+            line, err = self.skip_to(
+                lambda ln: RE_CODING_DESC.search(ln) or ln.startswith('```') or ln.startswith('**') or ln.startswith('## '),
+                f'{feature_id}:{self.cursor+1}:{language_id}: expected coding description or example')
+            if err:
+                # if we haven't found an example, this is an error.
+                # if we *do* have an example, this is just the end of the
+                # language block.
+                if not examples:
+                    all_errors.append(err)
+                break
+            elif line.startswith('**') or line.startswith('## '):
+                break
+            elif line.startswith('```'):
+                new_examples, errors = self.parse_example_block(feature_id, language_id)
+                examples.extend(new_examples)
+                all_errors.extend(errors)
+            else:
+                new_examples, errors = self.parse_feature_value(feature_id, language_id)
+                examples.extend(new_examples)
+                all_errors.extend(errors)
+        return examples, all_errors
+
+    def parse_feature_value(self, feature_id, language_id):
+        line = self.consume_line()
+        assert RE_CODING_DESC.search(line)
+        # TODO: check found values against actual value?
+        # TODO: this section could contain sources
+
+        # just skip the first paragraph for now
+        _, err = self.skip_to(
+            lambda ln: ln.startswith('```') or not ln or ln.isspace(),
+            f'{feature_id}:{language_id}: EOF in coding description')
+        if err:
+            return [], [err]
+        # skip to next block
+        line, err = self.skip_to(
+            lambda ln: ln.startswith('```') or ln.startswith('**') or ln.startswith('## '),
+            f'{feature_id}:{language_id}: expected ``` got {line}')
+        if err:
+            return [], [err]
+        elif line.startswith('**') or line.startswith('## '):
+            return [], []
+        elif line.startswith('```'):
+            return self.parse_example_block(feature_id, language_id)
+        else:
+            assert False, f'UNREACHABLE: {line}'  # pragma: nocover
+
+    def parse_example_block(self, feature_id, language_id):
+        line = self.consume_line()
+        assert line.startswith('```')
+        igt = []
+        examples = []
+        errors = []
+        while (line := self.peek()) is not None:
+            if line.startswith('```'):
+                self.consume_line()
+                break
+            if not line or line.isspace():
+                self.consume_line()
+            elif re.match(r'\s*‘', line):
+                example, err = self.parse_translation(
+                    feature_id, language_id, self.cursor+1, igt)
+                if example:
+                    examples.append(example)
+                if err:
+                    errors.append(err)
+                igt = []
+            else:
+                igt.append(self.consume_line())
+        if line is None:
+            errors.append(ParseError(f'{feature_id}:{language_id}: unfinished example block'))
+        elif igt:
+            errors.append(ParseError(f'{feature_id}:{self.cursor+1}:{language_id}: expected translation'))
+        return examples, errors
+
+    def parse_translation(self, feature_id, language_id, example_lineno, igt):
+        line = self.peek()
+        assert re.match(r'^\s*‘', line)
+        line = re.sub(r'^\s*‘', '', line)
+        assert line and not line.isspace()
+        trlines = []
+        skip = False
+        while line is not None:
+            if line.startswith('```'):
+                break
+            elif not line or line.isspace():
+                self.consume_line()
+                line = self.peek()
+                break
+            elif (m := re.match(r'(.*?)’(?:$|\s)', line, flags=re.DOTALL)):
+                trline = m.group(1)
+                _, trend = m.span()
+                # TODO: rest might contain a source
+                rest = line[trend:]
+                if '’' in rest:
+                    print(f'{feature_id}:{self.cursor+1}:{language_id}: WARNING: multiple ’ found: {line}')
+                trlines.append(trline)
+                self.consume_line()
+                skip = True
+                line = self.peek()
+            elif skip:
+                self.consume_line()
+                line = self.peek()
+            else:
+                if '’' in line:
+                    print(f'{feature_id}:{self.cursor+1}:{language_id}: WARNING: unexpected ’: {line}')
+                trlines.append(line)
+                self.consume_line()
+                line = self.peek()
+        if line is None:
+            return None, ParseError(f'{feature_id}:{example_lineno}:{language_id} EOF in translation')
+
+        # since the first line has been asserted to be non-empty
+        # there *should* be something in trlines unless I messed up
+        assert trlines
+        if not igt:
+            return None, ParseError(f'{feature_id}:{example_lineno}:{language_id}: empty example')
+
+        # remove artifacts from bulleted lists
+        igt = [
+            re.sub(r'^\s*(?:[a-f]\.|\([12a-e]\))\s*', '', line)
+            for line in igt]
+
+        line_arrangement, err = arrange_example_lines(
+            self.line_arrangers, language_id, feature_id, example_lineno, igt)
+        if err:
+            return None, err
+
+        translation = ' '.join(
+            w
+            for ln in trlines
+            for w in ln.split()
+            if w)
+        example = {
+            'Language_ID': language_id,
+            'Primary_Text': line_arrangement.primary_text(),
+            'Analyzed_Word': line_arrangement.analyzed_word(),
+            'Gloss': line_arrangement.gloss(),
+            'Translated_Text': translation.rstrip('.'),
+            # FIXME: single field (Debug_Info?)
+            'Debug_Line_Number': example_lineno,
+            'Debug_Feature_ID': feature_id,
+        }
+        return example, None
 
 
 # Transformation rules to fix misaligned glosses

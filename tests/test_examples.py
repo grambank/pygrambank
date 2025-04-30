@@ -103,6 +103,460 @@ class LineArrangement(unittest.TestCase):
         self.assertEqual(arranger.gloss(), ['x1', 'x2', 'x3'])
 
 
+class ExampleExtraction(unittest.TestCase):
+
+    def test_no_example_sections(self):
+        wikipage = 'No examples here, sir'
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_too_many_example_sections(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            'hi',
+            '## Examples',
+            'hi again'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_other_non_example_sections(self):
+        wikipage = '\n'.join([
+            '## No Examples',
+            'hi',
+            '## Examples',
+            'hi again',
+            '## No Examples either',
+            'how are you doing today?'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(errors, [])
+
+    def test_no_language_block(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            'hi'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(errors, [])
+
+    def test_typo_in_glottocode(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: upp1465)'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_no_examples(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_no_example_but_feature_value(self):
+        # FIXME(johannes): apparently that both the last line and the next
+        # section are load-bearing here.
+        # They shouldn't be.
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '',
+            'Coded 1.',
+            '',
+            '## Next section'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(errors, [])
+
+    def test_nothing_after_feature_value(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '',
+            'Coded 1.'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertNotEqual(errors, [])
+
+    def test_missing_example_block(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '',
+            'Coded 1.',
+            '',
+            'hi'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertNotEqual(errors, [])
+
+    def test_one_example(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
+    def test_space_before_example(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            '',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
+    def test_unclosed_example_block(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '## next section'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertNotEqual(errors, [])
+
+    def test_missing_analyzed_word(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der mehrt ega',
+            '‘he always takes forever’',
+            '```',
+            '## next section'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_missing_igt(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            '‘he always takes forever’',
+            '```',
+            '## next section'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_missing_translation(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '```',
+            '## next section'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(examples, [])
+        self.assertEqual(len(errors), 1)
+
+    def test_note_before_example(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            'A random note',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
+    def test_feature_value_before_example(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '',
+            'Coded 1. Definitely exists.',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
+    def test_stuff_after_translation(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’ (roughly)',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
+    def test_mulitline_translation(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes…',
+            '… wait for it …',
+            'forever’ (wow, what a',
+            'tense build-up)',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes… … wait for it … forever')
+        self.assertEqual(errors, [])
+
+    def test_multiple_quotes_in_translations(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            "‘he always takes forever’ OR ‘something else’",
+            'OOOR ‘yet another thing’!',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        # these only print two warnings
+        self.assertEqual(errors, [])
+
+    def test_multiple_examples(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '',
+            'nu    gugge  ma,        e  Motschegiebschn',
+            'well  look   for.a.bit  a  ladybird',
+            '‘Would you look at that, a ladybird’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 2)
+        ex1 = examples[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+        ex2 = examples[1]
+        self.assertEqual(ex2['Language_ID'], 'uppe1465')
+        self.assertEqual(ex2['Primary_Text'], 'nu gugge ma, e Motschegiebschn')
+        self.assertEqual(ex2['Analyzed_Word'], ['nu', 'gugge', 'ma,', 'e', 'Motschegiebschn'])
+        self.assertEqual(ex2['Gloss'], ['well', 'look', 'for.a.bit', 'a', 'ladybird'])
+        self.assertEqual(ex2['Translated_Text'], 'Would you look at that, a ladybird')
+        self.assertEqual(errors, [])
+
+    def test_keep_collected_examples_on_error(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '',
+            'nu    gugge  ma,        e  Motschegiebschn',
+            '‘Would you look at that, a ladybird’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex1 = examples[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+        self.assertEqual(len(errors), 1)
+
+    def test_strip_bullet_points(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'a.  der  mehrt         ega',
+            '    DEM  take.forever  constantly',
+            '    ‘he always takes forever’',
+            '',
+            'b.  nu    gugge  ma,        e  Motschegiebschn',
+            '    well  look   for.a.bit  a  ladybird',
+            '    ‘Would you look at that, a ladybird’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 2)
+        ex1 = examples[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+        ex2 = examples[1]
+        self.assertEqual(ex2['Language_ID'], 'uppe1465')
+        self.assertEqual(ex2['Primary_Text'], 'nu gugge ma, e Motschegiebschn')
+        self.assertEqual(ex2['Analyzed_Word'], ['nu', 'gugge', 'ma,', 'e', 'Motschegiebschn'])
+        self.assertEqual(ex2['Gloss'], ['well', 'look', 'for.a.bit', 'a', 'ladybird'])
+        self.assertEqual(ex2['Translated_Text'], 'Would you look at that, a ladybird')
+        self.assertEqual(errors, [])
+
+    def test_multiple_example_blocks(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```',
+            '',
+            'Furthermore, see:',
+            '',
+            '```',
+            'nu    gugge  ma,        e  Motschegiebschn',
+            'well  look   for.a.bit  a  ladybird',
+            '‘Would you look at that, a ladybird’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 2)
+        ex1 = examples[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+        ex2 = examples[1]
+        self.assertEqual(ex2['Language_ID'], 'uppe1465')
+        self.assertEqual(ex2['Primary_Text'], 'nu gugge ma, e Motschegiebschn')
+        self.assertEqual(ex2['Analyzed_Word'], ['nu', 'gugge', 'ma,', 'e', 'Motschegiebschn'])
+        self.assertEqual(ex2['Gloss'], ['well', 'look', 'for.a.bit', 'a', 'ladybird'])
+        self.assertEqual(ex2['Translated_Text'], 'Would you look at that, a ladybird')
+        self.assertEqual(errors, [])
+
+    def test_multiple_languages(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```',
+            '**Upper Sorbian** (Glottolog: uppe1395)',
+            '```',
+            'Měrćin  čita   knihu  w   bibliotece',
+            'Martin  reads  book   in  library',
+            '‘Martin reads a book in the library’',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 2)
+        ex1 = examples[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+        ex2 = examples[1]
+        self.assertEqual(ex2['Language_ID'], 'uppe1395')
+        self.assertEqual(ex2['Primary_Text'], 'Měrćin čita knihu w bibliotece')
+        self.assertEqual(ex2['Analyzed_Word'], ['Měrćin', 'čita', 'knihu', 'w', 'bibliotece'])
+        self.assertEqual(ex2['Gloss'], ['Martin', 'reads', 'book', 'in', 'library'])
+        self.assertEqual(ex2['Translated_Text'], 'Martin reads a book in the library')
+        self.assertEqual(errors, [])
+
+
 class AlignmentCorrection(unittest.TestCase):
 
     def test_rule_not_applicable(self):
