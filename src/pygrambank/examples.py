@@ -3,16 +3,27 @@ import unicodedata
 from collections import defaultdict, namedtuple
 from itertools import zip_longest
 
-# TODO: DOCSTRINGS EVERYWHERE
-
 class ParseError(namedtuple('ParseError', 'msg')):
+    """Error message for the example parser.
+
+    We're doing errors-as-values here, so we can:
+        a. Collect mutiple errors across.
+        b. Keep going to try and parse more examples.
+    """
+
     __slots__ = ()
 
     def __str__(self):
+        """String representation of the error."""
         return self.msg
 
 
 def example_error_msg(example, msg):
+    """Add some debug infos to an error message, if available.
+
+    'Available' here means that examples can have an optional field
+    `Debug_Prefix` that will be prepended to the message.
+    """
     if (debug_prefix := example.get('Debug_Prefix')):
         return f'{debug_prefix}: {msg}'
     else:
@@ -20,6 +31,7 @@ def example_error_msg(example, msg):
 
 
 def render_gloss(analyzed_word, gloss):
+    """Return string represenation of `analyzed_word` and `gloss`."""
     widths = [
         max(len(wd), len(gl))
         for wd, gl in zip_longest(analyzed_word, gloss, fillvalue='')]
@@ -29,24 +41,10 @@ def render_gloss(analyzed_word, gloss):
 
 
 # Line arrangement
-#
-# Use the lines from the text to fill fields like Primary_Text or Analyzed_Word.
-# This needs some work because some examples have different numbers of lines and
-# those lines mean different things in different examples, think e.g.
-#
-# (a)  Plural in German:
-#      alle  Menschen
-#      all   humans
-#      ‘all humans’
-#
-# vs
-#
-# (b)  alle Menschen
-#      all-e   Mensch-en
-#      all-PL  human-PL
-#      ‘all humans’
 
 class DefaultArranger:
+    """Line arranger for a 'prototypical' example."""
+
     @classmethod
     def is_applicable(cls, feature_id, language_id):
         """Return True iff. this arranger is supposed to be used."""
@@ -86,6 +84,28 @@ class DefaultArranger:
 def arrange_example_lines(
     line_arrangers, language_id, feature_id, example_lineno, igt,
 ):
+    """Rearrange the lines in an interlinear gloss.
+
+    Use the lines from the text to fill fields like Primary_Text or
+    Analyzed_Word.  This needs some work because some examples have different
+    numbers of lines and those lines mean different things in different
+    examples, think e.g.
+
+    (a)  Plural in German:
+         alle  Menschen
+         all   humans
+         ‘all humans’
+
+    vs
+
+    (b)  alle Menschen
+         all-e   Mensch-en
+         all-PL  human-PL
+         ‘all humans’
+
+    This is done using custom `Arranger` objects that customise the line
+    assignments.  The most common cases are handled by the `DefaultArranger`.
+    """
     for cls in line_arrangers:
         if cls.is_applicable(feature_id, language_id):
             arranger_cls = cls
@@ -99,70 +119,101 @@ def arrange_example_lines(
         return arranger, None
 
 
+# Example extraction
+
 RE_CODING_DESC = re.compile(
     r'\b(?:coded? (?:as )?|gets a )([0-3?])', re.IGNORECASE)
 
 
 class ExampleParser:
+    """Parser for extracting glossed examples from markdown.
+
+    Grambank's example section is a complex web of implicit rules but roughly
+    follows the following structure:
+
+        ## Examples  (← example section)
+
+        **Language** (Glottocode: xyzw1234)  (← language section)
+
+        Coded 1.  (← optional feature value description)
+
+        ```  (← 'source code' block containing one or more examples)
+        line 1   (← gloss lines)
+        line 2
+        ‘translation’  (← translation wrappend in typographic single quotes ‘’)
+        ```
+    """
+
     def __init__(self, line_arrangers):
+        """Set up internal state for the example parser.
+
+        `line_arrangers` is a list of arranger objects that reconfigure the
+        lines in a glossed translation (usually a subclass of `DefaultArranger`).
+        """
         self.line_arrangers = line_arrangers
         self.lines = None
         self.cursor = 0
 
-    def peek(self):
+    def _peek(self):
+        """Return the line the parser is currently looking at."""
         try:
             return self.lines[self.cursor]
         except IndexError:
             return None
 
-    def consume_line(self):
-        line = self.peek()
+    def _consume_line(self):
+        """Return the current line and then advance the cursor."""
+        line = self._peek()
         self.cursor += 1
         return line
 
-    def skip_to(self, pred, msg):
-        while (line := self.peek()) is not None:
+    def _skip_to(self, pred, msg):
+        """Consume lines until `pred(line)` returns True."""
+        while (line := self._peek()) is not None:
             if pred(line):
                 return line, None
             else:
-                self.consume_line()
+                self._consume_line()
         return None, ParseError(msg)
 
     def parse_description(self, feature_id, description):
+        """Return examples in markdown description."""
         self.lines = description.strip().splitlines()
         self.cursor = 0
         line = None
-        _, err = self.skip_to(
+        _, err = self._skip_to(
             lambda ln: ln == '## Examples',
             f'{feature_id}: no example section')
         if err:
             return [], [err]
-        examples, errors = self.parse_example_section(feature_id)
-        while (line := self.consume_line()) is not None:
+        examples, errors = self._parse_example_section(feature_id)
+        while (line := self._consume_line()) is not None:
             if line == '## Examples':
                 errors.append(ParseError(f'{feature_id}:{self.cursor+1}: multiple example sections'))
         return examples, errors
 
-    def parse_example_section(self, feature_id):
-        line = self.consume_line()
+    def _parse_example_section(self, feature_id):
+        """Return examples in the 'Examples' section."""
+        line = self._consume_line()
         assert line == '## Examples', line
         examples = []
         all_errors = []
         while True:
-            line, err = self.skip_to(
+            line, err = self._skip_to(
                 lambda ln: ln.startswith(('## ', '**')),
                 'eof')
             if err or line is None or line.startswith('## '):
                 return examples, all_errors
             elif line.startswith('**'):
-                new_examples, errors = self.parse_language(feature_id)
+                new_examples, errors = self._parse_language(feature_id)
                 examples.extend(new_examples)
                 all_errors.extend(errors)
             else:
                 assert False, 'UNREACHABLE'  # pragma: nocover
 
-    def parse_language(self, feature_id):
-        line = self.consume_line()
+    def _parse_language(self, feature_id):
+        """Return examples in a language block."""
+        line = self._consume_line()
         assert line
         m = re.fullmatch(
             r'\*\*[^*]+\*\*\s*[\([](?:ISO(?:[ -]6\d\d-3)?:\s*\S\S\S,)?\s*Glotto(?:log|code):\s*([a-z]{4}\d{4})\s*\]?\)?\.?',
@@ -171,7 +222,7 @@ class ExampleParser:
             return [], [ParseError(f'{feature_id}:{self.cursor+1}: no glottocode: {line}')]
         language_id = m.group(1)
 
-        line, err = self.skip_to(
+        line, err = self._skip_to(
             lambda ln: not ln or ln.isspace() or ln.startswith('```'),
             f'{feature_id}:{language_id}: EOF after language name')
         if err:
@@ -180,7 +231,7 @@ class ExampleParser:
         examples = []
         all_errors = []
         while True:
-            line, err = self.skip_to(
+            line, err = self._skip_to(
                 lambda ln: RE_CODING_DESC.search(ln) or ln.startswith(('```', '**', '## ')),
                 f'{feature_id}:{self.cursor+1}:{language_id}: expected coding description or example')
             if err:
@@ -193,29 +244,30 @@ class ExampleParser:
             elif line.startswith(('**', '## ')):
                 break
             elif line.startswith('```'):
-                new_examples, errors = self.parse_example_block(feature_id, language_id)
+                new_examples, errors = self._parse_example_block(feature_id, language_id)
                 examples.extend(new_examples)
                 all_errors.extend(errors)
             else:
-                new_examples, errors = self.parse_feature_value(feature_id, language_id)
+                new_examples, errors = self._parse_feature_value(feature_id, language_id)
                 examples.extend(new_examples)
                 all_errors.extend(errors)
         return examples, all_errors
 
-    def parse_feature_value(self, feature_id, language_id):
-        line = self.consume_line()
+    def _parse_feature_value(self, feature_id, language_id):
+        """Return examples inside the feature description."""
+        line = self._consume_line()
         assert RE_CODING_DESC.search(line)
         # TODO: check found values against actual value?
         # TODO: this section could contain sources
 
         # just skip the first paragraph for now
-        _, err = self.skip_to(
+        _, err = self._skip_to(
             lambda ln: ln.startswith('```') or not ln or ln.isspace(),
             f'{feature_id}:{language_id}: EOF in coding description')
         if err:
             return [], [err]
         # skip to next block
-        line, err = self.skip_to(
+        line, err = self._skip_to(
             lambda ln: ln.startswith(('```', '**', '## ')),
             f'{feature_id}:{language_id}: expected ``` got {line}')
         if err:
@@ -223,24 +275,25 @@ class ExampleParser:
         elif line.startswith(('**', '## ')):
             return [], []
         elif line.startswith('```'):
-            return self.parse_example_block(feature_id, language_id)
+            return self._parse_example_block(feature_id, language_id)
         else:
             assert False, f'UNREACHABLE: {line}'  # pragma: nocover
 
-    def parse_example_block(self, feature_id, language_id):
-        line = self.consume_line()
+    def _parse_example_block(self, feature_id, language_id):
+        """Find and parse example blocks."""
+        line = self._consume_line()
         assert line.startswith('```')
         igt = []
         examples = []
         errors = []
-        while (line := self.peek()) is not None:
+        while (line := self._peek()) is not None:
             if line.startswith('```'):
-                self.consume_line()
+                self._consume_line()
                 break
             if not line or line.isspace():
-                self.consume_line()
+                self._consume_line()
             elif re.match(r'\s*‘', line):
-                example, err = self.parse_translation(
+                example, err = self._parse_translation(
                     feature_id, language_id, self.cursor+1, igt)
                 if example:
                     examples.append(example)
@@ -248,15 +301,16 @@ class ExampleParser:
                     errors.append(err)
                 igt = []
             else:
-                igt.append(self.consume_line())
+                igt.append(self._consume_line())
         if line is None:
             errors.append(ParseError(f'{feature_id}:{language_id}: unfinished example block'))
         elif igt:
             errors.append(ParseError(f'{feature_id}:{self.cursor+1}:{language_id}: expected translation'))
         return examples, errors
 
-    def parse_translation(self, feature_id, language_id, example_lineno, igt):
-        line = self.peek()
+    def _parse_translation(self, feature_id, language_id, example_lineno, igt):
+        """Add translation to IGT and finalise an example."""
+        line = self._peek()
         assert re.match(r'^\s*‘', line)
         line = re.sub(r'^\s*‘', '', line)
         assert line
@@ -267,8 +321,8 @@ class ExampleParser:
             if line.startswith('```'):
                 break
             elif not line or line.isspace():
-                self.consume_line()
-                line = self.peek()
+                self._consume_line()
+                line = self._peek()
                 break
             elif (m := re.match(r'(.*?)’(?:$|\s)', line, flags=re.DOTALL)):
                 trline = m.group(1)
@@ -278,18 +332,18 @@ class ExampleParser:
                 if '’' in rest:
                     print(f'{feature_id}:{self.cursor+1}:{language_id}: WARNING: multiple ’ found: {line}')
                 trlines.append(trline)
-                self.consume_line()
+                self._consume_line()
                 skip = True
-                line = self.peek()
+                line = self._peek()
             elif skip:
-                self.consume_line()
-                line = self.peek()
+                self._consume_line()
+                line = self._peek()
             else:
                 if '’' in line:
                     print(f'{feature_id}:{self.cursor+1}:{language_id}: WARNING: unexpected ’: {line}')
                 trlines.append(line)
-                self.consume_line()
-                line = self.peek()
+                self._consume_line()
+                line = self._peek()
         if line is None:
             return None, ParseError(f'{feature_id}:{example_lineno}:{language_id} EOF in translation')
 
@@ -336,10 +390,10 @@ GlossRule = namedtuple('GlossRule', 'pred lhs rhs')
 
 
 class MalformedRule(Exception):
-    pass
+    """Error for when a user passes in an invalid rule object."""
 
 
-def apply_rule_iter(rule, items):
+def _apply_rule_iter(rule, items):
     index = 0
     while index < len(items):
         rule_index = 0
@@ -358,12 +412,17 @@ def apply_rule_iter(rule, items):
 
 
 def apply_rule(rule, items):
+    """Return transformed version of `items` after applying `rule` to it."""
     if not rule.lhs:
         raise MalformedRule('Left-hand-side of a transformation rule must not be empty')
-    return list(apply_rule_iter(rule, items))
+    return list(_apply_rule_iter(rule, items))
 
 
 def fix_glosses(example, rules):
+    """Realign glosses in an `example` based on a number of `rules`.
+
+    Note that example is mutated in place!
+    """
     rules = [rule for rule in rules if rule.pred(example)]
     if not rules:
         return
@@ -381,14 +440,26 @@ def fix_glosses(example, rules):
 
 
 def has_aligned_glosses(example):
+    """Check if glosses in an example are well-aligned."""
     return len(example['Analyzed_Word']) == len(example['Gloss'])
 
 
 class AlignmentChecker:
+    """Object for checking whether glossed examples are properly aligned.
+
+    The only reason this is an object instead of a function is so we can collect
+    errors messages along the way.
+    """
+
     def __init__(self):
+        """Initialise the alignment checker."""
         self.errors = []
 
     def is_aligned(self, example):
+        """Return True iff. the glosses are properly aligned.
+
+        Return False otherwise.
+        """
         if has_aligned_glosses(example):
             return True
         else:
@@ -401,6 +472,7 @@ class AlignmentChecker:
 
 
 def drop_misaligned(examples):
+    """Return list of examples with well-aligned glosses."""
     checker = AlignmentChecker()
     examples = [ex for ex in examples if checker.is_aligned(ex)]
     return examples, checker.errors
@@ -413,7 +485,7 @@ def drop_misaligned(examples):
 # examples which pass the fuzzy match but not the exact match, errors will be
 # emitted.
 
-def get_unique_example_ids(examples):
+def _get_unique_example_ids(examples):
     unique = set()
     errors = []
 
@@ -452,7 +524,8 @@ def get_unique_example_ids(examples):
 
 
 def unique_examples(examples):
-    unique_ids, errors = get_unique_example_ids(examples)
+    """Return list of *unique* examples and a list of *potential* duplicates."""
+    unique_ids, errors = _get_unique_example_ids(examples)
     if len(unique_ids) != len(examples):
         examples = [ex for ex in examples if ex['ID'] in unique_ids]
     return examples, errors
