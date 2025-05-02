@@ -6,13 +6,15 @@ from itertools import zip_longest
 # TODO: DOCSTRINGS EVERYWHERE
 
 class ParseError(namedtuple('ParseError', 'msg')):
+    __slots__ = ()
+
     def __str__(self):
         return self.msg
 
 
 def example_error_msg(example, msg):
-    if (debug_info := example.get('Debug_Info')):
-        return f'{debug_info}: {msg}'
+    if (debug_prefix := example.get('Debug_Prefix')):
+        return f'{debug_prefix}: {msg}'
     else:
         return msg
 
@@ -82,7 +84,7 @@ class DefaultArranger:
 
 
 def arrange_example_lines(
-    line_arrangers, language_id, feature_id, example_lineno, igt
+    line_arrangers, language_id, feature_id, example_lineno, igt,
 ):
     for cls in line_arrangers:
         if cls.is_applicable(feature_id, language_id):
@@ -98,7 +100,7 @@ def arrange_example_lines(
 
 
 RE_CODING_DESC = re.compile(
-    r'\b(?:coded? (?:as )?|gets a )([0-3?])', re.I)
+    r'\b(?:coded? (?:as )?|gets a )([0-3?])', re.IGNORECASE)
 
 
 class ExampleParser:
@@ -148,7 +150,7 @@ class ExampleParser:
         all_errors = []
         while True:
             line, err = self.skip_to(
-                lambda ln: ln.startswith('## ') or ln.startswith('**'),
+                lambda ln: ln.startswith(('## ', '**')),
                 'eof')
             if err or line is None or line.startswith('## '):
                 return examples, all_errors
@@ -179,7 +181,7 @@ class ExampleParser:
         all_errors = []
         while True:
             line, err = self.skip_to(
-                lambda ln: RE_CODING_DESC.search(ln) or ln.startswith('```') or ln.startswith('**') or ln.startswith('## '),
+                lambda ln: RE_CODING_DESC.search(ln) or ln.startswith(('```', '**', '## ')),
                 f'{feature_id}:{self.cursor+1}:{language_id}: expected coding description or example')
             if err:
                 # if we haven't found an example, this is an error.
@@ -188,7 +190,7 @@ class ExampleParser:
                 if not examples:
                     all_errors.append(err)
                 break
-            elif line.startswith('**') or line.startswith('## '):
+            elif line.startswith(('**', '## ')):
                 break
             elif line.startswith('```'):
                 new_examples, errors = self.parse_example_block(feature_id, language_id)
@@ -214,11 +216,11 @@ class ExampleParser:
             return [], [err]
         # skip to next block
         line, err = self.skip_to(
-            lambda ln: ln.startswith('```') or ln.startswith('**') or ln.startswith('## '),
+            lambda ln: ln.startswith(('```', '**', '## ')),
             f'{feature_id}:{language_id}: expected ``` got {line}')
         if err:
             return [], [err]
-        elif line.startswith('**') or line.startswith('## '):
+        elif line.startswith(('**', '## ')):
             return [], []
         elif line.startswith('```'):
             return self.parse_example_block(feature_id, language_id)
@@ -257,7 +259,8 @@ class ExampleParser:
         line = self.peek()
         assert re.match(r'^\s*‘', line)
         line = re.sub(r'^\s*‘', '', line)
-        assert line and not line.isspace()
+        assert line
+        assert not line.isspace()
         trlines = []
         skip = False
         while line is not None:
@@ -317,9 +320,7 @@ class ExampleParser:
             'Analyzed_Word': line_arrangement.analyzed_word(),
             'Gloss': line_arrangement.gloss(),
             'Translated_Text': translation.rstrip('.'),
-            # FIXME: single field (Debug_Info?)
-            'Debug_Line_Number': example_lineno,
-            'Debug_Feature_ID': feature_id,
+            'Debug_Prefix': f'{feature_id}:{example_lineno}',
         }
         return example, None
 
