@@ -556,6 +556,28 @@ class ExampleExtraction(unittest.TestCase):
         self.assertEqual(ex2['Translated_Text'], 'Martin reads a book in the library')
         self.assertEqual(errors, [])
 
+    def test_ignore_note_at_the_end(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '',
+            '(Source: dude just trust me)',
+            '```'])
+        parser = gbex.ExampleParser([])
+        examples, errors = parser.parse_description('GB001', wikipage)
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
 
 class AlignmentCorrection(unittest.TestCase):
 

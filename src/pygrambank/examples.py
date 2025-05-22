@@ -125,6 +125,10 @@ RE_CODING_DESC = re.compile(
     r'\b(?:coded? (?:as )?|gets a )([0-3?])', re.IGNORECASE)
 
 
+def is_coda(igt):
+    return len(igt) == 1 and len(igt[0]) > 0 and igt[0][0] == '(' and igt[-1][-1] == ')'
+
+
 class ExampleParser:
     """Parser for extracting glossed examples from markdown.
 
@@ -304,7 +308,7 @@ class ExampleParser:
                 igt.append(self._consume_line())
         if line is None:
             errors.append(ParseError(f'{feature_id}:{language_id}: unfinished example block'))
-        elif igt:
+        elif igt and not is_coda(igt):
             errors.append(ParseError(f'{feature_id}:{self.cursor+1}:{language_id}: expected translation'))
         return examples, errors
 
