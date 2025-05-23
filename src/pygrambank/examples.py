@@ -202,7 +202,7 @@ class ExampleParser:
     def parse_description(self, feature_id, description):
         """Return examples in markdown description."""
         self._reset_state()
-        self.lines = description.strip().splitlines()
+        self.lines = unicodedata.normalize('NFKC', description).strip().splitlines()
         line = None
         _, err = self._skip_to(
             lambda ln: ln == '## Examples',
