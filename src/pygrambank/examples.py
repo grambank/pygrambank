@@ -148,15 +148,26 @@ class ExampleParser:
         ```
     """
 
-    def __init__(self, line_arrangers):
+    def __init__(self, line_arrangers, blacklist):
         """Set up internal state for the example parser.
 
         `line_arrangers` is a list of arranger objects that reconfigure the
         lines in a glossed translation (usually a subclass of `DefaultArranger`).
+
+        `blacklist` is a list of Feature ID–Glottocode pairs that are known to
+        contain examples that don't follow the IGT structures.  Errors from
+        these example blocks will not be reported.
         """
+        self._reset_state()
+        self._errors = []
         self.line_arrangers = line_arrangers
-        self.lines = None
+        self.blacklist = defaultdict(set)
+        for feature_id, glottocode in blacklist:
+            self.blacklist[feature_id].add(glottocode)
+
+    def _reset_state(self):
         self.cursor = 0
+        self.lines = None
 
     def _peek(self):
         """Return the line the parser is currently looking at."""
@@ -180,38 +191,44 @@ class ExampleParser:
                 self._consume_line()
         return None, ParseError(msg)
 
+    def errors(self):
+        """Return errors collecting duing example extraction."""
+        return self._errors[:]
+
+    def _err(self, err, blacklisted=False):
+        if not blacklisted:
+            self._errors.append(err)
+
     def parse_description(self, feature_id, description):
         """Return examples in markdown description."""
+        self._reset_state()
         self.lines = description.strip().splitlines()
-        self.cursor = 0
         line = None
         _, err = self._skip_to(
             lambda ln: ln == '## Examples',
             f'{feature_id}: no example section')
         if err:
-            return [], [err]
-        examples, errors = self._parse_example_section(feature_id)
+            self._err(err)
+            return []
+        examples = self._parse_example_section(feature_id)
         while (line := self._consume_line()) is not None:
             if line == '## Examples':
-                errors.append(ParseError(f'{feature_id}:{self.cursor+1}: multiple example sections'))
-        return examples, errors
+                self._err(ParseError(f'{feature_id}:{self.cursor+1}: multiple example sections'))
+        return examples
 
     def _parse_example_section(self, feature_id):
         """Return examples in the 'Examples' section."""
         line = self._consume_line()
         assert line == '## Examples', line
         examples = []
-        all_errors = []
         while True:
             line, err = self._skip_to(
                 lambda ln: ln.startswith(('## ', '**')),
                 'eof')
             if err or line is None or line.startswith('## '):
-                return examples, all_errors
+                return examples
             elif line.startswith('**'):
-                new_examples, errors = self._parse_language(feature_id)
-                examples.extend(new_examples)
-                all_errors.extend(errors)
+                examples.extend(self._parse_language(feature_id))
             else:
                 assert False, 'UNREACHABLE'  # pragma: nocover
 
@@ -223,17 +240,18 @@ class ExampleParser:
             r'\*\*[^*]+\*\*\s*[\([](?:ISO(?:[ -]6\d\d-3)?:\s*\S\S\S,)?\s*Glotto(?:log|code):\s*([a-z]{4}\d{4})\s*\]?\)?\.?',
             line.strip())
         if not m:
-            return [], [ParseError(f'{feature_id}:{self.cursor+1}: no glottocode: {line}')]
+            self._err(ParseError(f'{feature_id}:{self.cursor+1}: expected one language with one glottocode: {line}'))
+            return []
         language_id = m.group(1)
 
         line, err = self._skip_to(
             lambda ln: not ln or ln.isspace() or ln.startswith('```'),
             f'{feature_id}:{language_id}: EOF after language name')
         if err:
-            return [], [err]
+            self._err(err)
+            return []
 
         examples = []
-        all_errors = []
         while True:
             line, err = self._skip_to(
                 lambda ln: RE_CODING_DESC.search(ln) or ln.startswith(('```', '**', '## ')),
@@ -243,19 +261,16 @@ class ExampleParser:
                 # if we *do* have an example, this is just the end of the
                 # language block.
                 if not examples:
-                    all_errors.append(err)
+                    is_blacklisted = language_id in self.blacklist.get(feature_id, ())
+                    self._err(err, is_blacklisted)
                 break
             elif line.startswith(('**', '## ')):
                 break
             elif line.startswith('```'):
-                new_examples, errors = self._parse_example_block(feature_id, language_id)
-                examples.extend(new_examples)
-                all_errors.extend(errors)
+                examples.extend(self._parse_example_block(feature_id, language_id))
             else:
-                new_examples, errors = self._parse_feature_value(feature_id, language_id)
-                examples.extend(new_examples)
-                all_errors.extend(errors)
-        return examples, all_errors
+                examples.extend(self._parse_feature_value(feature_id, language_id))
+        return examples
 
     def _parse_feature_value(self, feature_id, language_id):
         """Return examples inside the feature description."""
@@ -269,15 +284,17 @@ class ExampleParser:
             lambda ln: ln.startswith('```') or not ln or ln.isspace(),
             f'{feature_id}:{language_id}: EOF in coding description')
         if err:
-            return [], [err]
+            self._err(err)
+            return []
         # skip to next block
         line, err = self._skip_to(
             lambda ln: ln.startswith(('```', '**', '## ')),
             f'{feature_id}:{language_id}: expected ``` got {line}')
         if err:
-            return [], [err]
+            self._err(err)
+            return []
         elif line.startswith(('**', '## ')):
-            return [], []
+            return []
         elif line.startswith('```'):
             return self._parse_example_block(feature_id, language_id)
         else:
@@ -289,7 +306,7 @@ class ExampleParser:
         assert line.startswith('```')
         igt = []
         examples = []
-        errors = []
+        is_blacklisted = language_id in self.blacklist.get(feature_id, ())
         while (line := self._peek()) is not None:
             if line.startswith('```'):
                 self._consume_line()
@@ -297,22 +314,27 @@ class ExampleParser:
             if not line or line.isspace():
                 self._consume_line()
             elif re.match(r'\s*‘', line):
-                example, err = self._parse_translation(
-                    feature_id, language_id, self.cursor+1, igt)
+                example = self._parse_translation(
+                    feature_id, language_id, self.cursor+1, igt,
+                    is_blacklisted)
                 if example:
                     examples.append(example)
-                if err:
-                    errors.append(err)
                 igt = []
             else:
                 igt.append(self._consume_line())
         if line is None:
-            errors.append(ParseError(f'{feature_id}:{language_id}: unfinished example block'))
+            self._err(
+                ParseError(f'{feature_id}:{language_id}: unfinished example block'),
+                is_blacklisted)
         elif igt and not is_coda(igt):
-            errors.append(ParseError(f'{feature_id}:{self.cursor+1}:{language_id}: expected translation'))
-        return examples, errors
+            self._err(
+                ParseError(f'{feature_id}:{self.cursor+1}:{language_id}: expected translation'),
+                is_blacklisted)
+        return examples
 
-    def _parse_translation(self, feature_id, language_id, example_lineno, igt):
+    def _parse_translation(
+        self, feature_id, language_id, example_lineno, igt, is_blacklisted,
+    ):
         """Add translation to IGT and finalise an example."""
         line = self._peek()
         assert re.match(r'^\s*‘', line)
@@ -349,23 +371,30 @@ class ExampleParser:
                 self._consume_line()
                 line = self._peek()
         if line is None:
-            return None, ParseError(f'{feature_id}:{example_lineno}:{language_id} EOF in translation')
+            self._err(
+                ParseError(f'{feature_id}:{example_lineno}:{language_id} EOF in translation'),
+                is_blacklisted)
+            return None
 
         # since the first line has been asserted to be non-empty
         # there *should* be something in trlines unless I messed up
         assert trlines
         if not igt:
-            return None, ParseError(f'{feature_id}:{example_lineno}:{language_id}: empty example')
+            self._err(
+                ParseError(f'{feature_id}:{example_lineno}:{language_id}: empty example'),
+                is_blacklisted)
+            return None
 
         # remove artifacts from bulleted lists
         igt = [
-            re.sub(r'^\s*(?:[a-f]\.|\([12a-e]\))\s*', '', line)
+            re.sub(r'^\s*(?:[a-f]\.|\([123a-e]\))\s*', '', line)
             for line in igt]
 
         line_arrangement, err = arrange_example_lines(
             self.line_arrangers, language_id, feature_id, example_lineno, igt)
         if err:
-            return None, err
+            self._err(err, is_blacklisted)
+            return None
 
         translation = ' '.join(
             w
@@ -380,7 +409,7 @@ class ExampleParser:
             'Translated_Text': translation.rstrip('.'),
             'Debug_Prefix': f'{feature_id}:{example_lineno}',
         }
-        return example, None
+        return example
 
 
 # Transformation rules to fix misaligned glosses
@@ -457,7 +486,11 @@ class AlignmentChecker:
 
     def __init__(self):
         """Initialise the alignment checker."""
-        self.errors = []
+        self._errors = []
+
+    def errors(self):
+        """Return errors collected during alignment checking."""
+        return self._errors[:]
 
     def is_aligned(self, example):
         """Return True iff. the glosses are properly aligned.
@@ -471,7 +504,7 @@ class AlignmentChecker:
                 example,
                 'misaligned glosses:\n{}'.format(
                     render_gloss(example['Analyzed_Word'], example['Gloss']))))
-            self.errors.append(err)
+            self._errors.append(err)
             return False
 
 
@@ -479,7 +512,7 @@ def drop_misaligned(examples):
     """Return list of examples with well-aligned glosses."""
     checker = AlignmentChecker()
     examples = [ex for ex in examples if checker.is_aligned(ex)]
-    return examples, checker.errors
+    return examples, checker.errors()
 
 
 # Example deduplication

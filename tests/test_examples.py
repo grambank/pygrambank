@@ -107,8 +107,9 @@ class ExampleExtraction(unittest.TestCase):
 
     def test_no_example_sections(self):
         wikipage = 'No examples here, sir'
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -118,8 +119,9 @@ class ExampleExtraction(unittest.TestCase):
             'hi',
             '## Examples',
             'hi again'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -131,8 +133,9 @@ class ExampleExtraction(unittest.TestCase):
             'hi again',
             '## No Examples either',
             'how are you doing today?'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(errors, [])
 
@@ -140,8 +143,9 @@ class ExampleExtraction(unittest.TestCase):
         wikipage = '\n'.join([
             '## Examples',
             'hi'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(errors, [])
 
@@ -149,8 +153,9 @@ class ExampleExtraction(unittest.TestCase):
         wikipage = '\n'.join([
             '## Examples',
             '**Saxon** (Glottolog: upp1465)'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -158,8 +163,9 @@ class ExampleExtraction(unittest.TestCase):
         wikipage = '\n'.join([
             '## Examples',
             '**Saxon** (Glottolog: uppe1465)'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -174,8 +180,9 @@ class ExampleExtraction(unittest.TestCase):
             'Coded 1.',
             '',
             '## Next section'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(errors, [])
 
@@ -185,8 +192,9 @@ class ExampleExtraction(unittest.TestCase):
             '**Saxon** (Glottolog: uppe1465)',
             '',
             'Coded 1.'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertNotEqual(errors, [])
 
@@ -198,8 +206,9 @@ class ExampleExtraction(unittest.TestCase):
             'Coded 1.',
             '',
             'hi'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertNotEqual(errors, [])
 
@@ -212,8 +221,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -233,8 +243,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -253,8 +264,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’',
             '## next section'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertNotEqual(errors, [])
 
@@ -267,8 +279,9 @@ class ExampleExtraction(unittest.TestCase):
             '‘he always takes forever’',
             '```',
             '## next section'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -280,8 +293,9 @@ class ExampleExtraction(unittest.TestCase):
             '‘he always takes forever’',
             '```',
             '## next section'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -294,8 +308,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '```',
             '## next section'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(examples, [])
         self.assertEqual(len(errors), 1)
 
@@ -309,8 +324,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -331,8 +347,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -351,8 +368,9 @@ class ExampleExtraction(unittest.TestCase):
             'DEM  take.forever  constantly',
             '‘he always takes forever’ (roughly)',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -374,8 +392,9 @@ class ExampleExtraction(unittest.TestCase):
             'forever’ (wow, what a',
             'tense build-up)',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -395,8 +414,9 @@ class ExampleExtraction(unittest.TestCase):
             "‘he always takes forever’ OR ‘something else’",
             'OOOR ‘yet another thing’!',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -420,8 +440,9 @@ class ExampleExtraction(unittest.TestCase):
             'well  look   for.a.bit  a  ladybird',
             '‘Would you look at that, a ladybird’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 2)
         ex1 = examples[0]
         self.assertEqual(ex1['Language_ID'], 'uppe1465')
@@ -449,8 +470,9 @@ class ExampleExtraction(unittest.TestCase):
             'nu    gugge  ma,        e  Motschegiebschn',
             '‘Would you look at that, a ladybird’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex1 = examples[0]
         self.assertEqual(ex1['Language_ID'], 'uppe1465')
@@ -473,8 +495,9 @@ class ExampleExtraction(unittest.TestCase):
             '    well  look   for.a.bit  a  ladybird',
             '    ‘Would you look at that, a ladybird’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 2)
         ex1 = examples[0]
         self.assertEqual(ex1['Language_ID'], 'uppe1465')
@@ -507,8 +530,9 @@ class ExampleExtraction(unittest.TestCase):
             'well  look   for.a.bit  a  ladybird',
             '‘Would you look at that, a ladybird’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 2)
         ex1 = examples[0]
         self.assertEqual(ex1['Language_ID'], 'uppe1465')
@@ -539,8 +563,9 @@ class ExampleExtraction(unittest.TestCase):
             'Martin  reads  book   in  library',
             '‘Martin reads a book in the library’',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 2)
         ex1 = examples[0]
         self.assertEqual(ex1['Language_ID'], 'uppe1465')
@@ -556,6 +581,36 @@ class ExampleExtraction(unittest.TestCase):
         self.assertEqual(ex2['Translated_Text'], 'Martin reads a book in the library')
         self.assertEqual(errors, [])
 
+    def test_blacklist(self):
+        wikipage = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'der  mehrt         ega',
+            'DEM  take.forever  constantly',
+            '‘he always takes forever’',
+            '```',
+            '**Upper Sorbian** (Glottolog: uppe1395)',
+            '```',
+            '   | SG            | DU          | PL        ',
+            '---+---------------+-------------+-----------',
+            ' 1 | ja            | mój         | my        ',
+            ' 2 | ty            | wój         | wy        ',
+            ' 3 | wón/wona/wone | wonaj/wonej | woni/wone ',
+            '```'])
+        blacklist = [('GB001', 'uppe1395')]
+        parser = gbex.ExampleParser([], blacklist)
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
+        self.assertEqual(len(examples), 1)
+        ex = examples[0]
+        self.assertEqual(ex['Language_ID'], 'uppe1465')
+        self.assertEqual(ex['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex['Translated_Text'], 'he always takes forever')
+        self.assertEqual(errors, [])
+
     def test_ignore_note_at_the_end(self):
         wikipage = '\n'.join([
             '## Examples',
@@ -567,8 +622,9 @@ class ExampleExtraction(unittest.TestCase):
             '',
             '(Source: dude just trust me)',
             '```'])
-        parser = gbex.ExampleParser([])
-        examples, errors = parser.parse_description('GB001', wikipage)
+        parser = gbex.ExampleParser([], [])
+        examples = parser.parse_description('GB001', wikipage)
+        errors = parser.errors()
         self.assertEqual(len(examples), 1)
         ex = examples[0]
         self.assertEqual(ex['Language_ID'], 'uppe1465')
@@ -577,6 +633,52 @@ class ExampleExtraction(unittest.TestCase):
         self.assertEqual(ex['Gloss'], ['DEM', 'take.forever', 'constantly'])
         self.assertEqual(ex['Translated_Text'], 'he always takes forever')
         self.assertEqual(errors, [])
+
+    def test_parser_reuse_and_error_collection(self):
+        parser = gbex.ExampleParser([], [])
+        wikipage1 = '\n'.join([
+            '## Examples',
+            '**Saxon** (Glottolog: uppe1465)',
+            '```',
+            'a.  der  mehrt         ega',
+            '    DEM  take.forever  constantly',
+            '    ‘he always takes forever’',
+            '',
+            'b.  nu    gugge  ma,        e  Motschegiebschn',
+            '    well  look   for.a.bit  a  ladybird',
+            '```'])
+        examples1 = parser.parse_description('GB001', wikipage1)
+        wikipage2 = '\n'.join([
+            '## Examples',
+            '**Upper Sorbian** (Glottolog: uppe1395)',
+            '```',
+            'a. Měrćin  čita   knihu  w   bibliotece',
+            '   Martin  reads  book   in  library',
+            '   ‘Martin reads a book in the library’',
+            '',
+            'b. Měrćin  čita   knihu  wo     wjelrybach',
+            '   Martin  reads  book   about  whales',
+            '```'])
+        examples2 = parser.parse_description('GB001', wikipage2)
+
+        self.assertEqual(len(examples1), 1)
+        ex1 = examples1[0]
+        self.assertEqual(ex1['Language_ID'], 'uppe1465')
+        self.assertEqual(ex1['Primary_Text'], 'der mehrt ega')
+        self.assertEqual(ex1['Analyzed_Word'], ['der', 'mehrt', 'ega'])
+        self.assertEqual(ex1['Gloss'], ['DEM', 'take.forever', 'constantly'])
+        self.assertEqual(ex1['Translated_Text'], 'he always takes forever')
+
+        self.assertEqual(len(examples2), 1)
+        ex2 = examples2[0]
+        self.assertEqual(ex2['Language_ID'], 'uppe1395')
+        self.assertEqual(ex2['Primary_Text'], 'Měrćin čita knihu w bibliotece')
+        self.assertEqual(ex2['Analyzed_Word'], ['Měrćin', 'čita', 'knihu', 'w', 'bibliotece'])
+        self.assertEqual(ex2['Gloss'], ['Martin', 'reads', 'book', 'in', 'library'])
+        self.assertEqual(ex2['Translated_Text'], 'Martin reads a book in the library')
+
+        errors = parser.errors()
+        self.assertEqual(len(errors), 2)
 
 
 class AlignmentCorrection(unittest.TestCase):
