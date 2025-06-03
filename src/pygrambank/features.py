@@ -115,7 +115,7 @@ class GB20(object):
     def _iterfeatures(self, wiki):
         # I don't want to deal with combining diacritics tbh…
         wikitext = unicodedata.normalize(
-            'NFKC',
+            'NFC',
             self.path.read_text(encoding='utf-8'))
         for chunk in wikitext.split(self.CHUNK_SEP):
             if chunk.strip():
