@@ -390,7 +390,7 @@ class ExampleParser:
 
         # remove artifacts from bulleted lists
         igt = [
-            re.sub(r'^\s*(?:[a-f]\.|\([123a-e]\))\s*', '', line)
+            re.sub(r'^\s*(?:[a-f]\.|\([123a-e][a-e]?\))\s*', '', line)
             for line in igt]
 
         line_arrangement, err = arrange_example_lines(
