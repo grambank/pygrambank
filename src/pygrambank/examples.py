@@ -129,6 +129,9 @@ def is_coda(igt):
     return len(igt) == 1 and len(igt[0]) > 0 and igt[0][0] == '(' and igt[-1][-1] == ')'
 
 
+NotIGT = namedtuple('NotIGT', 'feature_id language_id')
+
+
 class ExampleParser:
     """Parser for extracting glossed examples from markdown.
 
