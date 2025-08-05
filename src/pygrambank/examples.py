@@ -410,7 +410,7 @@ class ExampleParser:
             'Analyzed_Word': line_arrangement.analyzed_word(),
             'Gloss': line_arrangement.gloss(),
             'Translated_Text': translation.rstrip('.'),
-            'Debug_Prefix': f'{feature_id}:{example_lineno}',
+            'Debug_Prefix': f'{feature_id}.md:line {example_lineno} ({language_id})',
         }
         return example
 
@@ -529,36 +529,49 @@ def _get_unique_example_ids(examples):
     unique = set()
     errors = []
 
-    duplicates = defaultdict(list)
+    soft_duplicates = defaultdict(list)
     for example in examples:
         primary_norm = ''.join(
             c.lower()
             for c in unicodedata.normalize('NFKD', example['Primary_Text'])
             if c.isascii() and not c.isspace())
-        duplicates[example.get('Language_ID', ''), primary_norm].append(example)
+        assert example.get('Language_ID')
+        soft_duplicates[example.get('Language_ID', ''), primary_norm].append(example)
 
-    for dups in duplicates.values():
+    for dups in soft_duplicates.values():
         if len(dups) < 2:
             unique.update(ex['ID'] for ex in dups)
         else:
-            not_duplicates = {}
+            hard_duplicates = defaultdict(list)
             for ex in dups:
-                key = (ex['Primary_Text'],
-                       ' '.join(ex.get('Analyzed_Word') or ()),
-                       ' '.join(ex.get('Gloss') or ()),
-                       ex.get('Translated_Text', ''))
-                if key not in not_duplicates:
-                    not_duplicates[key] = ex
-            if len(not_duplicates) != 1:
-                example_list = '\n'.join(
-                    example_error_msg(ex, "\n  {}{}\n  '{}'".format(
-                        ex['Primary_Text'],
-                        '\n{}'.format(render_gloss(ex['Analyzed_Word'], ex['Gloss'])) if ex.get('Gloss') else '',
-                        ex['Translated_Text']))
-                    for ex in dups)
-                # XXX: maybe return different error type?
-                errors.append(ParseError(f'Possible example dups:\n{example_list}'))
-            unique.update(ex['ID'] for ex in not_duplicates.values())
+                key = (
+                    ex['Primary_Text'],
+                    ' '.join(ex.get('Analyzed_Word') or ()),
+                    ' '.join(ex.get('Gloss') or ()),
+                    ex.get('Translated_Text', ''))
+                hard_duplicates[key].append(ex)
+            if len(hard_duplicates) != 1:
+                example_strings = []
+                for dups in hard_duplicates.values():
+                    locations = '\n'.join(
+                        '{}:'.format(ex['Debug_Prefix'])
+                        for ex in dups
+                        if ex.get('Debug_Prefix'))
+                    first_ex = dups[0]
+                    if first_ex.get('Gloss'):
+                        glossline = '\n{}'.format(
+                            render_gloss(first_ex['Analyzed_Word'], first_ex['Gloss']))
+                    else:
+                        glossline = ''
+                    example_strings.append("{}\n  {}{}\n  ‘{}’".format(
+                        locations,
+                        first_ex['Primary_Text'],
+                        glossline,
+                        first_ex['Translated_Text']))
+                examples_string = '\n'.join(example_strings)
+                assert not errors
+                errors.append(ParseError(f'Possible example dups:\n{examples_string}'))
+            unique.update(dups[0]['ID'] for dups in hard_duplicates.values())
 
     return unique, errors
 
