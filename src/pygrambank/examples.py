@@ -233,7 +233,7 @@ class ExampleParser:
             elif line.startswith('**'):
                 examples.extend(self._parse_language(feature_id))
             else:
-                assert False, 'UNREACHABLE'  # pragma: nocover
+                raise AssertionError('UNREACHABLE')  # pragma: nocover
 
     def _parse_language(self, feature_id):
         """Return examples in a language block."""
@@ -301,7 +301,7 @@ class ExampleParser:
         elif line.startswith('```'):
             return self._parse_example_block(feature_id, language_id)
         else:
-            assert False, f'UNREACHABLE: {line}'  # pragma: nocover
+            raise AssertionError(f'UNREACHABLE: {line}')  # pragma: nocover
 
     def _parse_example_block(self, feature_id, language_id):
         """Find and parse example blocks."""
@@ -404,7 +404,7 @@ class ExampleParser:
             for ln in trlines
             for w in ln.split()
             if w)
-        example = {
+        return {
             'Language_ID': language_id,
             'Primary_Text': line_arrangement.primary_text(),
             'Analyzed_Word': line_arrangement.analyzed_word(),
@@ -412,7 +412,6 @@ class ExampleParser:
             'Translated_Text': translation.rstrip('.'),
             'Debug_Prefix': f'{feature_id}.md:line {example_lineno} ({language_id})',
         }
-        return example
 
 
 # Transformation rules to fix misaligned glosses
