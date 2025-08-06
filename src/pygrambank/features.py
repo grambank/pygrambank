@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from collections import OrderedDict, Counter
 
 from clldutils.misc import lazyproperty
@@ -112,7 +113,11 @@ class GB20(object):
         self.path = path
 
     def _iterfeatures(self, wiki):
-        for chunk in self.path.read_text(encoding='utf-8').split(self.CHUNK_SEP):
+        # I don't want to deal with combining diacritics tbh…
+        wikitext = unicodedata.normalize(
+            'NFC',
+            self.path.read_text(encoding='utf-8'))
+        for chunk in wikitext.split(self.CHUNK_SEP):
             if chunk.strip():
                 yield Feature.from_chunk(chunk, wiki)
 
