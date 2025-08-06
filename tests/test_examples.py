@@ -888,14 +888,18 @@ class ExampleDeduplication(unittest.TestCase):
     def test_no_duplicates(self):
         examples = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'an example'},
             {'ID': 'ex2',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'a second example'}]
         # nothing happened
         expected = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'an example'},
             {'ID': 'ex2',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'a second example'}]
         result, errors = gbex.unique_examples(examples)
         self.assertEqual(errors, [])
@@ -904,11 +908,14 @@ class ExampleDeduplication(unittest.TestCase):
     def test_exact_duplicates(self):
         examples = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'the same example'},
             {'ID': 'ex2',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'the same example'}]
         expected = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'the same example'}]
         result, errors = gbex.unique_examples(examples)
         self.assertEqual(errors, [])
@@ -936,52 +943,62 @@ class ExampleDeduplication(unittest.TestCase):
     def test_fuzzy_duplicates(self):
         examples = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'FAST dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'das-selbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost(!!!) the same'}]
         expected = [
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'FAST dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'das-selbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
              'Translated_Text': 'Almost the same'},
             {'ID': 'ex1',
+             'Language_ID': 'stan1293',
              'Primary_Text': 'Fast dasselbe',
              'Analyzed_Word': ['fast', 'dasselbe'],
              'Gloss': ['almost', 'the.same'],
