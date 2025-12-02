@@ -2,15 +2,19 @@
 Lookup the references given in the `Source` column of a sheet in Glottolog
 hh.bib or the Grambank bib.
 """
-import pathlib
+import csv
 import collections
+import pathlib
 
-from termcolor import colored
 from cldfcatalog import Catalog
+from termcolor import colored
 
-from pygrambank.sheet import Sheet
-from pygrambank.cldf import BibliographyMatcher, GlottologGB
 from pygrambank.bib import lgcodestr
+from pygrambank.cldf import BibliographyMatcher, GlottologGB
+from pygrambank.sheet import Sheet
+
+
+Error = collections.namedtuple('Error', 'sheet citation count')
 
 
 def register(parser):
@@ -29,6 +33,11 @@ def register(parser):
         '--glottolog-version',
         default=None,
         help="tag to checkout glottolog/glottolog to",
+    )
+    parser.add_argument(
+        '--report',
+        help="Path of TSV file, to which results will be written.",
+        default=None,
     )
 
 
@@ -66,6 +75,7 @@ def run_(args, glottolog):  # pragma: no cover
                 else:
                     print('---non-language', lang_id)
 
+    errors = []
     for sheet in sheets:
         glottocode = sheet.glottocode
 
@@ -89,13 +99,21 @@ def run_(args, glottolog):  # pragma: no cover
             for spec, occurrences in bib_matcher.get_unresolved_citations():
                 if len(spec) == 3:
                     author, year, _ = spec
-                    print('{}\t{} ({})'.format(occurrences, author, year))
+                    print(f'{occurrences}\t{author} ({year})')
+                    errors.append(Error(
+                        sheet=sheet.path,
+                        citation=f'{author} ({year})',
+                        count=occurrences))
                 elif len(spec) == 2:
                     source_string, _ = spec
-                    print('{}\t{}'.format(occurrences, source_string))
+                    print(f'{occurrences}\t{source_string}')
+                    errors.append(Error(
+                        sheet=sheet.path,
+                        citation=source_string,
+                        count=occurrences))
                 else:  # pragma: nocover
                     # theoretically unreachable
-                    print('{}\t{}'.format(occurrences, spec))
+                    print(f'{occurrences}\t{spec}')
             if bibkeys_by_glottocode.get(glottocode):
                 print()
                 print(colored('Available sources:', attrs=['bold']))
@@ -106,9 +124,14 @@ def run_(args, glottolog):  # pragma: no cover
                     print('{}\t{}\t{}'.format(
                         colored(bibkey, color='blue'),
                         type_,
-                        colored('{} {}'.format(author, year), attrs=['bold'])))
+                        colored(f'{author} {year}', attrs=['bold'])))
             print()
             print(colored('FAIL', color='red'))
         else:
             print()
             print(colored('OK', color='green'))
+    if args.report and errors:
+        with open(args.report, 'w', encoding='utf-8') as f:
+            wtr = csv.writer(f, delimiter='\t')
+            wtr.writerow(Error._fields)
+            wtr.writerows(errors)
