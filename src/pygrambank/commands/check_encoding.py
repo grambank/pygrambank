@@ -64,7 +64,7 @@ def suggest_encodings(raw_line):
         try:
             suggestions[enc] = raw_line.decode(enc)
         except UnicodeError:  # pragma: nocover
-            suggestions[enc] = '<could not decode from {}>'.format(enc)
+            suggestions[enc] = f'<could not decode from {enc}>'
     return suggestions
 
 
@@ -86,18 +86,16 @@ def run(args):
                     utf8_detected = True
                 for msg in find_replacement_chars(unicode_line):
                     print(
-                        '{}:{}: Unicode replacement character found: {}'.format(
-                            p, lineno, msg),
+                        f'{p}:{lineno}: Unicode replacement character found: {msg}',
                         file=sys.stderr)
             except UnicodeDecodeError:
                 nonutf8_detected = True
                 for match in find_non_ascii(raw_line):
-                    print('{}:{}: Non-UTF8 character found: {}'.format(
-                        p, lineno, repr(match)))
+                    print(f'{p}:{lineno}: Non-UTF8 character found: {match!r}')
                     for enc, res in sorted(suggest_encodings(match).items()):
                         print(" * {}:\t'{}'".format(enc, res.rstrip('\r\n')))
 
         if utf8_detected and nonutf8_detected:
             print(
-                '{}: Mixed encoding detected! Tread with caution!'.format(p),
+                f'{p}: Mixed encoding detected! Tread with caution!',
                 file=sys.stderr)

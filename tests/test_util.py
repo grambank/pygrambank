@@ -10,7 +10,7 @@ from pygrambank import util
         ('Some One_Some Lang [NOCODE_xyz].csv', 0),
         ('The Other Coder_Language [iso].tsv', 1),
         ('Yet Another Coder_New Lang [abcd1234].xls', 0),
-    ]
+    ],
 )
 def test_write_tsv(api, tmp_path, fname, nrows):
     assert nrows == util.write_tsv(

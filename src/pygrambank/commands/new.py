@@ -1,7 +1,7 @@
 """
 Create a new, empty sheet
 """
-import pathlib
+from pathlib import Path
 
 from csvw.dsv import UnicodeWriter
 
@@ -18,7 +18,7 @@ def register(parser):
     add_wiki_repos(parser)
 
 
-def normalised_summary(feature_dict, feature):
+def normalised_summary(feature):
     summary = feature.wiki.get('Summary') or ''
     summary = summary.replace('\n', ' ')
     summary = summary.replace('\t', ' ')
@@ -28,17 +28,14 @@ def normalised_summary(feature_dict, feature):
 def assemble_row(row_spec, feature):
     try:
         return [format_func(feature) for format_func in row_spec.values()]
-    except Exception as e:
+    except Exception as err:
         # add some more information to the error, so I can find the faulty wiki
         # page.
-        raise ValueError('{}: {}'.format(feature.id, e))
+        raise ValueError(f'{feature.id}: {err}') from err
 
 
 def run(args):
-    if args.out == FNAME:  # pragma: no cover
-        name = args.repos.path(args.out)
-    else:
-        name = pathlib.Path(args.out)
+    name = args.repos.path(args.out) if args.out == FNAME else Path(args.out)
 
     features = {
         f.id: f
@@ -49,12 +46,12 @@ def run(args):
         'Feature_ID': lambda f: f.id,
         'Feature': lambda f: f.wiki_or_gb20('title', 'Feature'),
         'Possible Values': lambda f: f['Possible Values'],
-        'Language_ID': lambda f: '',
-        'Value': lambda f: '',
-        'Source': lambda f: '',
-        'Comment': lambda f: '',
-        'Contributed_Datapoints': lambda f: '',
-        'Clarifying comments': lambda f: normalised_summary(features, f),
+        'Language_ID': lambda _: '',
+        'Value': lambda _: '',
+        'Source': lambda _: '',
+        'Comment': lambda _: '',
+        'Contributed_Datapoints': lambda _: '',
+        'Clarifying comments': normalised_summary,
         'Relevant unit(s)': lambda f: f['Relevant unit(s)'],
         'Patron': lambda f: f.wiki_or_gb20('Patron', 'Feature Patron'),
     }

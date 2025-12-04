@@ -18,12 +18,12 @@ def run(args):
 
     if args.id:
         issue = issues[args.id]
-        print(colored('{0.created} {0.user}'.format(issue), 'green'))
+        print(colored(f'{issue.created} {issue.user}', 'green'))
         print(colored(issue.title, attrs={'bold', 'underline'}))
-        print('')
+        print()
         print(issue.body)
         for comment in issue.comments:
-            print(colored('\n    {0.created} {0.user}'.format(comment), 'green'))
+            print(colored(f'\n    {comment.created} {comment.user}', 'green'))
             for line in comment.stripped_body.split('\n'):
                 print('    ' + line)
         return

@@ -68,4 +68,4 @@ def update(args, sheet):
                 w.writerow(list(row.keys()))
             w.writerow(list(row.values()))
     if added:
-        args.log.info('Sheet {}: added {} features'.format(sheet.path.name, len(added)))
+        args.log.info(f'Sheet {sheet.path.name}: added {len(added)} features')

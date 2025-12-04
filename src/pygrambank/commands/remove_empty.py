@@ -67,9 +67,9 @@ def run(args):
             for x in range(width)
             if not rows[0][x] and x in cols_with_values]
         if unlabelled_cols:
-            raise ValueError(
-                '{}: Columns {} unlabelled. Fix manually.'.format(
-                    p, ', '.join(map(str, unlabelled_cols))))
+            msg = '{}: Columns {} unlabelled. Fix manually.'.format(
+                p, ', '.join(map(str, unlabelled_cols)))
+            raise ValueError(msg)
 
         new_rows = [
             [row[i] for i in range(width) if i in cols_with_values]

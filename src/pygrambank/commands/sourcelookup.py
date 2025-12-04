@@ -65,7 +65,7 @@ def run_(args, glottolog):  # pragma: no cover
     bibliography_entries.update(grambank.bib)
 
     bibkeys_by_glottocode = collections.defaultdict(set)
-    for key, (typ, fields) in bibliography_entries.items():
+    for key, (_, fields) in bibliography_entries.items():
         for lang_id in lgcodestr(fields.get('lgcode') or ''):
             if lang_id in languoids_by_ids:
                 glottocode = languoids_by_ids[lang_id].id
@@ -80,7 +80,7 @@ def run_(args, glottolog):  # pragma: no cover
         glottocode = sheet.glottocode
 
         print(colored(
-            '\nSource look-up for sheet {}...\n'.format(sheet.path),
+            f'\nSource look-up for sheet {sheet.path}...\n',
             attrs=['bold']))
 
         bib_matcher = BibliographyMatcher(
@@ -91,7 +91,7 @@ def run_(args, glottolog):  # pragma: no cover
 
         print(colored('Resolved sources:', attrs=['bold']))
         for source, occurrence_count in bib_matcher.get_sources():
-            print('{}\t{}\t{}'.format(occurrence_count, source.id, source))
+            print(f'{occurrence_count}\t{source.id}\t{source}')
 
         if bib_matcher.has_unresolved_citations():
             print()
@@ -135,3 +135,4 @@ def run_(args, glottolog):  # pragma: no cover
             wtr = csv.writer(f, delimiter='\t')
             wtr.writerow(Error._fields)
             wtr.writerows(errors)
+        args.log.info('Report written to {args.report}')

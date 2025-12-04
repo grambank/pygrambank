@@ -22,7 +22,7 @@ def sheet_factory(tmp_path):
 
 
 def test_visitor(sheet_abbr):
-    class Counter(object):
+    class Counter:
         def __init__(self):
             self.c = 0
 
@@ -332,7 +332,7 @@ class FeatureDependencies(unittest.TestCase):
         ('Value\tValue', 'duplicate header'),
         ('Feature_ID\tValue\tSource\tComment\t\nGB020\t1\t\t\tx', 'non-empty cell'),
         ('Feature_ID\tValue\tSource\tComment\t\nGB020\t1\t\t\tx\nGB020\t0\t\t\t', 'inconsistent'),
-    ]
+    ],
 )
 def test_check2(api, sheet_factory, text, error, capsys):
     s = sheet_factory(text)
@@ -367,7 +367,7 @@ GB020\t0\tMeier 2007\t\tHJH\n""")
         (dict(Feature_ID='GB020', Value='', Source='Ref', Comment=''), True),
         (dict(Feature_ID='GB020', Value='', Source='', Comment='text'), True),
         (dict(Feature_ID='', Value='1', Source='Ref'), False),
-    ]
+    ],
 )
 def test_valid_row(sheet_abbr, api, mocker, row, logs):
     log = mocker.Mock()

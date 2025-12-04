@@ -47,22 +47,22 @@ class Feature(OrderedDict):
         # Make sure there are no duplicate keys:
         keys = Counter(i[0] for i in items)
         if len(keys) != len(items):
-            raise ValueError('Duplicate keys: {}'.format(
-                ';'.join(key for key, count in keys.items() if count > 1)))
+            msg = 'Duplicate keys: {}'.format(
+                ';'.join(key for key, count in keys.items() if count > 1))
+            raise ValueError(msg)
         res = cls(items, wiki)
         for k, v in res.wiki.items():
-            if k in res:
-                if res[k] != v:  # pragma: no cover
-                    print('++++', k, res[k], v)
+            if k in res and res[k] != v:  # pragma: no cover
+                print('++++', k, res[k], v)
         return res
 
     def as_chunk(self):
-        return ''.join('{0}: {1}\n'.format(k, v) for k, v in self.items())
+        return ''.join(f'{k}: {v}\n' for k, v in self.items())
 
     @lazyproperty
     def wiki(self):
         res = OrderedDict()
-        p = self._wiki / '{}.md'.format(self.id)
+        p = self._wiki / f'{self.id}.md'
         if not p.exists():
             return res
         title, header, lines = None, None, []
@@ -84,8 +84,8 @@ class Feature(OrderedDict):
 
     @lazyproperty
     def description(self):
-        if self._wiki.joinpath('{0}.md'.format(self.id)).exists():
-            return self._wiki.joinpath('{0}.md'.format(self.id)).read_text(encoding='utf-8-sig')
+        if self._wiki.joinpath(f'{self.id}.md').exists():
+            return self._wiki.joinpath(f'{self.id}.md').read_text(encoding='utf-8-sig')
         else:  # pragma: no cover
             return self.wiki_or_gb20('Summary', 'Clarifying comments')
 
@@ -106,7 +106,7 @@ class Feature(OrderedDict):
                 self.wiki_or_gb20('Patron', 'Feature Patron').strip())]
 
 
-class GB20(object):
+class GB20:
     CHUNK_SEP = '\n\n\n\n'
 
     def __init__(self, path):

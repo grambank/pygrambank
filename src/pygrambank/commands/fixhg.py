@@ -18,9 +18,8 @@ class Fix:  # pragma: no cover
 
     def __call__(self, row):
         for k, v in row.items():
-            if ('ontributed' in k) and ('atapoint' in k):
-                if v.strip():
-                    return True
+            if ('ontributed' in k) and ('atapoint' in k) and v.strip():
+                return True
         for key in [(row['Feature_ID'], row['Value']), (row['Feature_ID'], '*')]:
             if key in self.spec:
                 # We found a matching datapoint ...

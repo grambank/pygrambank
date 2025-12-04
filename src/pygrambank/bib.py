@@ -112,8 +112,7 @@ def split_off_lowercase_nameparts(first_name):
     for i, name_part in enumerate(parts):
         if REGEX_CAPITALISED_NAME_PART.match(name_part):
             return (parts[:i], parts[i:])
-    else:  # pragma: nocover
-        return (), ()
+    return (), ()
 
 
 def move_von_part_to_last_name(author):

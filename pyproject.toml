@@ -1,3 +1,89 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygrambank"
+version = "2.1.1.dev"
+requires-python = ">= 3.8"
+dependencies = [
+    "clldutils>=3.6",
+    "cldfcatalog",
+    "csvw>=3.1.3",
+    "pycldf>=1.29",
+    "xlrd",
+    "openpyxl==2.4.8",
+    "pyglottolog>=2.0",
+    "tqdm",
+    "beautifulsoup4>=4.9.1",
+    "ftfy",
+    "html5lib",
+    "fuzzywuzzy",
+    "python-Levenshtein",
+]
+authors = [
+    { name="Robert Forkel", email="robert_forkel@eva.mpg.de" },
+    { name="Johannes Englisch", email="johannes_englisch@eva.mpg.de" },
+]
+description = "A python library to curate Grambank data"
+readme = "README.md"
+keywords = ["data", "linguistics"]
+license = { file="LICENSE" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.urls]
+Repository = "https://github.com/grambank/pygrambank"
+Issues = "https://github.com/grambank/pygrambank/issues"
+
+[project.optional-dependencies]
+dev = [ "flake8", "wheel", "twine" ]
+test = [
+    "pytest>=5.4",
+    "pytest-mock",
+    "pytest-cov",
+    "coverage>=4.2",
+]
+
+[project.entry-points.console_scripts]
+grambank = "pygrambank.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = ["--cov=pygrambank", "--cov-report", "term-missing"]
+
+[tool.coverage.run]
+source = ["pygrambank", "tests"]
+omit = [
+    "src/pygrambank/commands/add_feature_column.py",
+    "src/pygrambank/commands/check_conflicts.py",
+    "src/pygrambank/commands/conflicts.py",
+    "src/pygrambank/commands/merge_conflicts.py",
+    "src/pygrambank/commands/merge_contrib.py",
+    "src/pygrambank/commands/roundtrip.py",
+    "src/pygrambank/commands/stats.py",
+    "src/pygrambank/commands/recode.py",
+    "src/pygrambank/commands/updatefeatures.py",
+    "src/pygrambank/commands/issue*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

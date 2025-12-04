@@ -47,6 +47,6 @@ def test_von_part():
     authors = [{
         'firstname': 'Carl-Friedrich von',
         'lastname': 'Adelswegen',
-        'jr': 'Jr.'
+        'jr': 'Jr.',
     }]
     assert list(bib.parse_authors(author_string)) == authors

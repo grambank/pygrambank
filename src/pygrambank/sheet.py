@@ -25,7 +25,7 @@ def check_feature_dependencies(rows):
 
     def _require_comment(feat, reason):
         if not _comment(feat):
-            errors.append('{} must have a comment if {}'.format(feat, reason))
+            errors.append(f'{feat} must have a comment if {reason}')
 
     errors = []
 
@@ -65,7 +65,7 @@ def check_feature_dependencies(rows):
 
     for feat in (
         'GB026', 'GB303', 'GB320', 'GB166', 'GB197', 'GB129', 'GB285', 'GB336',
-        'GB260', 'GB165', 'GB319'
+        'GB260', 'GB165', 'GB319',
     ):
         if _value(feat) == '1':
             _require_comment(feat, reason='it is coded 1')
@@ -191,7 +191,7 @@ class Row:
             and (bool(sources) or not mismatch_is_fatal(source_string)))
 
 
-class Sheet(object):
+class Sheet:
     """
     Processing workflow:
     """
@@ -200,7 +200,7 @@ class Sheet(object):
 
     def __init__(self, path):
         match = self.name_pattern.match(path.name)
-        assert match, 'Invalid sheet name: {0}'.format(path.name)
+        assert match, f'Invalid sheet name: {path.name}'
         self.path = path
         self.coders = match.group('coders').replace('CB-PE-AS', 'HunterGatherer').split('-')
         self.glottocode = match.group('glottocode')
@@ -219,18 +219,18 @@ class Sheet(object):
             lgc = languoid.id
         language = glottolog.languoids_by_glottocode[lgc]
         if not language.macroareas:
-            print('--- no macroareas: {}'.format(self.glottocode))
-        return dict(
-            level=languoid.level.name,
-            lineage=[lang[1] for lang in languoid.lineage],
-            Language_level_ID=language.id,
+            print(f'--- no macroareas: {self.glottocode}')
+        return {
+            'level': languoid.level.name,
+            'lineage': [lang[1] for lang in languoid.lineage],
+            'Language_level_ID': language.id,
             # Macroareas are assigned to language level nodes:
-            Macroarea=language.macroareas[0].name if language.macroareas else '',
-            Latitude=languoid.latitude if languoid.latitude else language.latitude,
-            Longitude=languoid.longitude if languoid.longitude else language.longitude,
-            Family_name=languoid.lineage[0][0] if languoid.lineage else None,
-            Family_level_ID=languoid.lineage[0][1] if languoid.lineage else None,
-        )
+            'Macroarea': language.macroareas[0].name if language.macroareas else '',
+            'Latitude': languoid.latitude if languoid.latitude else language.latitude,
+            'Longitude': languoid.longitude if languoid.longitude else language.longitude,
+            'Family_name': languoid.lineage[0][0] if languoid.lineage else None,
+            'Family_level_ID': languoid.lineage[0][1] if languoid.lineage else None,
+        }
 
     def _reader(self, **kw):
         return dsv.reader(self.path, delimiter='\t', encoding='utf-8-sig', **kw)
@@ -274,19 +274,18 @@ class Sheet(object):
             return False
         res = True
         if not re.match('GB[0-9]{3}[a-z]?|(GBDRS.+)|TE[0-9]+|TS[0-9]+$', fid):
-            if row.get('Value'):
-                if log:
-                    log('invalid Feature_ID: {0}'.format(fid),
-                        lineno=lineno,
-                        level='ERROR',
-                        row_=row)
+            if row.get('Value') and log:
+                log(f'invalid Feature_ID: {fid}',
+                    lineno=lineno,
+                    level='ERROR',
+                    row_=row)
             res = False
         if fid not in api.features:
             return False
         if row.get('Value'):
             if row['Value'] != '?' and row['Value'] not in api.features[row['Feature_ID']].domain:
                 if log:
-                    log('invalid value: {0}'.format(row['Value']), lineno=lineno, row_=row)
+                    log('invalid value: {}'.format(row['Value']), lineno=lineno, row_=row)
                 res = False
         else:
             res = False
@@ -316,7 +315,7 @@ class Sheet(object):
                 res = False
         if row['Feature_ID'] in (features or set()):
             if log:
-                log('duplicate value for feature {0}'.format(
+                log('duplicate value for feature {}'.format(
                     row['Feature_ID']), lineno=lineno, level='ERROR', row_=row)
             res = False
         return res
@@ -326,7 +325,7 @@ class Sheet(object):
             msg = [
                 self.path.stem,
                 level,
-                "{}".format(lineno if lineno != -1 else '?'),
+                str(lineno if lineno != -1 else '?'),
                 row_['Feature_ID'] if row_ else '',
                 msg]
             print(colored('\t'.join(msg), color='red'))
@@ -339,19 +338,19 @@ class Sheet(object):
             if line == 0:
                 for col in ['Feature_ID', 'Value', 'Comment', 'Source']:
                     if col not in row:
-                        log('missing column {0}'.format(col), lineno=line)
+                        log(f'missing column {col}', lineno=line)
                 for j, c in enumerate(row):
                     if not c:
                         empty_index.append(j)
                 if len(set(row)) != len(row):
-                    dupes = collections.Counter([h for h in row if row.count(h) > 1])
-                    log('duplicate header column(s) %r' % dupes, lineno=line)
+                    dupes = collections.Counter(h for h in row if row.count(h) > 1)
+                    log(f'duplicate header column(s) {dupes!r}', lineno=line)
             else:
                 if not empty_index:
                     break
                 for j in empty_index:
                     if row[j]:
-                        log('non-empty cell with empty header: {0}'.format(row[j]),
+                        log(f'non-empty cell with empty header: {row[j]}',
                             lineno=line,
                             level='WARNING')
 
@@ -367,16 +366,16 @@ class Sheet(object):
             log('Less than 25 datapoints have comments', level='WARNING')
 
         try:
-            for gbid, rows in itertools.groupby(
-                sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID']
+            for _, rows in itertools.groupby(
+                sorted(res, key=lambda r: r['Feature_ID']), lambda r: r['Feature_ID'],
             ):
                 rows = list(rows)
-                if len(rows) > 1:
-                    # A feature is coded multiple times! If the codings are inconsistent, we raise
-                    # an error, otherwise the first value takes precedence.
-                    if len(set(r['Value'] for r in rows)) > 1:
-                        log('inconsistent multiple codings: {0}'.format([r['Value'] for r in rows]))
-        except:  # pragma: no cover  # noqa
+                # A feature is coded multiple times! If the codings are inconsistent, we raise
+                # an error, otherwise the first value takes precedence.
+                if len(rows) > 1 and len({r['Value'] for r in rows}) > 1:
+                    log('inconsistent multiple codings: {}'.format(
+                        [r['Value'] for r in rows]))
+        except:  # pragma: no cover  # pragma: noqa
             for row in res:
                 if not row['Feature_ID']:
                     print(row)

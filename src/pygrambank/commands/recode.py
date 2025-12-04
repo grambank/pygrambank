@@ -73,7 +73,7 @@ def run(args):
             if line is None:
                 found_invalid = True
                 print(
-                    '{}:{}: Could not decode line:'.format(p, index + 1),
+                    f'{p}:{index + 1}: Could not decode line:',
                     repr(raw_line),
                     file=sys.stderr)
 

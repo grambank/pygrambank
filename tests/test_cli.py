@@ -159,7 +159,8 @@ def test_fix(repos):
         str(fname),
     ])
     text = fname.read_text(encoding='utf8')
-    assert ('Author 2020' not in text) and ('Author xyz' in text)
+    assert 'Author 2020' not in text 
+    assert 'Author xyz' in text
 
 
 def test_features(repos, capsys, mocker):

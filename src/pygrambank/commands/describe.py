@@ -96,7 +96,7 @@ def describe(args, sheet):
             print('{}\t{}:\t{}'.format(k, coders_by_id[k], str(v).rjust(3)))
         else:
             args.log.error(colored(
-                'Unknown coder: "{}"'.format(k),
+                f'Unknown coder: "{k}"',
                 color='red'))  # pragma: no cover
 
     if args.columns:

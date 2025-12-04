@@ -2,7 +2,7 @@ import re
 
 import dateutil.parser
 from markdown import markdown
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup as BS
 
 # Redirect links:
 # wiki:
@@ -47,11 +47,11 @@ class Base:
             yield m.group('url')
 
     def iter_links(self):
-        for link in bs(self.html, 'html5lib').find_all('a'):
+        for link in BS(self.html, 'html5lib').find_all('a'):
             yield link['href'], link.text
 
     def iter_images(self):
-        for link in bs(self.html, 'html5lib').find_all('img'):
+        for link in BS(self.html, 'html5lib').find_all('img'):
             yield link['src'], link.get('alt')
 
 
@@ -73,10 +73,9 @@ class Issue(Base):
 
     @property
     def coding_problem(self):
-        for label in self.d['labels']:
-            if label['name'] == 'coding problem':
-                return True
-        return False  # pragma: no cover
+        return any(
+            label['name'] == 'coding problem'
+            for label in self.d['labels'])
 
     @property
     def comments(self):

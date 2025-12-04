@@ -24,7 +24,7 @@ def normalized_feature_id(s):
     match = re.fullmatch(r'(?:GB)?(\d+)([a-z])?', s)
     if match:
         number, suffix = match.groups()
-        return 'GB{:0>3}{}'.format(number, suffix)
+        return f'GB{number:0>3}{suffix}'
     else:
         return s
 
@@ -38,10 +38,13 @@ def normalize_comment(s):
     """
     if s:
         if set(s) == {'#'}:
-            return
-        if set(s) == {'?'}:
+            return None
+        elif set(s) == {'?'}:
             return '?'
-        return s
+        else:
+            return s
+    else:
+        return None
 
 
 def normalized_value(v):
@@ -94,9 +97,10 @@ def _normalized_row(row):
 def _read_excel_value(x):
     if x is None:
         return ""
-    if isinstance(x, float):
-        return '{0}'.format(int(x))
-    return '{0}'.format(x).strip()
+    elif isinstance(x, float):
+        return str(int(x))
+    else:
+        return str(x).strip()
 
 
 def iter_tsv(fname):
@@ -118,7 +122,7 @@ def iter_xlsx(fname):
                 for j, c in enumerate(row):
                     # There's a couple of sheets with > 10,000 columns, labeled with "Column<no>".
                     # We cut these out to reduce TSV bloat.
-                    if re.match('Column[0-9]+$', '{0}'.format(c.value)):  # pragma: no cover
+                    if re.match('Column[0-9]+$', str(c.value)):  # pragma: no cover
                         skip_cols.add(j)
             row = [_read_excel_value(c.value) for j, c in enumerate(row) if j not in skip_cols]
             if set(row) == {''}:  # pragma: no cover
@@ -139,7 +143,7 @@ def iter_xlsx(fname):
 
         for i in empty_cols:  # pragma: no cover
             assert all(not bool(r[i]) for r in data), \
-                'Empty header for non-empty column: {0}'.format(i)
+                f'Empty header for non-empty column: {i}'
 
 
 def iter_xls(fname):
@@ -158,7 +162,7 @@ def iter_xls(fname):
                 rows = rows_by_sheetname[sheetname]
                 break
     else:  # pragma: no cover
-        rows = list(rows_by_sheetname.values())[0]
+        rows = next(iter(rows_by_sheetname.values()))
     assert all(bool(c) for c in rows[0]), 'Empty column header'
     for row in rows[1:]:
         yield _normalized_row(collections.OrderedDict(zip(rows[0], row)))
@@ -184,9 +188,7 @@ def iter_csv(fname):
         res = list(read('utf-8-sig'))
     except UnicodeDecodeError:  # pragma: no cover
         res = list(read('cp1252'))
-
-    for r in res:
-        yield r
+    return res
 
 
 def write_tsv(in_, out_, glottocode):
@@ -269,7 +271,7 @@ def adhoc_merge(grambank_api, glottocode, conflict_rows):
             provenance = 'merged from: {}'.format(
                 '; '.join(sorted(value_provenance)))
         else:
-            provenance = list(value_provenance)[0]
+            provenance = next(iter(value_provenance))
         # :D
         sheet = Sheet(pathlib.Path('ABC_abcd1234.tsv'))
         sheet.path = pathlib.Path(provenance)
@@ -294,10 +296,12 @@ def iterunique(insheets, verbose=False):
             yield sheets[0]
         else:
             if verbose:
-                print('\nSelecting best sheet for {0}'.format(gc))
+                print(f'\nSelecting best sheet for {gc}')
             for i, (sheet, values) in enumerate(sheets):
                 if verbose:
-                    print('{0} dps: {1} sheet {2}'.format(
-                        len(values), 'choosing' if i == 0 else 'skipping', sheet.path.stem))
+                    print('{} dps: {} sheet {}'.format(
+                        len(values),
+                        'choosing' if i == 0 else 'skipping',
+                        sheet.path.stem))
                 if i == 0:
                     yield (sheet, values)

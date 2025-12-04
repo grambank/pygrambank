@@ -75,7 +75,7 @@ def run(args):
 
     assert not set(rows) - set(contribs)
     lnames = {c.last_name: c.id for c in contribs.values()}
-    fnames = {'{0.first_name} {0.last_name}'.format(c): c.id for c in contribs.values()}
+    fnames = {f'{c.first_name} {c.last_name}': c.id for c in contribs.values()}
 
     bios_by_id = {}
     for name in bios:
@@ -86,7 +86,7 @@ def run(args):
         if hname.last in lnames:
             bios_by_id[lnames[hname.last]] = bios[name]
             continue
-        full = '{0.first} {0.last}'.format(hname)
+        full = f'{hname.first} {hname.last}'
         if full in fnames:
             bios_by_id[fnames[full]] = bios[name]
             continue

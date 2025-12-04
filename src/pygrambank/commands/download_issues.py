@@ -22,7 +22,7 @@ def register(parser):  # pragma: no cover
 
 def run(args):  # pragma: no cover
     auth = HTTPBasicAuth(args.user, args.token)
-    issues = list(iteritems(auth, '/repos/{0}/issues'.format(REPOS), state='all'))
+    issues = list(iteritems(auth, f'/repos/{REPOS}/issues', state='all'))
     jsonlib.dump(issues, args.repos.issues_path, indent=4)
 
     res = {}

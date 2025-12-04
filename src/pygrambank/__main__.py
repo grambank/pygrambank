@@ -4,12 +4,11 @@ from pathlib import Path
 from clldutils.clilib import ParserError, register_subcommands, get_parser_and_subparsers
 from clldutils.loglib import Logging
 
+import pygrambank.commands
 from pygrambank.api import Grambank
 
 
 def main(args=None, catch_all=False, parsed_args=None):
-    import pygrambank.commands
-
     parser, subparsers = get_parser_and_subparsers('grambank')
     parser.add_argument(
         '--repos', help="clone of glottobank/Grambank", default=Path('.'), type=Path)

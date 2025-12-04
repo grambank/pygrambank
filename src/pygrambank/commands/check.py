@@ -42,7 +42,7 @@ def run(args):
         if (sheet.glottocode not in counts) or (n > counts[sheet.glottocode][0]):
             counts[sheet.glottocode] = (n, sheet.path.stem)
 
-    selected = set(v[1] for v in counts.values())
+    selected = {v[1] for v in counts.values()}
     for row in report:
         row.insert(1, row[0] in selected)
 
@@ -50,5 +50,5 @@ def run(args):
         with UnicodeWriter(args.report, delimiter='\t') as w:
             w.writerow(['sheet', 'selected', 'level', 'line', 'feature', 'message'])
             w.writerows(report)
-        args.log.info('Report written to {0}'.format(args.report))
+        args.log.info(f'Report written to {args.report}')
     args.log.error('Repos check found WARNINGs or ERRORs')

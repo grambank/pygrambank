@@ -21,6 +21,8 @@ def parse_photo(s):
     match = re.search(r'src="(?P<url>[^"]+)"', s)
     if match:
         return match.group('url').split('/')[-1]
+    else:
+        return None
 
 
 def parse_roles(s):
@@ -34,7 +36,7 @@ def valid_roles(instance, attribute, value):
 
 
 @attr.s
-class Contributor(object):
+class Contributor:
     id = attr.ib()
     last_name = attr.ib()
     first_name = attr.ib()
@@ -53,7 +55,7 @@ class Contributor(object):
 
     @property
     def name(self):
-        return '{0.first_name} {0.last_name}'.format(self)
+        return f'{self.first_name} {self.last_name}'
 
     @property
     def roles(self):
@@ -75,6 +77,7 @@ class Contributors(list):
             for row in rows]
         byid = collections.Counter(r.id for r in rows)
         if byid.most_common(1)[0][1] > 1:  # pragma: no cover
-            raise ValueError(
-                'duplicate ids: {0}'.format([k for k, v in byid.most_common() if v > 1]))
+            msg = 'duplicate ids: {}'.format(
+                [k for k, v in byid.most_common() if v > 1])
+            raise ValueError(msg)
         return cls(rows)

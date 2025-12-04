@@ -99,9 +99,7 @@ class BibliographyMatcher:
             self._parsed_author_cache[bibkey] = family_names
             return family_names
 
-    def _bibkeys_from_citation(
-        self, author, year, pages, word_from_title, glottocode
-    ):
+    def _bibkeys_from_citation(self, author, year, word_from_title, glottocode):
         """Return bibliography keys corresponding to a citation."""
 
         citation_lastname = undiacritic(bib.parse_authors(author)[0]['lastname'])
@@ -153,7 +151,7 @@ class BibliographyMatcher:
 
         for author, year, pages, word_from_title in authoryears:
             bibkeys = self._bibkeys_from_citation(
-                author, year, pages, word_from_title, glottocode)
+                author, year, word_from_title, glottocode)
             if bibkeys:
                 # FIXME: only yield at most one match!?
                 matched_refs.update(
@@ -197,13 +195,12 @@ class BibliographyMatcher:
                 '[{}]'.format(','.join(sorted(pages))) if pages else '')
             for new_bibkey, pages in pages_for_bibkey.items()]
         if not sheet_row.Source and bib.mismatch_is_fatal(source_string):
-            sheet_row.Source_comment = '{} (source not confirmed)'.format(
-                source_string)
+            sheet_row.Source_comment = f'{source_string} (source not confirmed)'
         else:
             sheet_row.Source_comment = source_string
 
 
-class GlottologGB(object):
+class GlottologGB:
     """
     A custom facade to the Glottolog API.
     """
@@ -220,7 +217,7 @@ class GlottologGB(object):
         """
         return {
             e.key: (e.type, e.fields)
-            for e in self.api.bibfiles['{0}.bib'.format(key)].iterentries()}
+            for e in self.api.bibfiles[f'{key}.bib'].iterentries()}
 
     @lazyproperty
     def languoids(self):

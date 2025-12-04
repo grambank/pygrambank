@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+from pygrambank.api import Grambank
+
 
 @pytest.fixture
 def repos(tmp_path):
@@ -12,8 +14,6 @@ def repos(tmp_path):
 
 @pytest.fixture
 def api(repos):
-    from pygrambank.api import Grambank
-
     return Grambank(repos)
 
 

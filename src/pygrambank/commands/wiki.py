@@ -28,9 +28,8 @@ def iter_examples(s):
                 yield from split_examples('\n'.join(ex))
                 ex = []
             in_example = not in_example
-        else:
-            if in_example:
-                ex.append(line)
+        elif in_example:
+            ex.append(line)
 
 
 def run(args):
@@ -57,6 +56,6 @@ def run(args):
     for ref in sorted(refs):
         if fuzz.token_set_ratio(prev, ref) < 100:
             print(ref)
-            print('')
+            print()
             c += 1
         prev = ref

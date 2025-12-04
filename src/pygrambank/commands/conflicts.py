@@ -58,7 +58,7 @@ def run(args):
         try:
             old_conflicts = list(dsv.reader(
                 conflict_path, delimiter='\t', dicts=True))
-        except IOError:
+        except OSError:
             # Just move on if there are no previous conflicts.
             old_conflicts = []
 
@@ -82,7 +82,7 @@ def run(args):
             if sheet.path.parent == api.sheets_dir:
                 new_path = api.quarantine_dir / sheet.path.name
                 if new_path.exists():
-                    raise IOError(f'{new_path}: already exists')
+                    raise OSError(f'{new_path}: already exists')
                 sheet.path.rename(new_path)
             else:
                 assert sheet.path.parent == api.quarantine_dir, (

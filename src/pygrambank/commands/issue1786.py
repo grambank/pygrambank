@@ -84,7 +84,7 @@ GB068 | Conrad and Wogiga 1991:33, 37 | Class 6 = Stative verbs have object suff
 GB068 | Green 1987; Glasgow 1981; Glasgow 1980; Green 2003 | Adjectives agree with their modifier in class, case, person, number and gender. Agreement markers used are the same as for verbs. Adjectives differ from verbs in that they do not take TAM marking and adjectives take case markers (Green:8). | bura1267
 GB068 | Bunye & Yap 1971a; Bunye & Yap (1971b); Payne 1994; Valkama 2000 | Differ from verbs in not taking voice marking | cebu1242
 GB069 | Bunye & Yap 1971a; Bunye & Yap (1971b); Payne 1994; Valkama 2000 | Differ from verbs in not taking voice marking | cebu1242
-GB068 | Scott 1978 | but all utterances require final MOOD, e.g. IND /=e/. GS: You gave N. Since –e is a mood suffix that completes an utterance on verbs, and on non-verbs when they end (usually short) utterances, my answer would be Y. (You already referenced Scott 1978:84).\|\|GR: Yes, but no Tense & P/N! | fore1270
+GB068 | Scott 1978 | but all utterances require final MOOD, e.g. IND /=e/. GS: You gave N. Since –e is a mood suffix that completes an utterance on verbs, and on non-verbs when they end (usually short) utterances, my answer would be Y. (You already referenced Scott 1978:84).\\|\\|GR: Yes, but no Tense & P/N! | fore1270
 GB069 | Dougherty 1983:92 | apparently not; no TAM marking (p. 92) | futu1245
 GB068 | Wolfenden 1971 | Distinct from verbs in that they don't take the voice marking. | hili1240
 GB069 | Wolfenden 1971 | Distinct from verbs in that they don't take the voice marking. | hili1240
