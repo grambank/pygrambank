@@ -27,7 +27,7 @@ class Warnings:  # pragma: no cover
         # Accumulator for warning messages:
         self.messages = ''
 
-    def __call__(self, msg, _lineno, level=None, row_=None, **_kw):
+    def __call__(self, msg, lineno, level=None, row_=None, **_kw):
         # This will be called within Sheet.valid_row when problems are detected.
         self.messages += '\n{}:{}: {}'.format(level, row_['Feature_ID'], msg)
 
