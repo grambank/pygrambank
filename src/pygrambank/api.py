@@ -1,8 +1,8 @@
+import functools
 from itertools import chain
 
 from csvw.dsv import reader
 from clldutils.apilib import API
-from clldutils.misc import lazyproperty
 from clldutils import jsonlib
 from pyglottolog.references.bibfiles import BibFile
 
@@ -47,27 +47,27 @@ class Grambank(API):
     def contributors(self):
         return Contributors.from_md(self.repos / 'CONTRIBUTORS.md')
 
-    @lazyproperty
+    @functools.cached_property
     def bib(self):
         return {e.key: (e.type, e.fields) for e in BibFile(self.repos / 'gb.bib').iterentries()}
 
-    @lazyproperty
+    @functools.cached_property
     def ordered_features(self):
         return list(self.features.values())
 
-    @lazyproperty
+    @functools.cached_property
     def features(self):
         return self.gb20.read_features(self.wiki)
 
-    @lazyproperty
+    @functools.cached_property
     def issues_path(self):
         return self.path('archived_discussions', 'issues.json')
 
-    @lazyproperty
+    @functools.cached_property
     def comments_path(self):
         return self.path('archived_discussions', 'comments.json')
 
-    @lazyproperty
+    @functools.cached_property
     def issues(self):
         issues = jsonlib.load(self.issues_path)
         comments = jsonlib.load(self.comments_path)

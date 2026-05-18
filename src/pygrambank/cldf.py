@@ -1,10 +1,10 @@
 import collections
-from itertools import groupby
+import functools
 import re
 import unicodedata
+from itertools import groupby
 
 import pyglottolog
-from clldutils.misc import lazyproperty
 from pycldf.sources import Source
 
 from pygrambank import bib
@@ -219,15 +219,15 @@ class GlottologGB:
             e.key: (e.type, e.fields)
             for e in self.api.bibfiles[f'{key}.bib'].iterentries()}
 
-    @lazyproperty
+    @functools.cached_property
     def languoids(self):
         return list(self.api.languoids())
 
-    @lazyproperty
+    @functools.cached_property
     def languoids_by_glottocode(self):
         return {lang.id: lang for lang in self.languoids}
 
-    @lazyproperty
+    @functools.cached_property
     def descendants_map(self):
         res = collections.defaultdict(list)
         for lang in self.languoids:
@@ -237,7 +237,7 @@ class GlottologGB:
                     res[gc].append(lang.id)
         return res
 
-    @lazyproperty
+    @functools.cached_property
     def languoids_by_ids(self):
         """
         We provide a simple lookup for the three types of identifiers for a Glottolog languoid,

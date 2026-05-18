@@ -1,8 +1,7 @@
 import re
+import functools
 import unicodedata
 from collections import OrderedDict, Counter
-
-from clldutils.misc import lazyproperty
 
 
 patrons = {
@@ -59,7 +58,7 @@ class Feature(OrderedDict):
     def as_chunk(self):
         return ''.join(f'{k}: {v}\n' for k, v in self.items())
 
-    @lazyproperty
+    @functools.cached_property
     def wiki(self):
         res = OrderedDict()
         p = self._wiki / f'{self.id}.md'
@@ -82,22 +81,22 @@ class Feature(OrderedDict):
         res['Patron'] = res['Patron'].split('\n')[0]
         return res
 
-    @lazyproperty
+    @functools.cached_property
     def description(self):
         if self._wiki.joinpath(f'{self.id}.md').exists():
             return self._wiki.joinpath(f'{self.id}.md').read_text(encoding='utf-8-sig')
         else:  # pragma: no cover
             return self.wiki_or_gb20('Summary', 'Clarifying comments')
 
-    @lazyproperty
+    @functools.cached_property
     def id(self):
         return self['Grambank ID']
 
-    @lazyproperty
+    @functools.cached_property
     def name(self):
         return self['Feature']
 
-    @lazyproperty
+    @functools.cached_property
     def patrons(self):
         return [
             patrons[k] for k in
