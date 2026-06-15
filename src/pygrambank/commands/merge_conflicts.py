@@ -17,6 +17,7 @@ from pygrambank.conflicts import check_conflicts
 
 CODERS = {
     'Farah07': 'FE',
+    'Grace': 'GE',
     'Grace-ph': 'GE',
     'Hedvig': 'HS',
     'Hoju': 'HC',
