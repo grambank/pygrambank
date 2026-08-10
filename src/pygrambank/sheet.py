@@ -1,9 +1,11 @@
 import re
 import itertools
 import collections
+from dataclasses import dataclass, field, fields
+from typing import List, Optional
+
 from termcolor import colored
 
-import attr
 from csvw import dsv
 
 from pygrambank.bib import iter_authoryearpages, mismatch_is_fatal
@@ -144,37 +146,43 @@ def check_feature_dependencies(rows):
     return errors
 
 
-@attr.s
+@dataclass
 class Source:
-    author = attr.ib()
-    year = attr.ib()
-    pages = attr.ib()
-    in_title = attr.ib()
+    author: str
+    year: str
+    pages: str
+    in_title: str
 
     @property
     def key(self):
         return self.author, self.year, self.in_title
 
 
-@attr.s
+@dataclass
 class Row:
-    Feature_ID = attr.ib()
-    Value = attr.ib()
-    Source = attr.ib()
-    Comment = attr.ib(default=None)
-    contributed_datapoint = attr.ib(
-        default=attr.Factory(list),
-        converter=lambda s: re.findall('[A-Z]+(?=[^A-Z]|$)', s) if s else [])
-    Source_comment = attr.ib(default=None)
+    Feature_ID: str
+    Value: str
+    Source: str
+    Comment: Optional[str] = None
+    contributed_datapoint: List[str] = field(default_factory=list)
+    Source_comment: Optional[str] = None
+
+    def __post_init__(self):
+        if self.contributed_datapoint:
+            self.contributed_datapoint = re.findall(
+                '[A-Z]+(?=[^A-Z]|$)',
+                self.contributed_datapoint)
+        else:
+            self.contributed_datapoint = []
 
     @classmethod
     def from_dict(cls, d):
-        fields = list(attr.fields_dict(cls).keys())
+        fields_ = set(f.name for f in fields(cls))
         kw = {}
         for k, v in d.items():
             if ('ontributed' in k) and ('atapoint' in k):
                 k = 'contributed_datapoint'
-            if k in fields:
+            if k in fields_:
                 kw[k] = v
         return cls(**kw)
 
