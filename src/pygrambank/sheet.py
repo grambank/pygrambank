@@ -109,36 +109,36 @@ def check_feature_dependencies(rows):
         # four states
         ('GB193', 'GB193a', 'GB193b', 4),
         ('GB203', 'GB203a', 'GB203b', 4)]
-    bad_vals_ternary = [
-        ('1', '0', '0'),
-        ('1', '1', '1'),
-        ('2', '1', '1'),
-        ('2', '0', '0'),
-        ('3', '0', '1'),
-        ('3', '1', '0')]
-    bad_vals_quarternary = [
-        ('0', '1', '0'),
-        ('0', '0', '1')]
+    good_vals_ternary = [
+        ('1', '1', '0'),
+        ('2', '0', '1'),
+        ('3', '1', '1')]
+    good_vals_quaternary = [
+        ('0', '0', '0')]
     for parent, binary_a, binary_b, n_states in multistate_features:
+        parent_val = _value(parent)
+        a_val = _value(binary_a)
+        b_val = _value(binary_b)
+
         if n_states < 4:
-            vals = bad_vals_ternary
+            good_vals = good_vals_ternary
         else:
-            vals = itertools.chain(bad_vals_ternary, bad_vals_quarternary)
-        for bad_parent, bad_a, bad_b in vals:
-            if (_value(parent) == bad_parent
-                and _value(binary_a) == bad_a
-                and _value(binary_b) == bad_b
+            good_vals = itertools.chain(good_vals_ternary, good_vals_quaternary)
+        for check_parent_val, good_a, good_b in good_vals:
+            if (parent_val == check_parent_val
+                and ((a_val and a_val != good_a) or (b_val and b_val != good_b))
             ):
                 errors.append(
                     "{} can't be {} if {} is {} and {} is {}".format(
-                        parent, bad_parent,
-                        binary_a, bad_a,
-                        binary_b, bad_b))
+                        parent, parent_val,
+                        binary_a, a_val,
+                        binary_b, b_val))
+        if parent_val == '?' and {a_val, b_val} <= {'0', '1'}:
+            errors.append(
+                '{} is ? but {} is {} and {} is {}'.format(
+                    parent, binary_a, a_val, binary_b, b_val))
 
-        if (n_states < 4
-            and _value(binary_a) == '0'
-            and _value(binary_b) == '0'
-        ):
+        if (n_states < 4 and a_val == '0' and b_val == '0'):
             errors.append(f"{binary_a} and {binary_b} can't both be 0")
 
     return errors
